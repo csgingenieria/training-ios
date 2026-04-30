@@ -1,0 +1,23 @@
+# Xcode user-specific data
+xcuserdata/
+*.xcuserstate
+
+# Build products
+build/
+DerivedData/
+*.xcarchive
+
+# CocoaPods (no usado, pero por si)
+Pods/
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Sensible
+.env
+*.p12
+*.mobileprovision
+
+# macOS
+.DS_Store
