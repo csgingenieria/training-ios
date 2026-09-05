@@ -4,12 +4,14 @@ import Foundation
 ///
 /// Similar a `StandingDTO` pero incluye `name` de la convocatoria (el manager
 /// abre el perfil sin contexto de qué convocatoria es cada standing).
+///
+/// Sin `plazas` ni derivados de «línea de corte», igual que `StandingDTO`:
+/// RGPD art. 22. Ver la nota de ese tipo antes de añadir campos aquí.
 struct ProfileStandingDTO: Sendable, Identifiable, Hashable {
     let convocatoriaId: String
     let name: String
     let position: Int
     let totalCandidates: Int
-    let plazas: Int
     let score: Double
     let attemptsCompleted: Int
     let attemptsTotal: Int

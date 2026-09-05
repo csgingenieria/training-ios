@@ -8,7 +8,7 @@ struct ManagerDashboardDTOTests {
         let dto: ManagerDashboardDTO = try JSONFixture.decode("manager-dashboard")
         #expect(dto.activeConvocatorias == 3)
         #expect(dto.totalCandidates == 120)
-        #expect(dto.totalPlazas == 60)
+        #expect(dto.totalParticipants == 60)
         #expect(dto.attemptsToday == 42)
         #expect(dto.attemptsThisWeek == 187)
         #expect(dto.lastWebfleetSyncAt == "2026-06-09T08:00:00+00:00")
@@ -22,7 +22,7 @@ struct ManagerDashboardDTOTests {
         {
             "activeConvocatorias": 0,
             "totalCandidates": 0,
-            "totalPlazas": 0,
+            "totalParticipants": 0,
             "attemptsToday": 0,
             "attemptsThisWeek": 0,
             "lastWebfleetSyncAt": null,

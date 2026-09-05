@@ -27,19 +27,15 @@ struct WatchStandingMock {
     let convocatoriaName: String
     let position: Int
     let totalCandidates: Int
-    let plazas: Int
     let score: Double
     let attemptsCompleted: Int
     let attemptsTotal: Int
     let status: String
 
-    var withinCutoff: Bool { position <= plazas }
-
     static let sample = WatchStandingMock(
         convocatoriaName: "Convocatoria 2026",
         position: 5,
         totalCandidates: 42,
-        plazas: 50,
         score: 8.25,
         attemptsCompleted: 5,
         attemptsTotal: 6,

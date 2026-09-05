@@ -111,7 +111,7 @@ struct StandingWidgetEntryView: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text("\(entry.standing.position)")
                     .font(.system(size: 56, weight: .bold, design: .serif).italic())
-                    .foregroundStyle(entry.standing.withinCutoff ? Color.widgetBrand : Color.widgetMuted)
+                    .foregroundStyle(Color.widgetBrand)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 Text("/\(entry.standing.totalCandidates)")
@@ -150,7 +150,7 @@ struct StandingWidgetEntryView: View {
                     .foregroundStyle(Color.widgetMuted)
                 Text("\(entry.standing.position)")
                     .font(.system(size: 48, weight: .bold, design: .serif).italic())
-                    .foregroundStyle(entry.standing.withinCutoff ? Color.widgetBrand : Color.widgetMuted)
+                    .foregroundStyle(Color.widgetBrand)
                 Text("de \(entry.standing.totalCandidates)")
                     .font(.caption2)
                     .foregroundStyle(Color.widgetMuted)
@@ -174,7 +174,6 @@ struct StandingWidgetEntryView: View {
 
                 metric(label: "Nota", value: String(format: "%.2f", entry.standing.score), color: scoreColor(entry.standing.score))
                 metric(label: "Intentos", value: "\(entry.standing.attemptsCompleted)/\(entry.standing.attemptsTotal)")
-                metric(label: "Plazas", value: "\(entry.standing.plazas)")
             }
             Spacer(minLength: 0)
         }
@@ -226,7 +225,7 @@ struct StandingWidget: Widget {
     StandingWidget()
 } timeline: {
     StandingEntry(date: .now, standing: .sample)
-    StandingEntry(date: .now, standing: .outsideCutoff)
+    StandingEntry(date: .now, standing: .lowerPosition)
 }
 
 #Preview(as: .systemMedium) {

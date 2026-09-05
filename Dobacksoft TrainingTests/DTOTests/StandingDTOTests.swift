@@ -9,20 +9,22 @@ struct StandingDTOTests {
         #expect(dto.convocatoriaId == "conv-001")
         #expect(dto.position == 3)
         #expect(dto.totalCandidates == 42)
-        #expect(dto.plazas == 50)
         #expect(dto.score == 7.5)
         #expect(dto.attemptsCompleted == 3)
         #expect(dto.attemptsTotal == 5)
         #expect(dto.status == "ACTIVE")
     }
 
-    @Test func standingIsWithinAvailableSeats() throws {
-        let dto: StandingDTO = try JSONFixture.decode("standing")
-        #expect(dto.isWithinAvailableSeats == true) // position 3 <= plazas 50
-    }
-
-    @Test func standingOutsideSeats() throws {
-        let json = """
+    /// The backend still returns `plazas` as a compatibility mirror of
+    /// `totalCandidates` (marked "Release N" in its services layer) while older
+    /// clients are retired. The field carries no meaning: cupos were removed
+    /// from the domain, and `CMADRID-ENTREGA.md` v1.1 states to the customer
+    /// that the system does not manage them.
+    ///
+    /// Decoding must ignore it rather than fail, and the DTO must not surface
+    /// it — a value that cannot be read cannot be rendered.
+    @Test func legacyPlazasFieldIsIgnored() throws {
+        let json = Data("""
         {
             "convocatoriaId": "conv-001",
             "position": 55,
@@ -33,8 +35,11 @@ struct StandingDTOTests {
             "attemptsTotal": 5,
             "status": "ACTIVE"
         }
-        """.data(using: .utf8)!
+        """.utf8)
+
         let dto = try JSONDecoder().decode(StandingDTO.self, from: json)
-        #expect(dto.isWithinAvailableSeats == false) // position 55 > plazas 50
+
+        #expect(dto.position == 55)
+        #expect(dto.totalCandidates == 60)
     }
 }

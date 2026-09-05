@@ -109,7 +109,6 @@ struct StandingCard: View {
 
             HStack(spacing: Theme.spacing.md.value) {
                 StandingMetric(title: "Nota", value: String(format: "%.2f", standing.score))
-                StandingMetric(title: "Plazas", value: "\(standing.plazas)")
                 StandingMetric(
                     title: "Intentos",
                     value: "\(standing.attemptsCompleted)/\(standing.attemptsTotal)"
@@ -581,8 +580,8 @@ struct AttemptSummaryRow: View {
                             .font(.metaCaption)
                             .foregroundStyle(Color.muted)
                     }
-                    if let dq = attempt.dataQuality, !dq.isEmpty {
-                        StatusBadge(text: dq, kind: dataQualityKind(dq))
+                    if let quality = attempt.quality {
+                        StatusBadge(text: quality.label, kind: quality.badgeKind)
                     }
                 }
             }
@@ -622,14 +621,6 @@ struct AttemptSummaryRow: View {
         }
     }
 
-    private func dataQualityKind(_ value: String) -> BadgeKind {
-        switch value.uppercased() {
-        case "HIGH", "GOOD":   return .success
-        case "MEDIUM", "OK":   return .warning
-        case "LOW", "BAD":     return .danger
-        default:               return .neutral
-        }
-    }
 }
 
 // MARK: - Filtros locales para "Mis intentos"

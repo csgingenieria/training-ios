@@ -39,28 +39,23 @@ struct WidgetStandingMock {
     let convocatoriaName: String
     let position: Int
     let totalCandidates: Int
-    let plazas: Int
     let score: Double
     let attemptsCompleted: Int
     let attemptsTotal: Int
-
-    var withinCutoff: Bool { position <= plazas }
 
     static let sample = WidgetStandingMock(
         convocatoriaName: "Convocatoria 2026",
         position: 5,
         totalCandidates: 42,
-        plazas: 50,
         score: 8.25,
         attemptsCompleted: 5,
         attemptsTotal: 6
     )
 
-    static let outsideCutoff = WidgetStandingMock(
+    static let lowerPosition = WidgetStandingMock(
         convocatoriaName: "Convocatoria 2026",
         position: 58,
         totalCandidates: 60,
-        plazas: 50,
         score: 5.10,
         attemptsCompleted: 4,
         attemptsTotal: 6

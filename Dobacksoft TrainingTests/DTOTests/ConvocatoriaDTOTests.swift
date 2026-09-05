@@ -12,7 +12,6 @@ struct ConvocatoriaDTOTests {
         #expect(first.id == "conv-001")
         #expect(first.name == "Convocatoria 2026 — Bomberos CMadrid")
         #expect(first.status == "OPEN")
-        #expect(first.plazas == 50)
         #expect(first.totalCandidates == 42)
         #expect(first.closedAt == nil)
         #expect(first.updatedAt == "2026-05-20T10:30:00Z")

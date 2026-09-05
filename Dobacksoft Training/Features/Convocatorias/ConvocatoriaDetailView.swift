@@ -34,7 +34,6 @@ struct ConvocatoriaDetailView: View {
         var lines: [String] = ["Convocatoria Training · CMadrid", convocatoria.name]
         if let s = convocatoria.status { lines.append("Estado: \(s)") }
         lines.append("Candidatos: \(convocatoria.totalCandidates)")
-        lines.append("Plazas: \(convocatoria.plazas)")
         return lines.joined(separator: "\n")
     }
 
@@ -54,8 +53,6 @@ struct ConvocatoriaDetailView: View {
 
             HStack(spacing: Theme.spacing.lg.value) {
                 metricBlock(value: "\(convocatoria.totalCandidates)", label: "Candidatos")
-                Divider().frame(height: 32)
-                metricBlock(value: "\(convocatoria.plazas)", label: "Plazas")
                 Spacer()
             }
 

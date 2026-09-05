@@ -19,7 +19,6 @@ struct StudentProfileDTOTests {
         #expect(first.convocatoriaId == "conv-001")
         #expect(first.name == "Convocatoria 2026")
         #expect(first.position == 5)
-        #expect(first.plazas == 50)
         #expect(first.score == 8.25)
         #expect(first.attemptsCompleted == 5)
         #expect(first.attemptsTotal == 6)

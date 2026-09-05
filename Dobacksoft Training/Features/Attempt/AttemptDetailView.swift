@@ -134,8 +134,8 @@ private struct AttemptDetailContent: View {
                         .font(.cardTitle)
                         .foregroundStyle(Color.muted)
                     Spacer()
-                    if let dq = attempt.dataQuality, !dq.isEmpty {
-                        StatusBadge(text: dq, kind: dataQualityKind(dq))
+                    if let quality = attempt.quality {
+                        StatusBadge(text: quality.label, kind: quality.badgeKind)
                     }
                 }
                 Divider()
@@ -249,12 +249,4 @@ private struct AttemptDetailContent: View {
         }
     }
 
-    private func dataQualityKind(_ value: String) -> BadgeKind {
-        switch value.uppercased() {
-        case "HIGH", "GOOD":  return .success
-        case "MEDIUM", "OK":  return .warning
-        case "LOW", "BAD":    return .danger
-        default:              return .neutral
-        }
-    }
 }

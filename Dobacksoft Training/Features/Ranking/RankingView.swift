@@ -153,7 +153,7 @@ struct RankingView: View {
                 Section {
                     ForEach(Array(displayedEntries.enumerated()), id: \.element.id) { idx, entry in
                         let isLast = idx == displayedEntries.count - 1
-                        rowOrLink(entry: entry, plazas: response.convocatoria.plazas)
+                        rowOrLink(entry: entry)
                         if !isLast {
                             Divider().padding(.leading, Theme.spacing.lg.value)
                         }
@@ -180,22 +180,22 @@ struct RankingView: View {
     }
 
     @ViewBuilder
-    private func rowOrLink(entry: RankingEntryDTO, plazas: Int) -> some View {
+    private func rowOrLink(entry: RankingEntryDTO) -> some View {
         // Preferimos navegar al perfil del alumno (vista MANAGER/ADMIN más útil).
         // Si no hay candidate.id, fallback al detalle del intento. Si no hay
         // ninguno, queda como row plana sin tap.
         if let candidateId = entry.candidate.id, !candidateId.isEmpty {
             NavigationLink(value: StudentProfileRoute(studentId: candidateId)) {
-                RankingEntryRow(entry: entry, plazas: plazas)
+                RankingEntryRow(entry: entry)
             }
             .buttonStyle(.plain)
         } else if let attemptId = entry.attemptId, !attemptId.isEmpty {
             NavigationLink(value: AttemptRoute(attemptId: attemptId)) {
-                RankingEntryRow(entry: entry, plazas: plazas)
+                RankingEntryRow(entry: entry)
             }
             .buttonStyle(.plain)
         } else {
-            RankingEntryRow(entry: entry, plazas: plazas)
+            RankingEntryRow(entry: entry)
         }
     }
 
@@ -211,8 +211,6 @@ struct RankingView: View {
                 } else {
                     Text("\(response.entries.count) candidatos")
                 }
-                Text("·")
-                Text("\(response.convocatoria.plazas) plazas")
             }
             .font(.metaCaption)
             .foregroundStyle(Color.muted)
@@ -231,9 +229,6 @@ struct RankingView: View {
 
 struct RankingEntryRow: View {
     let entry: RankingEntryDTO
-    let plazas: Int
-
-    private var withinCutoff: Bool { entry.position <= plazas }
 
     var body: some View {
         HStack(spacing: Theme.spacing.md.value) {
@@ -270,14 +265,17 @@ struct RankingEntryRow: View {
         .accessibilityLabel(accessibilityText)
     }
 
+    /// Every position gets the same treatment.
+    ///
+    /// Colouring the badge by `position <= plazas` drew a cut-off line on
+    /// screen: brand fill for "in", grey for "out". The system awards no verdict
+    /// and manages no seats, so the ranking must not imply one. RGPD art. 22.
     private var positionBadge: some View {
         Text("\(entry.position)")
             .font(.body(size: 16, weight: .bold, relativeTo: .headline))
-            .foregroundStyle(withinCutoff ? .white : Color.muted)
+            .foregroundStyle(Color.ink)
             .frame(width: 32, height: 32)
-            .background(
-                Circle().fill(withinCutoff ? Color.brand : Color.paper)
-            )
+            .background(Circle().fill(Color.paper))
             .accessibilityHidden(true)
     }
 

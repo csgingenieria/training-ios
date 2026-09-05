@@ -144,7 +144,6 @@ struct ConvocatoriaRow: View {
 
             HStack(spacing: Theme.spacing.base.value) {
                 metric(icon: "person.3.fill", text: "\(conv.totalCandidates) candidatos")
-                metric(icon: "ticket.fill", text: "\(conv.plazas) plazas")
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.semibold))
@@ -181,7 +180,6 @@ struct ConvocatoriaRow: View {
         var parts: [String] = [conv.name]
         if let status = conv.status { parts.append(status) }
         parts.append("\(conv.totalCandidates) candidatos")
-        parts.append("\(conv.plazas) plazas")
         return parts.joined(separator: ", ")
     }
 }

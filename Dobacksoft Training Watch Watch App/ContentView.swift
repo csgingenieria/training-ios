@@ -37,7 +37,7 @@ private struct StandingPage: View {
 
                 Text("\(standing.position)")
                     .font(.system(size: 60, weight: .bold, design: .serif).italic())
-                    .foregroundStyle(standing.withinCutoff ? Color.watchBrand : Color.watchMuted)
+                    .foregroundStyle(Color.watchBrand)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
 
@@ -49,7 +49,6 @@ private struct StandingPage: View {
 
                 metricRow(label: "Nota", value: String(format: "%.2f", standing.score), color: scoreColor(standing.score))
                 metricRow(label: "Intentos", value: "\(standing.attemptsCompleted)/\(standing.attemptsTotal)")
-                metricRow(label: "Plazas", value: "\(standing.plazas)")
 
                 Text(standing.convocatoriaName)
                     .font(.caption2)

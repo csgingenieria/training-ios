@@ -195,9 +195,9 @@ struct ManagerPanelView: View {
                 color: .success
             )
             KPICell(
-                title: "Plazas",
-                value: "\(dashboard.totalPlazas)",
-                icon: "ticket.fill",
+                title: "Participantes",
+                value: "\(dashboard.totalParticipants)",
+                icon: "figure.walk",
                 color: .warning
             )
         }

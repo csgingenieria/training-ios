@@ -10,10 +10,15 @@ import Foundation
 ///   ningún attempt fue sincronizado todavía.
 /// - `convocatoriasWithLowQuality`: convocatorias OPEN donde >25% de sus
 ///   intentos cerrados tienen `dataQuality == LOW`.
+/// - `totalParticipants`: inscritos no invalidados en convocatorias OPEN.
+///   Distinto de `totalCandidates`, que cuenta solo inscripciones ACTIVE.
+///
+/// El backend todavía devuelve `totalPlazas` como espejo de `totalParticipants`
+/// por compatibilidad; se descarta al decodificar. El sistema no gestiona cupos.
 struct ManagerDashboardDTO: Sendable {
     let activeConvocatorias: Int
     let totalCandidates: Int
-    let totalPlazas: Int
+    let totalParticipants: Int
     let attemptsToday: Int
     let attemptsThisWeek: Int
     let lastWebfleetSyncAt: String?
