@@ -42,6 +42,17 @@
       "score": 7.5,
       "attemptsCompleted": 3,
       "attemptsTotal": 5
+    },
+    {
+      "position": null,
+      "candidate": {
+        "id": "cand-004",
+        "name": "Sin conducir",
+        "plaza": "23"
+      },
+      "score": 0.0,
+      "attemptsCompleted": 0,
+      "attemptsTotal": 0
     }
   ]
 }

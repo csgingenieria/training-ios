@@ -56,9 +56,11 @@ enum RankingSortMode: String, CaseIterable, Identifiable {
     func apply(_ entries: [RankingEntryDTO]) -> [RankingEntryDTO] {
         switch self {
         case .position:
-            return entries.sorted { $0.position < $1.position }
+            // Quien no ha conducido no tiene puesto: va al final de la lista,
+            // no al principio como si fuera el puesto cero.
+            return entries.sorted { ($0.position ?? .max) < ($1.position ?? .max) }
         case .scoreDescending:
-            return entries.sorted { ($0.score ?? -1) > ($1.score ?? -1) }
+            return entries.sorted { ($0.displayScore ?? -1) > ($1.displayScore ?? -1) }
         case .attemptsDescending:
             return entries.sorted { $0.attemptsCompleted > $1.attemptsCompleted }
         }
@@ -248,7 +250,7 @@ struct RankingEntryRow: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 scoreText
-                Text("\(entry.attemptsCompleted)/\(entry.attemptsTotal)")
+                Text("\(entry.attemptsTotal) intentos")
                     .font(.metaCaption)
                     .foregroundStyle(Color.muted)
             }
@@ -272,9 +274,9 @@ struct RankingEntryRow: View {
     /// screen: brand fill for "in", grey for "out". The system awards no verdict
     /// and manages no seats, so the ranking must not imply one. RGPD art. 22.
     private var positionBadge: some View {
-        Text("\(entry.position)")
+        Text(entry.position.map(String.init) ?? "—")
             .font(.body(size: 16, weight: .bold, relativeTo: .headline))
-            .foregroundStyle(Color.ink)
+            .foregroundStyle(entry.hasNotDriven ? Color.muted : Color.ink)
             .frame(width: 32, height: 32)
             .background(Circle().fill(Color.paper))
             .accessibilityHidden(true)
@@ -282,7 +284,7 @@ struct RankingEntryRow: View {
 
     @ViewBuilder
     private var scoreText: some View {
-        if let s = entry.score {
+        if let s = entry.displayScore {
             Text(String(format: "%.2f", s))
                 .font(.body(size: 16, weight: .semibold, relativeTo: .headline))
                 .foregroundStyle(Color.ink)
@@ -294,9 +296,13 @@ struct RankingEntryRow: View {
     }
 
     private var accessibilityText: String {
-        var parts: [String] = ["Puesto \(entry.position)"]
+        var parts: [String] = [entry.position.map { "Puesto \($0)" } ?? "Sin puesto"]
         if let name = entry.candidate.name { parts.append(name) }
-        if let s = entry.score { parts.append("Nota \(String(format: "%.2f", s))") }
+        if entry.hasNotDriven {
+            parts.append("Sin recorridos conducidos")
+        } else if let s = entry.displayScore {
+            parts.append("Nota \(String(format: "%.2f", s))")
+        }
         parts.append("\(entry.attemptsCompleted) de \(entry.attemptsTotal) intentos")
         if entry.attemptId != nil { parts.append("Tocar para ver intento") }
         return parts.joined(separator: ", ")

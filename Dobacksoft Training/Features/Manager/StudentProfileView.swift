@@ -218,7 +218,7 @@ private struct ProfileStandingRow: View {
                 Divider().frame(height: 28)
                 metric(label: "Nota", value: String(format: "%.2f", standing.score))
                 Divider().frame(height: 28)
-                metric(label: "Intentos", value: "\(standing.attemptsCompleted)/\(standing.attemptsTotal)")
+                metric(label: "Intentos", value: "\(standing.attemptsTotal)")
                 Spacer()
             }
         }

@@ -81,7 +81,7 @@ struct StandingWidgetEntryView: View {
             HStack(spacing: 6) {
                 Text(String(format: "Nota %.2f", entry.standing.score))
                 Text("·")
-                Text("\(entry.standing.attemptsCompleted)/\(entry.standing.attemptsTotal)")
+                Text("\(entry.standing.attemptsTotal) intentos")
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
@@ -130,7 +130,7 @@ struct StandingWidgetEntryView: View {
                 Text(String(format: "%.2f", entry.standing.score))
                     .font(.caption.weight(.semibold))
             }
-            .foregroundStyle(scoreColor(entry.standing.score))
+            .foregroundStyle(Color.widgetInk)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .containerBackground(Color.widgetPaper, for: .widget)
@@ -172,8 +172,8 @@ struct StandingWidgetEntryView: View {
 
                 Spacer(minLength: 0)
 
-                metric(label: "Nota", value: String(format: "%.2f", entry.standing.score), color: scoreColor(entry.standing.score))
-                metric(label: "Intentos", value: "\(entry.standing.attemptsCompleted)/\(entry.standing.attemptsTotal)")
+                metric(label: "Nota", value: String(format: "%.2f", entry.standing.score), color: Color.widgetInk)
+                metric(label: "Intentos", value: "\(entry.standing.attemptsTotal)")
             }
             Spacer(minLength: 0)
         }
@@ -189,15 +189,6 @@ struct StandingWidgetEntryView: View {
             Text(value)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(color)
-        }
-    }
-
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-        case 0..<5:  return .widgetDanger
-        case 5..<7:  return .widgetMuted
-        case 7..<9:  return .widgetBrand
-        default:     return .widgetSuccess
         }
     }
 }

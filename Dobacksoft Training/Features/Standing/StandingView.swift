@@ -34,6 +34,11 @@ final class StandingViewModel {
 
 struct StandingView: View {
     let convocatoriaId: String
+
+    /// Estado de la convocatoria (`OPEN`, `CLOSED`…). Decide si la nota se
+    /// rotula como provisional. Lo conoce quien navega hasta aquí.
+    var convocatoriaStatus: String?
+
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = StandingViewModel()
 
@@ -50,7 +55,10 @@ struct StandingView: View {
                 )
             case .loaded(let standing):
                 ScrollView {
-                    StandingCard(standing: standing)
+                    StandingCard(
+                        standing: standing,
+                        finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
+                    )
                         .padding(.horizontal, Theme.spacing.base.value)
                         .padding(.vertical, Theme.spacing.base.value)
                 }
@@ -93,6 +101,10 @@ private func centeredLoading(_ text: String) -> some View {
 struct StandingCard: View {
     let standing: StandingDTO
 
+    /// Si la nota ya es definitiva. Depende del estado de la CONVOCATORIA, que
+    /// este DTO no trae: lo inyecta quien sí lo conoce.
+    var finality: GradeFinality = .unknown
+
     var body: some View {
         VStack(spacing: Theme.spacing.lg.value) {
             VStack(spacing: Theme.spacing.xs.value) {
@@ -109,16 +121,31 @@ struct StandingCard: View {
             }
 
             HStack(spacing: Theme.spacing.md.value) {
-                StandingMetric(title: "Nota", value: String(format: "%.2f", standing.score))
                 StandingMetric(
-                    title: "Intentos",
-                    value: "\(standing.attemptsCompleted)/\(standing.attemptsTotal)"
+                    title: finality.scoreLabel,
+                    value: String(format: "%.2f", standing.score)
                 )
+                // Sin fracción: `attemptsCompleted` cuenta recorridos de examen
+                // distintos y `attemptsTotal` cuenta intentos. Son dos unidades
+                // distintas, así que «2/4» no describe ningún progreso real, y
+                // ninguno de los dos es el denominador de la nota.
+                StandingMetric(
+                    title: "Intentos registrados",
+                    value: "\(standing.attemptsTotal)"
+                )
+            }
+
+            if let note = finality.note {
+                Text(note)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
                 HStack(spacing: Theme.spacing.sm.value) {
-                    Text("Estado")
+                    Text("Estado de tu matrícula")
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
                     StatusBadge(text: standing.status, kind: badgeKind(for: standing.status))
@@ -238,6 +265,7 @@ struct MyStandingTabView: View {
                 }
                 MyConvocatoriaContentView(
                     convocatoriaId: selectedId,
+                    convocatoriaStatus: convocatorias.first { $0.id == selectedId }?.status,
                     embedded: true
                 )
             }
@@ -349,6 +377,10 @@ struct MyStandingTabView: View {
 /// dashboard con saludo + selector sin doble scroll.
 struct MyConvocatoriaContentView: View {
     let convocatoriaId: String
+
+    /// Estado de la convocatoria seleccionada, para rotular la nota.
+    var convocatoriaStatus: String?
+
     var embedded: Bool = false
 
     @Environment(AuthSession.self) private var auth
@@ -400,7 +432,10 @@ struct MyConvocatoriaContentView: View {
             .frame(maxWidth: .infinity, minHeight: 120)
             .cardStyle()
         case .loaded(let standing):
-            StandingCard(standing: standing)
+            StandingCard(
+                standing: standing,
+                finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
+            )
         case .notFound:
             ContentUnavailableView(
                 "Sin inscripción",
@@ -435,6 +470,20 @@ struct MyConvocatoriaContentView: View {
                 }
             }
             .padding(.horizontal, Theme.spacing.xs.value)
+
+            // El backend avisa por escrito de que este listado NO se
+            // corresponde con lo que compone la nota: incluye recorridos de
+            // prácticas y cerrados sin nota. Y no manda la categoría del
+            // recorrido, así que la app no puede señalar cuáles son cuáles;
+            // adivinarlo por el código del recorrido está expresamente
+            // desaconsejado. Se dice lo que se sabe, sin insinuar el resto.
+            if case .loaded = attemptsVM.state {
+                Text("Este listado recoge todos tus recorridos cerrados, prácticas incluidas. No todos intervienen en la nota oficial.")
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, Theme.spacing.xs.value)
+            }
 
             switch attemptsVM.state {
             case .loading:
@@ -607,20 +656,11 @@ struct AttemptSummaryRow: View {
         if let s = attempt.score {
             Text(String(format: "%.2f", s))
                 .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
-                .foregroundStyle(scoreColor(s))
+                .foregroundStyle(Color.ink)
         } else {
             Text("—")
                 .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
                 .foregroundStyle(Color.muted)
-        }
-    }
-
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-        case 0..<5:  return .danger
-        case 5..<7:  return .warning
-        case 7..<9:  return .brand
-        default:     return .success
         }
     }
 

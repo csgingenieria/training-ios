@@ -109,7 +109,10 @@ struct ConvocatoriaDetailView: View {
                     Divider().padding(.leading, 52)
                 }
                 actionRow(icon: "trophy.fill", label: "Mi posición") {
-                    StandingView(convocatoriaId: convocatoria.id)
+                    StandingView(
+                        convocatoriaId: convocatoria.id,
+                        convocatoriaStatus: convocatoria.status
+                    )
                 }
             }
         }

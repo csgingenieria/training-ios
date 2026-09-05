@@ -210,7 +210,7 @@ struct MatrixView: View {
             if let s = score {
                 Text(String(format: "%.1f", s))
                     .font(.body(size: 15, weight: .semibold, relativeTo: .body))
-                    .foregroundStyle(scoreColor(s))
+                    .foregroundStyle(Color.ink)
             } else {
                 Text("—")
                     .font(.bodyText)
@@ -222,15 +222,6 @@ struct MatrixView: View {
         .padding(.horizontal, Theme.spacing.sm.value)
         .padding(.vertical, Theme.spacing.md.value)
         .contentShape(Rectangle())
-    }
-
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-        case 0..<5:  return Color.danger
-        case 5..<7:  return Color.warning
-        case 7..<9:  return Color.brand
-        default:     return Color.success
-        }
     }
 
     private func accessibilityCellLabel(_ candidate: String, _ circuit: String, _ score: Double?) -> String {

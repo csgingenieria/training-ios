@@ -47,8 +47,8 @@ private struct StandingPage: View {
 
                 Divider().padding(.vertical, 4)
 
-                metricRow(label: "Nota", value: String(format: "%.2f", standing.score), color: scoreColor(standing.score))
-                metricRow(label: "Intentos", value: "\(standing.attemptsCompleted)/\(standing.attemptsTotal)")
+                metricRow(label: "Nota", value: String(format: "%.2f", standing.score), color: Color.watchInk)
+                metricRow(label: "Intentos", value: "\(standing.attemptsTotal)")
 
                 Text(standing.convocatoriaName)
                     .font(.caption2)
@@ -76,13 +76,6 @@ private struct StandingPage: View {
         }
     }
 
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-        case 0..<5:  return .watchDanger
-        case 5..<7:  return .watchWarning
-        case 7..<9:  return .watchBrand
-        default:     return .watchSuccess
-        }
     }
 }
 
@@ -108,7 +101,7 @@ private struct AttemptsPage: View {
                         if let s = attempt.score {
                             Text(String(format: "%.2f", s))
                                 .font(.body.weight(.semibold))
-                                .foregroundStyle(scoreColor(s))
+                                .foregroundStyle(Color.watchInk)
                         } else {
                             Text("—")
                                 .foregroundStyle(Color.watchMuted)
@@ -124,13 +117,6 @@ private struct AttemptsPage: View {
         }
     }
 
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-        case 0..<5:  return .watchDanger
-        case 5..<7:  return .watchWarning
-        case 7..<9:  return .watchBrand
-        default:     return .watchSuccess
-        }
     }
 }
 

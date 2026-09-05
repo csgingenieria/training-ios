@@ -130,7 +130,7 @@ private struct AttemptDetailContent: View {
                 HStack(alignment: .firstTextBaseline, spacing: Theme.spacing.sm.value) {
                     Text(String(format: "%.2f", s))
                         .font(.display(size: 56, weight: .bold, italic: false, relativeTo: .largeTitle))
-                        .foregroundStyle(scoreColor(s))
+                        .foregroundStyle(Color.ink)
                     Text("/10")
                         .font(.cardTitle)
                         .foregroundStyle(Color.muted)
@@ -170,32 +170,56 @@ private struct AttemptDetailContent: View {
         }
     }
 
+    /// Desglose de la nota por componente.
+    ///
+    /// Las filas se identifican por índice: `family` es una etiqueta de display
+    /// y dos filas del mismo componente pueden compartirla.
     @ViewBuilder
     private var breakdownCard: some View {
-        VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
-            Text("Desglose")
-                .font(.cardTitle)
-                .foregroundStyle(Color.ink)
-            VStack(spacing: 0) {
-                ForEach(attempt.scoreBreakdown) { item in
-                    HStack {
-                        Text(item.family ?? "—")
-                            .font(.bodyText)
-                            .foregroundStyle(Color.inkSecondary)
-                        Spacer()
-                        Text("\(formatOrDash(item.obtained)) / \(formatOrDash(item.max))")
-                            .font(.bodyEmphasis)
-                            .foregroundStyle(Color.ink)
-                    }
-                    .padding(.vertical, Theme.spacing.sm.value)
-                    if item.id != attempt.scoreBreakdown.last?.id {
-                        Divider()
+        // Un intento de entrada manual llega sin desglose. Mejor no enseñar la
+        // tarjeta que enseñar un encabezado sobre nada.
+        if !attempt.scoreBreakdown.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+                Text("Desglose")
+                    .font(.cardTitle)
+                    .foregroundStyle(Color.ink)
+                VStack(spacing: 0) {
+                    ForEach(Array(attempt.scoreBreakdown.enumerated()), id: \.offset) { index, item in
+                        breakdownRow(item)
+                        if index < attempt.scoreBreakdown.count - 1 {
+                            Divider()
+                        }
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle()
+    }
+
+    @ViewBuilder
+    private func breakdownRow(_ item: AttemptScoreFamilyDTO) -> some View {
+        HStack {
+            Text(item.family ?? "—")
+                .font(.bodyText)
+                .foregroundStyle(Color.inkSecondary)
+            Spacer()
+            switch item.presentation {
+            case let .measured(obtained, max):
+                Text("\(formatScore(obtained)) / \(formatScore(max))")
+                    .font(.bodyEmphasis)
+                    .foregroundStyle(Color.ink)
+            case .notMeasured, .missingData:
+                // Sin números: «— / 0» se leía como un cero que el aspirante
+                // no sacó. El backend sabe el motivo exacto, pero todavía no lo
+                // envía, así que la app dice lo que sabe y nada más.
+                Text(item.presentation.label)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+            }
+        }
+        .padding(.vertical, Theme.spacing.sm.value)
+        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
@@ -236,18 +260,8 @@ private struct AttemptDetailContent: View {
         .cardStyle()
     }
 
-    private func formatOrDash(_ value: Double?) -> String {
-        guard let v = value else { return "—" }
-        return String(format: "%.1f", v)
-    }
-
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-        case 0..<5:  return .danger
-        case 5..<7:  return .warning
-        case 7..<9:  return .brand
-        default:     return .success
-        }
+    private func formatScore(_ value: Double) -> String {
+        String(format: "%.1f", value)
     }
 
 }
