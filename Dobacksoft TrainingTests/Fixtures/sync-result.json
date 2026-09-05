@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "ftp": {
+    "filesProcessed": 12,
+    "attemptsCreated": 4,
+    "errors": 0
+  },
+  "webfleet": {
+    "attemptsEnriched": 18,
+    "attemptsClosed": 5,
+    "errors": 1,
+    "lastError": "WebfleetAPI 503 (1 intento)"
+  }
+}

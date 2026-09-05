@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "conv-001",
+      "name": "Convocatoria 2026 — Bomberos CMadrid",
+      "description": "Evaluación práctica para conductor de camión de bomberos. Recorrido A y B.",
+      "status": "OPEN",
+      "plazas": 50,
+      "totalCandidates": 42,
+      "closedAt": null,
+      "updatedAt": "2026-05-20T10:30:00Z"
+    },
+    {
+      "id": "conv-002",
+      "name": "Convocatoria 2025 — Bomberos CMadrid",
+      "description": "Evaluación práctica anual.",
+      "status": "CLOSED",
+      "plazas": 50,
+      "totalCandidates": 48,
+      "closedAt": "2025-12-15T18:00:00Z",
+      "updatedAt": "2025-12-15T18:00:00Z"
+    }
+  ]
+}

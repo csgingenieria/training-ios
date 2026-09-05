@@ -1,0 +1,14 @@
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMDAxMjM0NTY3ODkiLCJleHAiOjk5OTk5OTk5OTl9.test-signature",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMDAxMjM0NTY3ODkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6OTk5OTk5OTk5OX0.test-signature",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "user": {
+    "id": "00123456789",
+    "email": "juan.perez@cmadrid.es",
+    "name": "Juan Pérez",
+    "role": "STUDENT",
+    "organizationId": "org-cmadrid-001",
+    "studentProfileId": "student-001"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "user": {
+    "id": "stu-001",
+    "email": "maria.garcia@cmadrid.com",
+    "name": "María García",
+    "role": "STUDENT",
+    "organizationId": "org-cmadrid",
+    "studentProfileId": "sp-001"
+  },
+  "standings": [
+    {
+      "convocatoriaId": "conv-001",
+      "name": "Convocatoria 2026",
+      "position": 5,
+      "totalCandidates": 42,
+      "plazas": 50,
+      "score": 8.25,
+      "attemptsCompleted": 5,
+      "attemptsTotal": 6,
+      "status": "ACTIVE"
+    },
+    {
+      "convocatoriaId": "conv-002",
+      "name": "Convocatoria 2025",
+      "position": 12,
+      "totalCandidates": 80,
+      "plazas": 40,
+      "score": 7.10,
+      "attemptsCompleted": 4,
+      "attemptsTotal": 6,
+      "status": "WITHDRAWN"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "atm-101",
+      "route": { "id": "r-1", "label": "Recorrido A" },
+      "score": 8.40,
+      "dataQuality": "HIGH",
+      "createdAt": "2026-06-08T10:30:00+00:00"
+    },
+    {
+      "id": "atm-102",
+      "route": { "id": "r-2", "label": "Recorrido B" },
+      "score": null,
+      "dataQuality": "LOW",
+      "createdAt": "2026-06-07T15:00:00+00:00"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "id": "atm-001",
+      "route": { "id": "r-1", "label": "Recorrido A" },
+      "score": 8.20,
+      "dataQuality": "HIGH",
+      "createdAt": "2026-06-09T09:15:00+00:00"
+    },
+    {
+      "id": "atm-002",
+      "route": { "id": "r-2", "label": "Recorrido B" },
+      "score": 6.50,
+      "dataQuality": "MEDIUM",
+      "createdAt": "2026-06-08T14:00:00+00:00"
+    },
+    {
+      "id": "atm-003",
+      "route": null,
+      "score": null,
+      "dataQuality": "LOW",
+      "createdAt": "2026-06-07T11:30:00+00:00"
+    }
+  ]
+}

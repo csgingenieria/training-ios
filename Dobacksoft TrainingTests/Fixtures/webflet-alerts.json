@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "attemptId": "atm-501",
+      "severity": "error",
+      "type": "WEBFLEET_ENRICHMENT_FAILED",
+      "message": "Webfleet API timeout tras 3 reintentos",
+      "studentName": "María García",
+      "timestamp": "2026-06-09T10:00:00+00:00"
+    },
+    {
+      "attemptId": "atm-502",
+      "severity": "warning",
+      "type": "WEBFLEET_ENRICHMENT_PARTIAL",
+      "message": "Datos rotativos incompletos (3/5 puntos)",
+      "studentName": "Carlos López",
+      "timestamp": "2026-06-09T09:45:00+00:00"
+    },
+    {
+      "attemptId": "atm-503",
+      "severity": "warning",
+      "type": "WEBFLEET_ENRICHMENT_PARTIAL",
+      "message": null,
+      "studentName": null,
+      "timestamp": null
+    }
+  ],
+  "count": 3
+}

@@ -1,0 +1,32 @@
+{
+  "convocatoria": {
+    "id": "conv-001",
+    "name": "Convocatoria 2026 — Bomberos CMadrid",
+    "description": "Evaluación práctica para conductor de camión de bomberos.",
+    "status": "OPEN",
+    "plazas": 50,
+    "totalCandidates": 42,
+    "closedAt": null,
+    "updatedAt": "2026-05-20T10:30:00Z"
+  },
+  "circuits": [
+    { "id": "RECORRIDO_A", "label": "Recorrido A" },
+    { "id": "RECORRIDO_B", "label": "Recorrido B" }
+  ],
+  "rows": [
+    {
+      "candidate": { "id": "cand-001", "name": "María García" },
+      "scores": [
+        { "circuitId": "RECORRIDO_A", "score": 9.0 },
+        { "circuitId": "RECORRIDO_B", "score": 8.4 }
+      ]
+    },
+    {
+      "candidate": { "id": "cand-002", "name": "Carlos López" },
+      "scores": [
+        { "circuitId": "RECORRIDO_A", "score": 8.2 },
+        { "circuitId": "RECORRIDO_B", "score": 8.8 }
+      ]
+    }
+  ]
+}

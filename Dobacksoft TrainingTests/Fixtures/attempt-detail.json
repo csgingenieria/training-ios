@@ -1,0 +1,37 @@
+{
+  "id": "attempt-001",
+  "candidate": {
+    "id": "cand-003",
+    "name": "Juan Pérez"
+  },
+  "route": {
+    "id": "RECORRIDO_A",
+    "label": "Recorrido A"
+  },
+  "score": 7.5,
+  "dataQuality": "HIGH",
+  "scoreBreakdown": [
+    { "family": "estabilidad", "obtained": 4.2, "max": 5.0 },
+    { "family": "velocidad", "obtained": 2.1, "max": 3.0 },
+    { "family": "ruta", "obtained": 1.2, "max": 2.0 }
+  ],
+  "events": [
+    {
+      "type": "EVT_01",
+      "severity": 0.6,
+      "confidence": "HIGH",
+      "description": "Maniobra brusca detectada",
+      "timestamp": "2026-05-15T09:32:00Z",
+      "source": "DOBACK_ELITE"
+    },
+    {
+      "type": "EVT_03",
+      "severity": 0.3,
+      "confidence": "MEDIUM",
+      "description": "Inclinación lateral excesiva",
+      "timestamp": "2026-05-15T09:35:00Z",
+      "source": "DOBACK_ELITE"
+    }
+  ],
+  "convocatoriaId": "conv-001"
+}
