@@ -260,8 +260,10 @@ private struct AttemptDetailContent: View {
         .cardStyle()
     }
 
+    /// Dos decimales: el peso efectivo que el backend fija por recorrido los
+    /// usa, y redondear a uno mostraba un máximo que no era el configurado.
     private func formatScore(_ value: Double) -> String {
-        String(format: "%.1f", value)
+        String(format: "%.2f", value)
     }
 
 }

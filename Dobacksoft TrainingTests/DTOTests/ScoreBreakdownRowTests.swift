@@ -53,20 +53,30 @@ struct ScoreBreakdownRowTests {
         #expect(measured != unmeasured)
     }
 
-    /// Real shape from the backend when the quality gates fail: every row
-    /// arrives unmeasured, so the whole card must read as unmeasured.
-    @Test func failedGatesLeaveEveryRowUnmeasured() throws {
+    /// Real shape when the validity gates fail: the backend blanks `obtenido`
+    /// and leaves the weight alone (`breakdown_reader.py`, `_gates_failed`), so
+    /// every row arrives weighted but valueless — "Sin dato", not "No evaluado".
+    /// An earlier version of this test asserted `max: 0.0` here, a shape the
+    /// backend never emits.
+    @Test func failedGatesLeaveEveryRowWithoutData() throws {
         let json = Data("""
         [
-          {"family": "Estabilidad (deducciones)", "obtained": null, "max": 0.0},
-          {"family": "Conducción (eventos de Webfleet)", "obtained": null, "max": 0.0},
-          {"family": "Velocidad (excesos por vía)", "obtained": null, "max": 0.0}
+          {"family": "Estabilidad (deducciones)", "obtained": null, "max": 5.0},
+          {"family": "Conducción (eventos de Webfleet)", "obtained": null, "max": 5.0},
+          {"family": "Velocidad (excesos por vía)", "obtained": null, "max": 2.0}
         ]
         """.utf8)
 
         let rows = try JSONDecoder().decode([AttemptScoreFamilyDTO].self, from: json)
 
         #expect(rows.count == 3)
-        #expect(rows.allSatisfy { $0.presentation == .notMeasured })
+        #expect(rows.allSatisfy { $0.presentation == .missingData })
+    }
+
+    /// A component the route gives no weight to must never render as a scored
+    /// zero, even when a value arrives with it.
+    @Test func zeroWithZeroWeightIsNotAScoredZero() {
+        #expect(row(0.0, 0.0).presentation == .notMeasured)
+        #expect(row(3.0, 0.0).presentation == .notMeasured)
     }
 }

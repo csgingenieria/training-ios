@@ -53,11 +53,16 @@ struct AttemptScoreFamilyDTO: Hashable, Sendable {
     }
 
     var presentation: Presentation {
-        guard let obtained else {
-            // Sin peso efectivo el componente no entra en la nota de este
-            // recorrido; con peso, entra pero falta el dato.
-            return (max ?? 0) > 0 ? .missingData : .notMeasured
-        }
+        // Sin peso efectivo el componente no aporta nada a la nota de este
+        // recorrido, haya llegado valor o no: pintar «0,0 / 0,0» afirmaría un
+        // cero que el aspirante no sacó.
+        guard (max ?? 0) > 0 else { return .notMeasured }
+
+        // Con peso, el componente cuenta. Si falta el valor es que no llegó
+        // (gates de validez fallados, enriquecimiento pendiente), no que valga
+        // cero.
+        guard let obtained else { return .missingData }
+
         return .measured(obtained: obtained, max: max ?? 0)
     }
 }

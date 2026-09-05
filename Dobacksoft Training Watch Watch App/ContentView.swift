@@ -75,8 +75,6 @@ private struct StandingPage: View {
                 .foregroundStyle(color)
         }
     }
-
-    }
 }
 
 // MARK: - Página intentos
@@ -115,8 +113,6 @@ private struct AttemptsPage: View {
                     .foregroundStyle(Color.watchBrand)
             }
         }
-    }
-
     }
 }
 

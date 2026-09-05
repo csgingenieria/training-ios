@@ -49,9 +49,14 @@ struct StandingView: View {
                 centeredLoading("Cargando posición…")
             case .notFound:
                 ContentUnavailableView(
-                    "Sin inscripción",
+                    "Todavía sin posición",
                     systemImage: "person.crop.circle.badge.questionmark",
-                    description: Text("No consta una inscripción activa en esta convocatoria.")
+                    // El backend devuelve el mismo 404 a quien no está inscrito
+                    // y a quien lo está pero aún no ha conducido — el caso más
+                    // común al abrir una convocatoria. Afirmar que no consta la
+                    // inscripción era falso para el segundo, así que el texto
+                    // cubre ambos sin dar por cierto ninguno.
+                    description: Text("Su posición aparecerá cuando se registre el primer recorrido calificado.")
                 )
             case .loaded(let standing):
                 ScrollView {
@@ -438,9 +443,9 @@ struct MyConvocatoriaContentView: View {
             )
         case .notFound:
             ContentUnavailableView(
-                "Sin inscripción",
+                "Todavía sin posición",
                 systemImage: "person.crop.circle.badge.questionmark",
-                description: Text("No consta una inscripción activa en esta convocatoria.")
+                description: Text("Su posición aparecerá cuando se registre el primer recorrido calificado.")
             )
             .cardStyle()
         case .error(let msg):

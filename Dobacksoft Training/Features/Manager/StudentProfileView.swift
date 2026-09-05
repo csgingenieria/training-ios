@@ -227,7 +227,7 @@ private struct ProfileStandingRow: View {
         .accessibilityLabel(
             "\(standing.name), puesto \(standing.position) de \(standing.totalCandidates), " +
             "nota \(String(format: "%.2f", standing.score)), " +
-            "\(standing.attemptsCompleted) de \(standing.attemptsTotal) intentos"
+            "\(standing.attemptsTotal) intentos"
         )
     }
 

@@ -49,7 +49,7 @@ enum RankingSortMode: String, CaseIterable, Identifiable {
         switch self {
         case .position:           return "Por puesto"
         case .scoreDescending:    return "Mejor nota"
-        case .attemptsDescending: return "Más intentos completados"
+        case .attemptsDescending: return "Más recorridos completados"
         }
     }
 
@@ -155,7 +155,9 @@ struct RankingView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
                 Section {
-                    ForEach(Array(displayedEntries.enumerated()), id: \.element.id) { idx, entry in
+                    // Identidad por índice: dos personas sin conducir y sin
+                    // `candidate.id` comparten `entry.id` y SwiftUI las colapsa.
+                    ForEach(Array(displayedEntries.enumerated()), id: \.offset) { idx, entry in
                         let isLast = idx == displayedEntries.count - 1
                         rowOrLink(entry: entry)
                         if !isLast {
@@ -303,7 +305,7 @@ struct RankingEntryRow: View {
         } else if let s = entry.displayScore {
             parts.append("Nota \(String(format: "%.2f", s))")
         }
-        parts.append("\(entry.attemptsCompleted) de \(entry.attemptsTotal) intentos")
+        parts.append("\(entry.attemptsTotal) intentos")
         if entry.attemptId != nil { parts.append("Tocar para ver intento") }
         return parts.joined(separator: ", ")
     }
