@@ -140,6 +140,11 @@
 			path = "Dobacksoft Training Widgets";
 			sourceTree = "<group>";
 		};
+		BDA1000B2FE0000200AA0002 /* SharedSnapshot */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SharedSnapshot;
+			sourceTree = "<group>";
+		};
 		BDF87DA82FA236BF003D3A05 /* Dobacksoft Training */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -239,6 +244,7 @@
 			children = (
 				A1B2C3000000000000000001 /* Config */,
 				BDF87DA82FA236BF003D3A05 /* Dobacksoft Training */,
+				BDA1000B2FE0000200AA0002 /* SharedSnapshot */,
 				BDF87DBA2FA236C4003D3A05 /* Dobacksoft TrainingTests */,
 				BDF87DC42FA236C4003D3A05 /* Dobacksoft TrainingUITests */,
 				BD1F39612FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */,
@@ -369,6 +375,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				BD1F39952FD9619C00DE1E50 /* Dobacksoft Training Widgets */,
+				BDA1000B2FE0000200AA0002 /* SharedSnapshot */,
 			);
 			name = "Dobacksoft Training WidgetsExtension";
 			packageProductDependencies = (
@@ -392,6 +399,7 @@
 				BD1F39A42FD961A200DE1E50 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				BDA1000B2FE0000200AA0002 /* SharedSnapshot */,
 				BDF87DA82FA236BF003D3A05 /* Dobacksoft Training */,
 			);
 			name = "Dobacksoft Training";
@@ -871,7 +879,9 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
+				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training Widgets/Dobacksoft_Training_Widgets.entitlements";
 				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training.Dobacksoft-Training-Widgets";
+				REGISTER_APP_GROUPS = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -903,7 +913,9 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
+				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training Widgets/Dobacksoft_Training_Widgets.entitlements";
 				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training.Dobacksoft-Training-Widgets";
+				REGISTER_APP_GROUPS = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -954,6 +966,7 @@
 				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training/Dobacksoft_Training.entitlements";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1006,6 +1019,7 @@
 				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training/Dobacksoft_Training.entitlements";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

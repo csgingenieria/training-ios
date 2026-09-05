@@ -12,7 +12,12 @@ final class StandingViewModel {
 
     var state: State = .loading
 
-    func load(convocatoriaId: String, auth: AuthSession) async {
+    func load(
+        convocatoriaId: String,
+        auth: AuthSession,
+        convocatoriaName: String? = nil,
+        finality: GradeFinality = .unknown
+    ) async {
         state = .loading
         do {
             let standing = try await auth.authorized { token in
@@ -29,6 +34,16 @@ final class StandingViewModel {
         } catch {
             state = .error(error.localizedDescription)
         }
+
+        // La vista rápida se alimenta desde aquí. Un estado de error no
+        // publica: un fallo de red pasajero no debe borrar el último dato bueno.
+        if let content = SnapshotPublisher.content(
+            for: state,
+            convocatoriaName: convocatoriaName,
+            finality: finality
+        ) {
+            SnapshotPublisher.shared.publish(content)
+        }
     }
 }
 
@@ -38,6 +53,9 @@ struct StandingView: View {
     /// Estado de la convocatoria (`OPEN`, `CLOSED`…). Decide si la nota se
     /// rotula como provisional. Lo conoce quien navega hasta aquí.
     var convocatoriaStatus: String?
+
+    /// Nombre de la convocatoria, para la vista rápida del widget.
+    var convocatoriaName: String?
 
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = StandingViewModel()
@@ -86,7 +104,12 @@ struct StandingView: View {
     }
 
     private func load() async {
-        await viewModel.load(convocatoriaId: convocatoriaId, auth: auth)
+        await viewModel.load(
+            convocatoriaId: convocatoriaId,
+            auth: auth,
+            convocatoriaName: convocatoriaName,
+            finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
+        )
     }
 }
 
@@ -216,6 +239,10 @@ struct MyStandingTabView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
 
+    private var selectedConvocatoria: ConvocatoriaSummaryDTO? {
+        convocatorias.first { $0.id == selectedId }
+    }
+
     var body: some View {
         Group {
             if isLoading {
@@ -270,7 +297,8 @@ struct MyStandingTabView: View {
                 }
                 MyConvocatoriaContentView(
                     convocatoriaId: selectedId,
-                    convocatoriaStatus: convocatorias.first { $0.id == selectedId }?.status,
+                    convocatoriaStatus: selectedConvocatoria?.status,
+                    convocatoriaName: selectedConvocatoria?.name,
                     embedded: true
                 )
             }
@@ -385,6 +413,9 @@ struct MyConvocatoriaContentView: View {
 
     /// Estado de la convocatoria seleccionada, para rotular la nota.
     var convocatoriaStatus: String?
+
+    /// Nombre de la convocatoria, para la vista rápida del widget.
+    var convocatoriaName: String?
 
     var embedded: Bool = false
 
@@ -586,7 +617,12 @@ struct MyConvocatoriaContentView: View {
     }
 
     private func load() async {
-        async let standing: Void = standingVM.load(convocatoriaId: convocatoriaId, auth: auth)
+        async let standing: Void = standingVM.load(
+            convocatoriaId: convocatoriaId,
+            auth: auth,
+            convocatoriaName: convocatoriaName,
+            finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
+        )
         async let attempts: Void = attemptsVM.load(convocatoriaId: convocatoriaId, auth: auth)
         _ = await (standing, attempts)
     }

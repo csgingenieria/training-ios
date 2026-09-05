@@ -1,10 +1,10 @@
 import SwiftUI
 
-// Theme/mock-data reducido para el Watch target.
+// Tokens de color del reloj.
 //
-// Igual que en el Widget: este target tiene su propia synced root group y no
-// comparte código con el target principal automáticamente. Para V1 mantenemos
-// "thin copy" de lo mínimo. Migrar a Swift Package si crece.
+// Este target no comparte código con el principal: tiene su propio grupo
+// sincronizado y, sobre todo, corre en OTRO dispositivo. Copia mínima y
+// deliberada de la paleta; el resto no se duplica.
 
 extension Color {
     static let watchPaper        = Color(red: 0xFC/255, green: 0xFB/255, blue: 0xF8/255)
@@ -17,41 +17,14 @@ extension Color {
     static let watchDanger       = Color(red: 0xB9/255, green: 0x1C/255, blue: 0x1C/255)
 }
 
-// MARK: - Mock data (V1)
-//
-// V2 requiere: WatchConnectivity para sincronizar token desde el iPhone,
-// O App Groups + Keychain compartido + APIClient propio del Watch.
-// V1 muestra el diseño con datos placeholder claros.
+/// Textos del reloj. Copia local de los de `SnapshotCopy`, porque este target
+/// no puede compartir código con la app: corre en otro dispositivo.
+///
+/// Castellano formal peninsular. Ninguno afirma un dato que el reloj no tiene.
+enum WatchCopy {
+    static let sinDatosPosicion =
+        "Sin datos en el reloj. Consulte su posición en la aplicación del iPhone."
 
-struct WatchStandingMock {
-    let convocatoriaName: String
-    let position: Int
-    let totalCandidates: Int
-    let score: Double
-    let attemptsCompleted: Int
-    let attemptsTotal: Int
-    let status: String
-
-    static let sample = WatchStandingMock(
-        convocatoriaName: "Convocatoria 2026",
-        position: 5,
-        totalCandidates: 42,
-        score: 8.25,
-        attemptsCompleted: 5,
-        attemptsTotal: 6,
-        status: "ACTIVE"
-    )
-}
-
-struct WatchAttemptMock: Identifiable {
-    let id: String
-    let routeLabel: String
-    let score: Double?
-    let date: String
-
-    static let samples: [WatchAttemptMock] = [
-        WatchAttemptMock(id: "1", routeLabel: "Recorrido A", score: 8.20, date: "Hoy 09:15"),
-        WatchAttemptMock(id: "2", routeLabel: "Recorrido B", score: 6.80, date: "Ayer 14:00"),
-        WatchAttemptMock(id: "3", routeLabel: "Recorrido A", score: nil, date: "Lun 11:30"),
-    ]
+    static let sinDatosIntentos =
+        "Sin intentos en el reloj. Consulte sus recorridos en la aplicación del iPhone."
 }

@@ -1,197 +1,314 @@
 import WidgetKit
 import SwiftUI
 
-// Widget "Mi posición" — V1 con datos placeholder.
+// Widget «Mi posición».
 //
-// Caso de uso: STUDENT mira el lock screen / home screen y ve su puesto +
-// nota sin abrir la app. Ideal para el bombero candidato.
+// No habla con el backend ni tiene credenciales: la app iOS es el único proceso
+// que consulta la API, y deposita una instantánea fechada en el App Group que
+// este widget se limita a pintar.
 //
-// V2 (cuando se configure App Groups + Keychain compartido):
-//   - Provider lee token del Keychain compartido (kSecAttrAccessGroup).
-//   - getTimeline llama GET /api/v1/me/convocatorias/<id>/standing.
-//   - .policy(.after(...)) cada 30 minutos para refrescar.
-// Hoy V1: snapshot estático, mismo standing en todas las entries.
-
-struct StandingProvider: TimelineProvider {
-    func placeholder(in context: Context) -> StandingEntry {
-        StandingEntry(date: Date(), standing: .sample)
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (StandingEntry) -> Void) {
-        completion(StandingEntry(date: Date(), standing: .sample))
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<StandingEntry>) -> Void) {
-        // V1: una entry, refresh policy en 30 min. V2 reemplaza esto con
-        // request real al backend usando token del Keychain compartido.
-        let now = Date()
-        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: now) ?? now
-        let entry = StandingEntry(date: now, standing: .sample)
-        completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
-    }
-}
+// Hasta ahora mostraba SIEMPRE un dato inventado —puesto 5 de 42, nota 8,25—
+// con el rótulo «Tu puesto y nota en la convocatoria actual». Cualquiera que
+// mirase el teléfono de un aspirante leía un resultado que nadie había medido.
+//
+// Regla que gobierna todo este archivo: si no hay dato, se dice que no lo hay.
+// Nunca un cero, nunca un guion en lugar de una cifra.
 
 struct StandingEntry: TimelineEntry {
     let date: Date
-    let standing: WidgetStandingMock
+    let state: WidgetState
+
+    /// Entrada sin dato, para la galería y para cuando no se puede leer.
+    static func placeholder(at date: Date) -> StandingEntry {
+        StandingEntry(
+            date: date,
+            state: WidgetState(read: .ilegible(.sinContenedor), freshness: nil)
+        )
+    }
 }
+
+struct StandingProvider: TimelineProvider {
+    private let reader = SnapshotReader()
+
+    /// La galería del sistema nunca ve cifras: enseñar ahí un puesto de ejemplo
+    /// es lo que hacía que el widget pareciera tener datos antes de tenerlos.
+    func placeholder(in context: Context) -> StandingEntry {
+        .placeholder(at: Date())
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (StandingEntry) -> Void) {
+        let now = Date()
+        completion(
+            context.isPreview
+                ? .placeholder(at: now)
+                : StandingEntry(date: now, state: reader.state(at: now))
+        )
+    }
+
+    /// Una sola lectura de fichero deja programado el envejecimiento del dato.
+    ///
+    /// En vez de despertar cada media hora a releer lo mismo, se emiten
+    /// entradas en los instantes en que la representación cambia sola (a las 6 h
+    /// y a las 48 h de la captura). Así el dato envejece sin gastar presupuesto
+    /// de recarga, que iOS raciona.
+    func getTimeline(in context: Context, completion: @escaping (Timeline<StandingEntry>) -> Void) {
+        let now = Date()
+        let crossings = reader.futureCrossings(after: now)
+
+        var entries = [StandingEntry(date: now, state: reader.state(at: now))]
+        entries += crossings.map { StandingEntry(date: $0, state: reader.state(at: $0)) }
+
+        // Nunca una línea temporal vacía ni una política en el pasado: dejaría
+        // el widget congelado en lo último que pintó.
+        let policy: TimelineReloadPolicy = crossings.isEmpty
+            ? .never
+            : .after(min(crossings[0], now.addingTimeInterval(4 * 3600)))
+
+        completion(Timeline(entries: entries, policy: policy))
+    }
+}
+
+// MARK: - Vista
 
 struct StandingWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.redactionReasons) private var redactionReasons
+
     var entry: StandingEntry
 
     var body: some View {
+        content
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(accessibilityText)
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch family {
         case .accessoryCircular:    circularView
         case .accessoryRectangular: rectangularView
-        case .accessoryInline:      inlineView
-        case .systemSmall:          smallView
         case .systemMedium:         mediumView
         default:                    smallView
         }
     }
 
-    // MARK: - Lock screen / watch face
+    /// Qué contar según el estado. Un solo sitio para las dos familias grandes.
+    private var message: String? {
+        switch entry.state.read {
+        case .ilegible:
+            return family == .systemMedium ? SnapshotCopy.ilegibleLargo : SnapshotCopy.ilegibleCorto
+        case .ausente:
+            return SnapshotCopy.sinSesion
+        case let .presente(snapshot):
+            if entry.state.freshness == .caducado { return SnapshotCopy.caducado }
+            switch snapshot.content {
+            case .desactivado:       return SnapshotCopy.desactivado
+            case .sinPosicionPropia: return SnapshotCopy.sinPosicionPropia
+            case .sinDatosAun:       return SnapshotCopy.sinDatosAun
+            case .sinConvocatoria:   return SnapshotCopy.sinConvocatoria
+            case let .sinPosicion(name):
+                return family == .systemMedium
+                    ? SnapshotCopy.sinPosicionEn(name)
+                    : "\(SnapshotCopy.sinPosicionTitulo). \(SnapshotCopy.sinPosicionDetalle)"
+            case .posicion:
+                return nil // Hay cifras.
+            }
+        }
+    }
+
+    private var standing: StandingSnapshot.Standing? {
+        guard case let .presente(snapshot) = entry.state.read,
+              case let .posicion(value) = snapshot.content,
+              entry.state.freshness != .caducado
+        else { return nil }
+        return value
+    }
+
+    private var capturedAt: Date? {
+        guard case let .presente(snapshot) = entry.state.read else { return nil }
+        return snapshot.capturedAt
+    }
+
+    // MARK: Familias
+
+    private var smallView: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            header
+            Spacer(minLength: 0)
+            if let standing {
+                positionBlock(standing)
+                scoreLine(standing)
+            } else if let message {
+                Text(message)
+                    .font(.caption2)
+                    .foregroundStyle(Color.widgetMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            ageNote
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .containerBackground(Color.widgetPaper, for: .widget)
+    }
+
+    private var mediumView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            header
+            if let standing {
+                HStack(alignment: .firstTextBaseline, spacing: 16) {
+                    positionBlock(standing)
+                    Divider().frame(height: 32)
+                    scoreBlock(standing)
+                    Spacer(minLength: 0)
+                }
+                Text(standing.convocatoriaName)
+                    .font(.caption2)
+                    .foregroundStyle(Color.widgetMuted)
+                    .lineLimit(1)
+                if standing.finality == .provisional {
+                    Text(SnapshotCopy.notaProvisionalDetalle)
+                        .font(.caption2)
+                        .foregroundStyle(Color.widgetMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else if let message {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(Color.widgetMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            ageNote
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .containerBackground(Color.widgetPaper, for: .widget)
+    }
 
     private var circularView: some View {
         ZStack {
             AccessoryWidgetBackground()
-            VStack(spacing: 0) {
-                Text("\(entry.standing.position)")
-                    .font(.system(size: 22, weight: .bold, design: .serif).italic())
-                Text("/\(entry.standing.totalCandidates)")
-                    .font(.system(size: 9, weight: .medium))
+            if let standing {
+                VStack(spacing: 0) {
+                    Text("\(standing.position)")
+                        .font(.title3.weight(.bold))
+                    Text("de \(standing.totalCandidates)")
+                        .font(.system(size: 9))
+                }
+                .privacySensitive()
+            } else {
+                Image(systemName: "trophy")
+                    .font(.title3)
             }
         }
-        .accessibilityLabel("Puesto \(entry.standing.position) de \(entry.standing.totalCandidates)")
     }
 
     private var rectangularView: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(entry.standing.convocatoriaName)
+            Text(SnapshotCopy.widgetName)
                 .font(.caption2.weight(.semibold))
-                .lineLimit(1)
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(entry.standing.position)")
-                    .font(.system(size: 24, weight: .bold, design: .serif).italic())
-                Text("/\(entry.standing.totalCandidates)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
-            HStack(spacing: 6) {
-                Text(String(format: "Nota %.2f", entry.standing.score))
-                Text("·")
-                Text("\(entry.standing.attemptsTotal) intentos")
-            }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var inlineView: some View {
-        Text("Training · \(entry.standing.position) de \(entry.standing.totalCandidates) · \(String(format: "%.2f", entry.standing.score))")
-    }
-
-    // MARK: - Home screen
-
-    private var smallView: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 4) {
-                Image(systemName: "shield.fill")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Color.widgetBrand)
-                Text("Training")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.widgetBrand)
-            }
-
-            Spacer(minLength: 0)
-
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text("\(entry.standing.position)")
-                    .font(.system(size: 56, weight: .bold, design: .serif).italic())
-                    .foregroundStyle(Color.widgetBrand)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                Text("/\(entry.standing.totalCandidates)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.widgetMuted)
-            }
-
-            Text(entry.standing.convocatoriaName)
-                .font(.caption2)
-                .foregroundStyle(Color.widgetMuted)
-                .lineLimit(1)
-
-            HStack(spacing: 4) {
-                Image(systemName: "star.fill")
+            if let standing {
+                Text("Puesto \(standing.position) de \(standing.totalCandidates)")
                     .font(.caption2)
-                Text(String(format: "%.2f", entry.standing.score))
-                    .font(.caption.weight(.semibold))
-            }
-            .foregroundStyle(Color.widgetInk)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .containerBackground(Color.widgetPaper, for: .widget)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "Mi posición. Puesto \(entry.standing.position) de \(entry.standing.totalCandidates). " +
-            "Nota \(String(format: "%.2f", entry.standing.score)). " +
-            "\(entry.standing.convocatoriaName)."
-        )
-    }
-
-    private var mediumView: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .center, spacing: 2) {
-                Text("Puesto")
+                    .privacySensitive()
+            } else if let message {
+                Text(message)
                     .font(.caption2)
-                    .foregroundStyle(Color.widgetMuted)
-                Text("\(entry.standing.position)")
-                    .font(.system(size: 48, weight: .bold, design: .serif).italic())
-                    .foregroundStyle(Color.widgetBrand)
-                Text("de \(entry.standing.totalCandidates)")
-                    .font(.caption2)
-                    .foregroundStyle(Color.widgetMuted)
-            }
-            Divider()
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 4) {
-                    Image(systemName: "shield.fill")
-                        .foregroundStyle(Color.widgetBrand)
-                    Text("Training")
-                        .foregroundStyle(Color.widgetBrand)
-                }
-                .font(.caption.weight(.semibold))
-
-                Text(entry.standing.convocatoriaName)
-                    .font(.caption)
-                    .foregroundStyle(Color.widgetInk)
                     .lineLimit(2)
-
-                Spacer(minLength: 0)
-
-                metric(label: "Nota", value: String(format: "%.2f", entry.standing.score), color: Color.widgetInk)
-                metric(label: "Intentos", value: "\(entry.standing.attemptsTotal)")
             }
-            Spacer(minLength: 0)
         }
-        .containerBackground(Color.widgetPaper, for: .widget)
-        .accessibilityElement(children: .combine)
     }
 
-    private func metric(label: String, value: String, color: Color = .widgetInk) -> some View {
-        HStack(spacing: 4) {
-            Text(label)
+    // MARK: Piezas
+
+    private var header: some View {
+        Text(SnapshotCopy.widgetName)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(Color.widgetMuted)
+    }
+
+    private func positionBlock(_ standing: StandingSnapshot.Standing) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(standing.position)")
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.widgetInk)
+            Text("de \(standing.totalCandidates)")
                 .font(.caption2)
                 .foregroundStyle(Color.widgetMuted)
-            Text(value)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(color)
         }
+        .privacySensitive()
+    }
+
+    private func scoreBlock(_ standing: StandingSnapshot.Standing) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let score = standing.score {
+                Text(String(format: "%.2f", score))
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Color.widgetInk)
+                    .privacySensitive()
+            } else {
+                Text(SnapshotCopy.notaNoDisponible)
+                    .font(.caption2)
+                    .foregroundStyle(Color.widgetMuted)
+            }
+            Text(scoreLabel(standing))
+                .font(.caption2)
+                .foregroundStyle(Color.widgetMuted)
+        }
+    }
+
+    @ViewBuilder
+    private func scoreLine(_ standing: StandingSnapshot.Standing) -> some View {
+        if let score = standing.score {
+            Text("\(scoreLabel(standing)) \(String(format: "%.2f", score))")
+                .font(.caption2)
+                .foregroundStyle(Color.widgetMuted)
+                .privacySensitive()
+        } else {
+            Text(SnapshotCopy.notaNoDisponible)
+                .font(.caption2)
+                .foregroundStyle(Color.widgetMuted)
+        }
+    }
+
+    private func scoreLabel(_ standing: StandingSnapshot.Standing) -> String {
+        standing.finality == .provisional ? SnapshotCopy.notaProvisional : SnapshotCopy.nota
+    }
+
+    /// Con el dato entre 6 y 48 horas se muestra cuándo se consultó. Un puesto
+    /// de anteayer presentado como actual es tan falso como uno inventado.
+    @ViewBuilder
+    private var ageNote: some View {
+        if entry.state.freshness == .envejecido, let capturedAt {
+            Text(SnapshotCopy.consultadoEl(capturedAt))
+                .font(.system(size: 9))
+                .foregroundStyle(Color.widgetMuted)
+                .lineLimit(2)
+        }
+    }
+
+    // MARK: Accesibilidad
+
+    /// Derivado del estado, nunca compuesto a mano sobre las cifras: antes
+    /// VoiceOver leía el puesto y la nota incluso con la pantalla bloqueada.
+    private var accessibilityText: String {
+        if redactionReasons.contains(.privacy) { return SnapshotCopy.redactado }
+
+        if let standing {
+            var parts = ["\(SnapshotCopy.widgetName). Puesto \(standing.position) de \(standing.totalCandidates)"]
+            if let score = standing.score {
+                parts.append("\(scoreLabel(standing)) \(String(format: "%.2f", score))")
+            } else {
+                parts.append(SnapshotCopy.notaNoDisponible)
+            }
+            parts.append(standing.convocatoriaName)
+            return parts.joined(separator: ". ")
+        }
+
+        return "\(SnapshotCopy.widgetName). \(message ?? SnapshotCopy.ilegibleCorto)"
     }
 }
+
+// MARK: - Declaración
 
 struct StandingWidget: Widget {
     let kind: String = "com.dobacksoft.training.standing"
@@ -200,39 +317,16 @@ struct StandingWidget: Widget {
         StaticConfiguration(kind: kind, provider: StandingProvider()) { entry in
             StandingWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Mi posición")
-        .description("Tu puesto y nota en la convocatoria actual.")
+        .configurationDisplayName(SnapshotCopy.widgetName)
+        .description(SnapshotCopy.widgetDescription)
+        // Sin `.accessoryInline`: es texto plano en la pantalla de bloqueo y el
+        // sistema no lo redacta, así que la posición quedaría a la vista de
+        // cualquiera con el teléfono bloqueado sobre la mesa.
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
             .accessoryCircular,
             .accessoryRectangular,
-            .accessoryInline
         ])
     }
-}
-
-#Preview(as: .systemSmall) {
-    StandingWidget()
-} timeline: {
-    StandingEntry(date: .now, standing: .sample)
-    StandingEntry(date: .now, standing: .lowerPosition)
-}
-
-#Preview(as: .systemMedium) {
-    StandingWidget()
-} timeline: {
-    StandingEntry(date: .now, standing: .sample)
-}
-
-#Preview(as: .accessoryRectangular) {
-    StandingWidget()
-} timeline: {
-    StandingEntry(date: .now, standing: .sample)
-}
-
-#Preview(as: .accessoryCircular) {
-    StandingWidget()
-} timeline: {
-    StandingEntry(date: .now, standing: .sample)
 }

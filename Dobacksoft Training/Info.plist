@@ -4,10 +4,6 @@
 <dict>
 	<key>BASE_URL</key>
 	<string>$(BASE_URL)</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Fraunces72pt-Regular.ttf</string>

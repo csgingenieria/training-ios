@@ -1,118 +1,64 @@
 import SwiftUI
 
-// Watch app — V1 con mock data.
-// Vista principal: standing del STUDENT en glance. Tab horizontal a "Mis intentos".
+// El reloj no muestra datos del aspirante.
 //
-// V2 (necesita pasos en Xcode UI):
-//   1. Activar "App Groups" en target principal + Watch target.
-//   2. Crear `group.com.dobacksoft.training` en developer portal.
-//   3. Refactor `TokenStore` con `kSecAttrAccessGroup`.
-//   4. Crear `WatchAPIClient` que lea token compartido y use endpoints reales.
-//   5. Alternativa: WatchConnectivity para empujar token + standing desde iPhone.
+// Hasta ahora enseñaba una posición y una nota inventadas (puesto 5 de 42,
+// nota 8,25) con el rótulo «Mi posición». Un aspirante que no hubiera conducido
+// nada leía en su muñeca, delante de sus compañeros de parque, un resultado que
+// nadie había medido.
+//
+// La app iOS es el único proceso con credenciales. Para que el reloj muestre el
+// dato real hace falta transporte por WatchConnectivity y una cirugía de
+// targets —el reloj es hoy `WKWatchOnly`, con un bundle id que no cuelga del de
+// la app, así que no se distribuye con ella—. Eso es una segunda entrega.
+//
+// Mientras tanto dice la verdad: no tiene el dato y explica dónde está.
 
 struct ContentView: View {
     var body: some View {
         TabView {
-            StandingPage(standing: .sample)
-                .tag(0)
-            AttemptsPage(attempts: WatchAttemptMock.samples)
-                .tag(1)
+            UnavailablePage(
+                title: "Mi posición",
+                message: WatchCopy.sinDatosPosicion,
+                symbol: "trophy"
+            )
+            .tag(0)
+
+            UnavailablePage(
+                title: "Mis intentos",
+                message: WatchCopy.sinDatosIntentos,
+                symbol: "list.bullet"
+            )
+            .tag(1)
         }
         .tabViewStyle(.verticalPage)
     }
 }
 
-// MARK: - Página standing
-
-private struct StandingPage: View {
-    let standing: WatchStandingMock
+private struct UnavailablePage: View {
+    let title: String
+    let message: String
+    let symbol: String
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                Text("Mi posición")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.watchMuted)
-                    .textCase(.uppercase)
+        VStack(spacing: 8) {
+            Image(systemName: symbol)
+                .font(.title3)
+                .foregroundStyle(Color.watchMuted)
 
-                Text("\(standing.position)")
-                    .font(.system(size: 60, weight: .bold, design: .serif).italic())
-                    .foregroundStyle(Color.watchBrand)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(Color.watchInk)
 
-                Text("de \(standing.totalCandidates)")
-                    .font(.caption2)
-                    .foregroundStyle(Color.watchMuted)
-
-                Divider().padding(.vertical, 4)
-
-                metricRow(label: "Nota", value: String(format: "%.2f", standing.score), color: Color.watchInk)
-                metricRow(label: "Intentos", value: "\(standing.attemptsTotal)")
-
-                Text(standing.convocatoriaName)
-                    .font(.caption2)
-                    .foregroundStyle(Color.watchMuted)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 4)
-            }
-            .padding(.vertical, 4)
-            .frame(maxWidth: .infinity)
-        }
-        .containerBackground(Color.watchBrand.opacity(0.08).gradient, for: .navigation)
-        .accessibilityElement(children: .contain)
-    }
-
-    private func metricRow(label: String, value: String, color: Color = .watchInk) -> some View {
-        HStack {
-            Text(label)
+            Text(message)
                 .font(.caption2)
                 .foregroundStyle(Color.watchMuted)
-            Spacer()
-            Text(value)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(color)
+                .multilineTextAlignment(.center)
         }
-    }
-}
-
-// MARK: - Página intentos
-
-private struct AttemptsPage: View {
-    let attempts: [WatchAttemptMock]
-
-    var body: some View {
-        List {
-            Section {
-                ForEach(attempts) { attempt in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(attempt.routeLabel)
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(1)
-                            Text(attempt.date)
-                                .font(.caption2)
-                                .foregroundStyle(Color.watchMuted)
-                        }
-                        Spacer()
-                        if let s = attempt.score {
-                            Text(String(format: "%.2f", s))
-                                .font(.body.weight(.semibold))
-                                .foregroundStyle(Color.watchInk)
-                        } else {
-                            Text("—")
-                                .foregroundStyle(Color.watchMuted)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-            } header: {
-                Text("Mis intentos")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.watchBrand)
-            }
-        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). \(message)")
     }
 }
 

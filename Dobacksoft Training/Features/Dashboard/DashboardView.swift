@@ -144,6 +144,7 @@ private enum SidebarSection: Hashable {
 struct ProfileView: View {
     @Environment(AuthSession.self) private var auth
     @State private var showLogoutConfirmation = false
+    @State private var quickViewEnabled = SnapshotPublisher.shared.isQuickViewEnabled
 
     var body: some View {
         Form {
@@ -162,6 +163,23 @@ struct ProfileView: View {
                         row("Organización", value: orgId)
                     }
                 }
+            }
+
+            Section {
+                Toggle("Mostrar mi posición en el widget", isOn: $quickViewEnabled)
+                    .tint(Color.brand)
+                    .onChange(of: quickViewEnabled) { _, enabled in
+                        // Al apagarlo se publica «desactivado», que no revela
+                        // nada. Al encenderlo, el estado que corresponda al rol;
+                        // la posición real llega al abrir «Mi posición».
+                        SnapshotPublisher.shared.setQuickViewEnabled(enabled) {
+                            auth.user?.isStudent == true ? .sinDatosAun : .sinPosicionPropia
+                        }
+                    }
+            } header: {
+                Text("Vista rápida")
+            } footer: {
+                Text("El widget muestra su puesto y su nota en la pantalla de inicio, donde puede verlos cualquier persona que mire el dispositivo. Viene desactivado.")
             }
 
             Section("API") {

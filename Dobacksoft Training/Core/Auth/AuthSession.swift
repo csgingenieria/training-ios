@@ -53,6 +53,13 @@ final class AuthSession {
         persistTokens(accessToken: response.access_token, refreshToken: response.refresh_token)
         user = response.user
         hasRestoredSession = true
+
+        // Purgar antes de nada: dos aspirantes pueden compartir dispositivo, y
+        // el segundo no puede heredar la posición del primero.
+        SnapshotPublisher.shared.clear()
+        SnapshotPublisher.shared.publish(
+            response.user.isStudent ? .sinDatosAun : .sinPosicionPropia
+        )
     }
 
     func logout() async {
@@ -64,6 +71,10 @@ final class AuthSession {
         } catch {
             AppLog.keychain.error("No se pudieron borrar los tokens: \(String(describing: error), privacy: .public)")
         }
+        // Sin esto, el widget de quien acaba de salir seguiría enseñando su
+        // puesto en la pantalla de inicio.
+        SnapshotPublisher.shared.clear()
+
         user = nil
         accessToken = nil
         refreshToken = nil
