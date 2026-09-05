@@ -8,22 +8,28 @@ final class AuthSession {
     var accessToken: String?
     var refreshToken: String?
     var isRestoring: Bool = false
+    var hasRestoredSession: Bool = false
 
     var isAuthenticated: Bool { user != nil && accessToken != nil }
 
     func restoreFromKeychain() async {
-        guard !isRestoring, !isAuthenticated else { return }
+        guard !isRestoring, !hasRestoredSession else { return }
         isRestoring = true
-        defer { isRestoring = false }
+        defer {
+            isRestoring = false
+            hasRestoredSession = true
+        }
 
-        guard let access = TokenStore.load(for: .accessToken) else { return }
+        let access = TokenStore.load(for: .accessToken)
         let refresh = TokenStore.load(for: .refreshToken)
+
+        guard access != nil || refresh != nil else { return }
+
         accessToken = access
         refreshToken = refresh
 
         do {
-            let me = try await APIClient.shared.me(accessToken: access)
-            user = me
+            try await restorePersistedSession(accessToken: access, refreshToken: refresh)
         } catch APIError.unauthenticated {
             await logout()
         } catch {
@@ -33,11 +39,9 @@ final class AuthSession {
 
     func login(email: String, password: String) async throws {
         let response = try await APIClient.shared.login(email: email, password: password)
-        TokenStore.save(response.access_token, for: .accessToken)
-        TokenStore.save(response.refresh_token, for: .refreshToken)
-        accessToken = response.access_token
-        refreshToken = response.refresh_token
+        persistTokens(accessToken: response.access_token, refreshToken: response.refresh_token)
         user = response.user
+        hasRestoredSession = true
     }
 
     func logout() async {
@@ -45,6 +49,36 @@ final class AuthSession {
         user = nil
         accessToken = nil
         refreshToken = nil
+        hasRestoredSession = true
+    }
+
+    private func restorePersistedSession(
+        accessToken: String?,
+        refreshToken: String?
+    ) async throws {
+        if let accessToken {
+            do {
+                user = try await APIClient.shared.me(accessToken: accessToken)
+                return
+            } catch APIError.unauthenticated {
+                // Intentamos refresh más abajo si existe refresh token.
+            }
+        }
+
+        guard let refreshToken else {
+            throw APIError.unauthenticated
+        }
+
+        let refreshResponse = try await APIClient.shared.refresh(refreshToken: refreshToken)
+        persistTokens(accessToken: refreshResponse.access_token, refreshToken: refreshToken)
+        user = try await APIClient.shared.me(accessToken: refreshResponse.access_token)
+    }
+
+    private func persistTokens(accessToken: String, refreshToken: String) {
+        TokenStore.save(accessToken, for: .accessToken)
+        TokenStore.save(refreshToken, for: .refreshToken)
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
     }
 
     /// Preview helper — NO usar en producción.
@@ -52,6 +86,7 @@ final class AuthSession {
         let session = AuthSession()
         session.accessToken = "preview"
         session.refreshToken = "preview"
+        session.hasRestoredSession = true
         session.user = UserDTO(
             id: "preview-id",
             email: "preview@cmadrid.com",

@@ -6,7 +6,42 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		BD1F395E2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = BD1F395D2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BD1F39922FD9619C00DE1E50 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD1F39912FD9619A00DE1E50 /* WidgetKit.framework */; };
+		BD1F39942FD9619C00DE1E50 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD1F39932FD9619C00DE1E50 /* SwiftUI.framework */; };
+		BD1F39A52FD961A200DE1E50 /* Dobacksoft Training WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BD1F398F2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		BD1F395F2FD9614500DE1E50 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BDF87D9E2FA236BF003D3A05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD1F395C2FD9614500DE1E50;
+			remoteInfo = "Dobacksoft Training Watch Watch App";
+		};
+		BD1F396D2FD9615000DE1E50 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BDF87D9E2FA236BF003D3A05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD1F395C2FD9614500DE1E50;
+			remoteInfo = "Dobacksoft Training Watch Watch App";
+		};
+		BD1F39772FD9615000DE1E50 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BDF87D9E2FA236BF003D3A05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD1F395C2FD9614500DE1E50;
+			remoteInfo = "Dobacksoft Training Watch Watch App";
+		};
+		BD1F39A32FD961A200DE1E50 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BDF87D9E2FA236BF003D3A05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD1F398E2FD9619A00DE1E50;
+			remoteInfo = "Dobacksoft Training WidgetsExtension";
+		};
 		BDF87DB82FA236C4003D3A05 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BDF87D9E2FA236BF003D3A05 /* Project object */;
@@ -23,13 +58,55 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		BD1F39812FD9615000DE1E50 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				BD1F395E2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F39AA2FD961A200DE1E50 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BD1F39A52FD961A200DE1E50 /* Dobacksoft Training WidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		A1B2C3000000000000000002 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		A1B2C3000000000000000003 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		A1B2C3000000000000000004 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
+		BD1F39582FD9614400DE1E50 /* Dobacksoft Training Watch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dobacksoft Training Watch.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD1F395D2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dobacksoft Training Watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD1F396C2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Dobacksoft Training Watch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD1F39762FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Dobacksoft Training Watch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD1F398F2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Dobacksoft Training WidgetsExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD1F39912FD9619A00DE1E50 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		BD1F39932FD9619C00DE1E50 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		BDF87DA62FA236BF003D3A05 /* Dobacksoft Training.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dobacksoft Training.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BDF87DB72FA236C4003D3A05 /* Dobacksoft TrainingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Dobacksoft TrainingTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BDF87DC12FA236C4003D3A05 /* Dobacksoft TrainingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Dobacksoft TrainingUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		BD1F39A92FD961A200DE1E50 /* Exceptions for "Dobacksoft Training Widgets" folder in "Dobacksoft Training WidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BD1F398E2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension */;
+		};
 		BDF87DC92FA236C4003D3A05 /* Exceptions for "Dobacksoft Training" folder in "Dobacksoft Training" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -40,6 +117,29 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		BD1F39612FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Dobacksoft Training Watch Watch App";
+			sourceTree = "<group>";
+		};
+		BD1F396F2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Dobacksoft Training Watch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		BD1F39792FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Dobacksoft Training Watch Watch AppUITests";
+			sourceTree = "<group>";
+		};
+		BD1F39952FD9619C00DE1E50 /* Dobacksoft Training Widgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BD1F39A92FD961A200DE1E50 /* Exceptions for "Dobacksoft Training Widgets" folder in "Dobacksoft Training WidgetsExtension" target */,
+			);
+			path = "Dobacksoft Training Widgets";
+			sourceTree = "<group>";
+		};
 		BDF87DA82FA236BF003D3A05 /* Dobacksoft Training */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -61,6 +161,36 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		BD1F395A2FD9614500DE1E50 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F39692FD9615000DE1E50 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F39732FD9615000DE1E50 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F398C2FD9619A00DE1E50 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BD1F39942FD9619C00DE1E50 /* SwiftUI.framework in Frameworks */,
+				BD1F39922FD9619C00DE1E50 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BDF87DA32FA236BF003D3A05 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -85,12 +215,37 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A1B2C3000000000000000001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3000000000000000002 /* Debug.xcconfig */,
+				A1B2C3000000000000000003 /* Release.xcconfig */,
+				A1B2C3000000000000000004 /* Staging.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		BD1F39902FD9619A00DE1E50 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BD1F39912FD9619A00DE1E50 /* WidgetKit.framework */,
+				BD1F39932FD9619C00DE1E50 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		BDF87D9D2FA236BF003D3A05 = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3000000000000000001 /* Config */,
 				BDF87DA82FA236BF003D3A05 /* Dobacksoft Training */,
 				BDF87DBA2FA236C4003D3A05 /* Dobacksoft TrainingTests */,
 				BDF87DC42FA236C4003D3A05 /* Dobacksoft TrainingUITests */,
+				BD1F39612FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */,
+				BD1F396F2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests */,
+				BD1F39792FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests */,
+				BD1F39952FD9619C00DE1E50 /* Dobacksoft Training Widgets */,
+				BD1F39902FD9619A00DE1E50 /* Frameworks */,
 				BDF87DA72FA236BF003D3A05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,6 +256,11 @@
 				BDF87DA62FA236BF003D3A05 /* Dobacksoft Training.app */,
 				BDF87DB72FA236C4003D3A05 /* Dobacksoft TrainingTests.xctest */,
 				BDF87DC12FA236C4003D3A05 /* Dobacksoft TrainingUITests.xctest */,
+				BD1F39582FD9614400DE1E50 /* Dobacksoft Training Watch.app */,
+				BD1F395D2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App.app */,
+				BD1F396C2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests.xctest */,
+				BD1F39762FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests.xctest */,
+				BD1F398F2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,6 +268,115 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		BD1F39572FD9614400DE1E50 /* Dobacksoft Training Watch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD1F39822FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch" */;
+			buildPhases = (
+				BD1F39562FD9614400DE1E50 /* Resources */,
+				BD1F39812FD9615000DE1E50 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BD1F39602FD9614500DE1E50 /* PBXTargetDependency */,
+			);
+			name = "Dobacksoft Training Watch";
+			packageProductDependencies = (
+			);
+			productName = "Dobacksoft Training Watch";
+			productReference = BD1F39582FD9614400DE1E50 /* Dobacksoft Training Watch.app */;
+			productType = "com.apple.product-type.application.watchapp2-container";
+		};
+		BD1F395C2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD1F397E2FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch Watch App" */;
+			buildPhases = (
+				BD1F39592FD9614500DE1E50 /* Sources */,
+				BD1F395A2FD9614500DE1E50 /* Frameworks */,
+				BD1F395B2FD9614500DE1E50 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BD1F39612FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */,
+			);
+			name = "Dobacksoft Training Watch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "Dobacksoft Training Watch Watch App";
+			productReference = BD1F395D2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BD1F396B2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD1F39852FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch Watch AppTests" */;
+			buildPhases = (
+				BD1F39682FD9615000DE1E50 /* Sources */,
+				BD1F39692FD9615000DE1E50 /* Frameworks */,
+				BD1F396A2FD9615000DE1E50 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BD1F396E2FD9615000DE1E50 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BD1F396F2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests */,
+			);
+			name = "Dobacksoft Training Watch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "Dobacksoft Training Watch Watch AppTests";
+			productReference = BD1F396C2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		BD1F39752FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD1F39882FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch Watch AppUITests" */;
+			buildPhases = (
+				BD1F39722FD9615000DE1E50 /* Sources */,
+				BD1F39732FD9615000DE1E50 /* Frameworks */,
+				BD1F39742FD9615000DE1E50 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BD1F39782FD9615000DE1E50 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BD1F39792FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests */,
+			);
+			name = "Dobacksoft Training Watch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "Dobacksoft Training Watch Watch AppUITests";
+			productReference = BD1F39762FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		BD1F398E2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD1F39A62FD961A200DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training WidgetsExtension" */;
+			buildPhases = (
+				BD1F398B2FD9619A00DE1E50 /* Sources */,
+				BD1F398C2FD9619A00DE1E50 /* Frameworks */,
+				BD1F398D2FD9619A00DE1E50 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BD1F39952FD9619C00DE1E50 /* Dobacksoft Training Widgets */,
+			);
+			name = "Dobacksoft Training WidgetsExtension";
+			packageProductDependencies = (
+			);
+			productName = "Dobacksoft Training WidgetsExtension";
+			productReference = BD1F398F2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		BDF87DA52FA236BF003D3A05 /* Dobacksoft Training */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BDF87DCA2FA236C4003D3A05 /* Build configuration list for PBXNativeTarget "Dobacksoft Training" */;
@@ -115,10 +384,12 @@
 				BDF87DA22FA236BF003D3A05 /* Sources */,
 				BDF87DA32FA236BF003D3A05 /* Frameworks */,
 				BDF87DA42FA236BF003D3A05 /* Resources */,
+				BD1F39AA2FD961A200DE1E50 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BD1F39A42FD961A200DE1E50 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				BDF87DA82FA236BF003D3A05 /* Dobacksoft Training */,
@@ -183,9 +454,26 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2640;
-				LastUpgradeCheck = 2640;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					BD1F39572FD9614400DE1E50 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					BD1F395C2FD9614500DE1E50 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					BD1F396B2FD9615000DE1E50 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = BD1F395C2FD9614500DE1E50;
+					};
+					BD1F39752FD9615000DE1E50 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = BD1F395C2FD9614500DE1E50;
+					};
+					BD1F398E2FD9619A00DE1E50 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					BDF87DA52FA236BF003D3A05 = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
@@ -216,11 +504,51 @@
 				BDF87DA52FA236BF003D3A05 /* Dobacksoft Training */,
 				BDF87DB62FA236C4003D3A05 /* Dobacksoft TrainingTests */,
 				BDF87DC02FA236C4003D3A05 /* Dobacksoft TrainingUITests */,
+				BD1F39572FD9614400DE1E50 /* Dobacksoft Training Watch */,
+				BD1F395C2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */,
+				BD1F396B2FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppTests */,
+				BD1F39752FD9615000DE1E50 /* Dobacksoft Training Watch Watch AppUITests */,
+				BD1F398E2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		BD1F39562FD9614400DE1E50 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F395B2FD9614500DE1E50 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F396A2FD9615000DE1E50 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F39742FD9615000DE1E50 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F398D2FD9619A00DE1E50 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BDF87DA42FA236BF003D3A05 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -245,6 +573,34 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		BD1F39592FD9614500DE1E50 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F39682FD9615000DE1E50 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F39722FD9615000DE1E50 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD1F398B2FD9619A00DE1E50 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BDF87DA22FA236BF003D3A05 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -269,6 +625,26 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		BD1F39602FD9614500DE1E50 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD1F395C2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */;
+			targetProxy = BD1F395F2FD9614500DE1E50 /* PBXContainerItemProxy */;
+		};
+		BD1F396E2FD9615000DE1E50 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD1F395C2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */;
+			targetProxy = BD1F396D2FD9615000DE1E50 /* PBXContainerItemProxy */;
+		};
+		BD1F39782FD9615000DE1E50 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD1F395C2FD9614500DE1E50 /* Dobacksoft Training Watch Watch App */;
+			targetProxy = BD1F39772FD9615000DE1E50 /* PBXContainerItemProxy */;
+		};
+		BD1F39A42FD961A200DE1E50 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD1F398E2FD9619A00DE1E50 /* Dobacksoft Training WidgetsExtension */;
+			targetProxy = BD1F39A32FD961A200DE1E50 /* PBXContainerItemProxy */;
+		};
 		BDF87DB92FA236C4003D3A05 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BDF87DA52FA236BF003D3A05 /* Dobacksoft Training */;
@@ -282,7 +658,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		BDF87DCB2FA236C4003D3A05 /* Debug */ = {
+		BD1F397F2FD9615000DE1E50 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -290,18 +666,283 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Debug;
+		};
+		BD1F39802FD9615000DE1E50 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Release;
+		};
+		BD1F39832FD9615000DE1E50 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Watch";
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BD1F39842FD9615000DE1E50 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Watch";
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BD1F39862FD9615000DE1E50 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Dobacksoft Training Watch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Dobacksoft Training Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Debug;
+		};
+		BD1F39872FD9615000DE1E50 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Dobacksoft Training Watch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Dobacksoft Training Watch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Release;
+		};
+		BD1F39892FD9615000DE1E50 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "Dobacksoft Training Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Debug;
+		};
+		BD1F398A2FD9615000DE1E50 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training-Watch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "Dobacksoft Training Watch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Release;
+		};
+		BD1F39A72FD961A200DE1E50 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Dobacksoft Training Widgets/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Widgets";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training.Dobacksoft-Training-Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BD1F39A82FD961A200DE1E50 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Dobacksoft Training Widgets/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Widgets";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training.Dobacksoft-Training-Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BDF87DCB2FA236C4003D3A05 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3000000000000000002 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 2S747NZP4R;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Dobacksoft Training/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "DobackSoft Training";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -310,13 +951,14 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.3;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -329,11 +971,13 @@
 		};
 		BDF87DCC2FA236C4003D3A05 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3000000000000000003 /* Release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -341,12 +985,16 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Dobacksoft Training/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "DobackSoft Training";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -355,13 +1003,14 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.3;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Com.Dobacksoft-Training";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -406,6 +1055,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -429,6 +1079,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -468,6 +1119,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -484,6 +1136,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -494,6 +1147,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
@@ -503,13 +1157,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Dobacksoft Training.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Dobacksoft Training";
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
 			name = Debug;
@@ -520,6 +1176,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
@@ -529,13 +1186,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Dobacksoft Training.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Dobacksoft Training";
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
 			name = Release;
@@ -545,6 +1204,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
@@ -554,13 +1214,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 				TEST_TARGET_NAME = "Dobacksoft Training";
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
 			name = Debug;
@@ -570,6 +1232,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
@@ -579,13 +1242,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 				TEST_TARGET_NAME = "Dobacksoft Training";
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
 			name = Release;
@@ -593,6 +1258,51 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		BD1F397E2FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD1F397F2FD9615000DE1E50 /* Debug */,
+				BD1F39802FD9615000DE1E50 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD1F39822FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD1F39832FD9615000DE1E50 /* Debug */,
+				BD1F39842FD9615000DE1E50 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD1F39852FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD1F39862FD9615000DE1E50 /* Debug */,
+				BD1F39872FD9615000DE1E50 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD1F39882FD9615000DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training Watch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD1F39892FD9615000DE1E50 /* Debug */,
+				BD1F398A2FD9615000DE1E50 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD1F39A62FD961A200DE1E50 /* Build configuration list for PBXNativeTarget "Dobacksoft Training WidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD1F39A72FD961A200DE1E50 /* Debug */,
+				BD1F39A82FD961A200DE1E50 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BDF87DA12FA236BF003D3A05 /* Build configuration list for PBXProject "Dobacksoft Training" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

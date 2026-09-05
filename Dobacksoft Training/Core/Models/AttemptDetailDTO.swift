@@ -1,16 +1,20 @@
 import Foundation
 
-struct AttemptCandidateDTO: Decodable, Hashable, Sendable {
+struct AttemptCandidateDTO: Hashable, Sendable {
     let id: String?
     let name: String?
 }
 
-struct AttemptRouteDTO: Decodable, Hashable, Sendable {
+nonisolated extension AttemptCandidateDTO: Decodable {}
+
+struct AttemptRouteDTO: Hashable, Sendable {
     let id: String?
     let label: String?
 }
 
-struct AttemptScoreFamilyDTO: Decodable, Hashable, Sendable, Identifiable {
+nonisolated extension AttemptRouteDTO: Decodable {}
+
+struct AttemptScoreFamilyDTO: Hashable, Sendable, Identifiable {
     let family: String?
     let obtained: Double?
     let max: Double?
@@ -18,7 +22,9 @@ struct AttemptScoreFamilyDTO: Decodable, Hashable, Sendable, Identifiable {
     var id: String { family ?? UUID().uuidString }
 }
 
-struct AttemptEventDTO: Decodable, Hashable, Sendable, Identifiable {
+nonisolated extension AttemptScoreFamilyDTO: Decodable {}
+
+struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     let type: String?
     let severity: Double?  // backend devuelve 0..1
     let confidence: String? // "HIGH" / "LOW"
@@ -29,7 +35,9 @@ struct AttemptEventDTO: Decodable, Hashable, Sendable, Identifiable {
     var id: String { (type ?? "ev") + "-" + (timestamp ?? UUID().uuidString) }
 }
 
-struct AttemptDetailDTO: Decodable, Sendable {
+nonisolated extension AttemptEventDTO: Decodable {}
+
+struct AttemptDetailDTO: Sendable {
     let id: String?
     let candidate: AttemptCandidateDTO?
     let route: AttemptRouteDTO?
@@ -39,3 +47,5 @@ struct AttemptDetailDTO: Decodable, Sendable {
     let events: [AttemptEventDTO]
     let convocatoriaId: String?
 }
+
+nonisolated extension AttemptDetailDTO: Decodable {}

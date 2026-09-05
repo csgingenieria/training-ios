@@ -1,0 +1,4 @@
+// Dobacksoft Training — Release Configuration
+// Actualizar cuando el dominio de producción esté confirmado.
+// `$()` evita que xcconfig interprete `//` como inicio de comentario y rompa el URL.
+BASE_URL = https:/$()/training.dobacksoft.com

@@ -8,39 +8,46 @@ struct LoginView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Theme.spacing.lg.value) {
             Spacer()
 
-            VStack(spacing: 8) {
+            VStack(spacing: Theme.spacing.md.value) {
                 Image(systemName: "shield.fill")
                     .font(.system(size: 56))
-                    .foregroundStyle(.tint)
+                    .foregroundStyle(Color.brand)
+                    .accessibilityHidden(true)
                 Text("Training")
-                    .font(.system(size: 40, weight: .bold))
+                    .font(.appTitle)
+                    .foregroundStyle(Color.ink)
                 Text("CMadrid · Conductor de camión de bomberos")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
                     .multilineTextAlignment(.center)
             }
 
-            VStack(spacing: 12) {
+            VStack(spacing: Theme.spacing.md.value) {
                 TextField("Email", text: $email)
                     .textFieldStyle(.roundedBorder)
+                    .font(.bodyText)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .accessibilityLabel("Correo electrónico")
 
                 SecureField("Contraseña", text: $password)
                     .textFieldStyle(.roundedBorder)
+                    .font(.bodyText)
                     .textContentType(.password)
+                    .accessibilityLabel("Contraseña")
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.callout)
-                        .foregroundStyle(.red)
+                        .font(.bodyText)
+                        .foregroundStyle(Color.danger)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
+                        .accessibilityLabel("Error: \(errorMessage)")
                 }
 
                 Button {
@@ -48,26 +55,26 @@ struct LoginView: View {
                 } label: {
                     if isLoading {
                         ProgressView()
-                            .frame(maxWidth: .infinity)
                             .tint(.white)
                     } else {
                         Text("Iniciar sesión")
-                            .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(.brandPrimary)
                 .disabled(isLoading || email.isEmpty || password.isEmpty)
+                .accessibilityLabel(isLoading ? "Iniciando sesión" : "Iniciar sesión")
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, Theme.spacing.xl.value)
 
             Spacer()
 
             Text("v1 · API \(AppEnvironment.baseURL.host() ?? "")")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+                .font(.metaCaption)
+                .foregroundStyle(Color.muted)
+                .accessibilityHidden(true)
         }
         .padding()
+        .pageBackground()
     }
 
     private func login() async {

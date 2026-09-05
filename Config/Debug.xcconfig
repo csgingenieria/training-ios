@@ -1,0 +1,3 @@
+// Dobacksoft Training — Debug Configuration
+// `$()` evita que xcconfig interprete `//` como inicio de comentario y rompa el URL.
+BASE_URL = https:/$()/dobacksoft-training.duckdns.org

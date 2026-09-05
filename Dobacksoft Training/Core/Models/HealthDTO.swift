@@ -1,7 +1,9 @@
 import Foundation
 
-struct HealthDTO: Decodable, Sendable {
+struct HealthDTO: Sendable {
     let status: String
     let version: String
     let time: String
 }
+
+nonisolated extension HealthDTO: Decodable {}

@@ -1,6 +1,6 @@
 import Foundation
 
-struct UserDTO: Decodable, Identifiable, Hashable, Sendable {
+struct UserDTO: Identifiable, Hashable, Sendable {
     let id: String
     let email: String
     let name: String
@@ -11,3 +11,5 @@ struct UserDTO: Decodable, Identifiable, Hashable, Sendable {
     var isStudent: Bool { role == "STUDENT" }
     var isAdminLike: Bool { ["ADMIN", "SUPER_ADMIN", "MANAGER"].contains(role) }
 }
+
+nonisolated extension UserDTO: Decodable {}

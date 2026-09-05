@@ -1,5 +1,13 @@
 import SwiftUI
 
+private struct AttemptRoute: Hashable {
+    let attemptId: String
+}
+
+private struct StudentProfileRoute: Hashable {
+    let studentId: String
+}
+
 @MainActor
 @Observable
 final class RankingViewModel {
@@ -28,16 +36,52 @@ final class RankingViewModel {
     }
 }
 
+enum RankingSortMode: String, CaseIterable, Identifiable {
+    case position
+    case scoreDescending
+    case attemptsDescending
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .position:           return "Por puesto"
+        case .scoreDescending:    return "Mejor nota"
+        case .attemptsDescending: return "Más intentos completados"
+        }
+    }
+
+    func apply(_ entries: [RankingEntryDTO]) -> [RankingEntryDTO] {
+        switch self {
+        case .position:
+            return entries.sorted { $0.position < $1.position }
+        case .scoreDescending:
+            return entries.sorted { ($0.score ?? -1) > ($1.score ?? -1) }
+        case .attemptsDescending:
+            return entries.sorted { $0.attemptsCompleted > $1.attemptsCompleted }
+        }
+    }
+}
+
 struct RankingView: View {
     let convocatoriaId: String
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = RankingViewModel()
+    @State private var searchText = ""
+    @State private var sortMode: RankingSortMode = .position
 
     var body: some View {
         Group {
             switch viewModel.state {
             case .loading:
-                ProgressView("Cargando ranking…")
+                VStack(spacing: Theme.spacing.md.value) {
+                    ProgressView().tint(Color.brand)
+                    Text("Cargando ranking…")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .pageBackground()
             case .empty:
                 ContentUnavailableView(
                     "Ranking vacío",
@@ -45,19 +89,15 @@ struct RankingView: View {
                     description: Text("Todavía no hay entradas en esta convocatoria.")
                 )
             case .loaded(let response):
-                List {
-                    Section {
-                        ForEach(response.entries) { entry in
-                            RankingEntryRow(entry: entry, plazas: response.convocatoria.plazas)
-                        }
-                    } header: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(response.convocatoria.name).font(.headline)
-                            Text("\(response.entries.count) candidatos · \(response.convocatoria.plazas) plazas")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        .textCase(nil)
-                    }
+                let filtered = filter(response.entries)
+                let sorted = sortMode.apply(filtered)
+                if sorted.isEmpty && !searchText.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                } else {
+                    loadedList(
+                        response: response,
+                        displayedEntries: sorted
+                    )
                 }
             case .error(let msg):
                 ContentUnavailableView {
@@ -66,13 +106,121 @@ struct RankingView: View {
                     Text(msg)
                 } actions: {
                     Button("Reintentar") { Task { await load() } }
+                        .buttonStyle(.brandPrimary(fullWidth: false))
                 }
             }
         }
         .navigationTitle("Ranking")
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Buscar candidato")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                sortMenu
+            }
+        }
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    @ViewBuilder
+    private var sortMenu: some View {
+        Menu {
+            Picker("Orden", selection: $sortMode) {
+                ForEach(RankingSortMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .foregroundStyle(Color.brand)
+        }
+        .accessibilityLabel("Cambiar orden del ranking")
+    }
+
+    private func filter(_ entries: [RankingEntryDTO]) -> [RankingEntryDTO] {
+        let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return entries }
+        return entries.filter { entry in
+            (entry.candidate.name?.lowercased().contains(query) ?? false) ||
+            (entry.candidate.plaza?.lowercased().contains(query) ?? false)
+        }
+    }
+
+    @ViewBuilder
+    private func loadedList(response: RankingResponseDTO, displayedEntries: [RankingEntryDTO]) -> some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                Section {
+                    ForEach(Array(displayedEntries.enumerated()), id: \.element.id) { idx, entry in
+                        let isLast = idx == displayedEntries.count - 1
+                        rowOrLink(entry: entry, plazas: response.convocatoria.plazas)
+                        if !isLast {
+                            Divider().padding(.leading, Theme.spacing.lg.value)
+                        }
+                    }
+                } header: {
+                    rankingHeader(response, shown: displayedEntries.count)
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                    .fill(Color.paperElevated)
+            )
+            .themedShadow(.small)
+            .padding(.horizontal, Theme.spacing.base.value)
+            .padding(.vertical, Theme.spacing.base.value)
+        }
+        .pageBackground()
+        .navigationDestination(for: AttemptRoute.self) { route in
+            AttemptDetailView(attemptId: route.attemptId)
+        }
+        .navigationDestination(for: StudentProfileRoute.self) { route in
+            StudentProfileView(studentId: route.studentId)
+        }
+    }
+
+    @ViewBuilder
+    private func rowOrLink(entry: RankingEntryDTO, plazas: Int) -> some View {
+        // Preferimos navegar al perfil del alumno (vista MANAGER/ADMIN más útil).
+        // Si no hay candidate.id, fallback al detalle del intento. Si no hay
+        // ninguno, queda como row plana sin tap.
+        if let candidateId = entry.candidate.id, !candidateId.isEmpty {
+            NavigationLink(value: StudentProfileRoute(studentId: candidateId)) {
+                RankingEntryRow(entry: entry, plazas: plazas)
+            }
+            .buttonStyle(.plain)
+        } else if let attemptId = entry.attemptId, !attemptId.isEmpty {
+            NavigationLink(value: AttemptRoute(attemptId: attemptId)) {
+                RankingEntryRow(entry: entry, plazas: plazas)
+            }
+            .buttonStyle(.plain)
+        } else {
+            RankingEntryRow(entry: entry, plazas: plazas)
+        }
+    }
+
+    @ViewBuilder
+    private func rankingHeader(_ response: RankingResponseDTO, shown: Int) -> some View {
+        VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
+            Text(response.convocatoria.name)
+                .font(.cardTitle)
+                .foregroundStyle(Color.ink)
+            HStack(spacing: Theme.spacing.sm.value) {
+                if shown != response.entries.count {
+                    Text("\(shown) de \(response.entries.count) candidatos")
+                } else {
+                    Text("\(response.entries.count) candidatos")
+                }
+                Text("·")
+                Text("\(response.convocatoria.plazas) plazas")
+            }
+            .font(.metaCaption)
+            .foregroundStyle(Color.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Theme.spacing.base.value)
+        .padding(.vertical, Theme.spacing.md.value)
+        .background(Color.paperElevated)
     }
 
     private func load() async {
@@ -85,30 +233,73 @@ struct RankingEntryRow: View {
     let entry: RankingEntryDTO
     let plazas: Int
 
+    private var withinCutoff: Bool { entry.position <= plazas }
+
     var body: some View {
-        HStack(spacing: 12) {
-            Text("\(entry.position)")
-                .font(.title3.weight(.semibold))
-                .frame(width: 36, alignment: .center)
-                .foregroundStyle(entry.position <= plazas ? .primary : .secondary)
+        HStack(spacing: Theme.spacing.md.value) {
+            positionBadge
+
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.candidate.name ?? "—").font(.body)
+                Text(entry.candidate.name ?? "—")
+                    .font(.bodyEmphasis)
+                    .foregroundStyle(Color.ink)
                 if let plaza = entry.candidate.plaza {
-                    Text("Plaza \(plaza)").font(.caption2).foregroundStyle(.tertiary)
+                    Text("Plaza \(plaza)")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
                 }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                if let s = entry.score {
-                    Text(String(format: "%.2f", s)).font(.body.weight(.semibold))
-                } else {
-                    Text("—").foregroundStyle(.secondary)
-                }
+                scoreText
                 Text("\(entry.attemptsCompleted)/\(entry.attemptsTotal)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+            }
+            if entry.attemptId != nil {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Color.muted)
+                    .accessibilityHidden(true)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, Theme.spacing.base.value)
+        .padding(.vertical, Theme.spacing.md.value)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var positionBadge: some View {
+        Text("\(entry.position)")
+            .font(.body(size: 16, weight: .bold, relativeTo: .headline))
+            .foregroundStyle(withinCutoff ? .white : Color.muted)
+            .frame(width: 32, height: 32)
+            .background(
+                Circle().fill(withinCutoff ? Color.brand : Color.paper)
+            )
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var scoreText: some View {
+        if let s = entry.score {
+            Text(String(format: "%.2f", s))
+                .font(.body(size: 16, weight: .semibold, relativeTo: .headline))
+                .foregroundStyle(Color.ink)
+        } else {
+            Text("—")
+                .font(.body(size: 16, weight: .semibold, relativeTo: .headline))
+                .foregroundStyle(Color.muted)
+        }
+    }
+
+    private var accessibilityText: String {
+        var parts: [String] = ["Puesto \(entry.position)"]
+        if let name = entry.candidate.name { parts.append(name) }
+        if let s = entry.score { parts.append("Nota \(String(format: "%.2f", s))") }
+        parts.append("\(entry.attemptsCompleted) de \(entry.attemptsTotal) intentos")
+        if entry.attemptId != nil { parts.append("Tocar para ver intento") }
+        return parts.joined(separator: ", ")
     }
 }

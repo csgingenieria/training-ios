@@ -33,9 +33,11 @@ enum APIError: Error, Sendable {
 
 /// Shape genérica del cuerpo de error del backend. Todos los campos opcionales
 /// para tolerar la divergencia conocida entre handlers del blueprint y `@require_role`.
-struct APIErrorBody: Decodable, Sendable {
+struct APIErrorBody: Sendable {
     let error: String?
     let message: String?
     let details: [String: [String]]?
     let reason: String?
 }
+
+nonisolated extension APIErrorBody: Decodable {}

@@ -33,12 +33,13 @@ final class ConvocatoriasListViewModel {
 struct ConvocatoriasListView: View {
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = ConvocatoriasListViewModel()
+    @State private var searchText = ""
 
     var body: some View {
         Group {
             switch viewModel.state {
             case .loading:
-                ProgressView("Cargando…").frame(maxWidth: .infinity, maxHeight: .infinity)
+                loadingView
             case .empty:
                 ContentUnavailableView(
                     "Sin convocatorias",
@@ -46,13 +47,11 @@ struct ConvocatoriasListView: View {
                     description: Text("No tenés convocatorias visibles para tu rol.")
                 )
             case .loaded(let items):
-                List(items) { conv in
-                    NavigationLink(value: conv) {
-                        ConvocatoriaRow(conv: conv)
-                    }
-                }
-                .navigationDestination(for: ConvocatoriaSummaryDTO.self) { conv in
-                    ConvocatoriaDetailView(convocatoria: conv)
+                let filtered = filter(items)
+                if filtered.isEmpty && !searchText.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                } else {
+                    loadedList(filtered)
                 }
             case .error(let msg):
                 ContentUnavailableView {
@@ -61,12 +60,56 @@ struct ConvocatoriasListView: View {
                     Text(msg)
                 } actions: {
                     Button("Reintentar") { Task { await load() } }
+                        .buttonStyle(.brandPrimary(fullWidth: false))
                 }
             }
         }
         .navigationTitle("Convocatorias")
+        .searchable(text: $searchText, prompt: "Buscar convocatoria")
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    private func filter(_ items: [ConvocatoriaSummaryDTO]) -> [ConvocatoriaSummaryDTO] {
+        let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return items }
+        return items.filter {
+            $0.name.lowercased().contains(query) ||
+            ($0.description?.lowercased().contains(query) ?? false)
+        }
+    }
+
+    @ViewBuilder
+    private var loadingView: some View {
+        VStack(spacing: Theme.spacing.md.value) {
+            ProgressView()
+                .tint(Color.brand)
+            Text("Cargando convocatorias…")
+                .font(.metaCaption)
+                .foregroundStyle(Color.muted)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .pageBackground()
+    }
+
+    @ViewBuilder
+    private func loadedList(_ items: [ConvocatoriaSummaryDTO]) -> some View {
+        ScrollView {
+            LazyVStack(spacing: Theme.spacing.md.value) {
+                ForEach(items) { conv in
+                    NavigationLink(value: conv) {
+                        ConvocatoriaRow(conv: conv)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, Theme.spacing.base.value)
+            .padding(.vertical, Theme.spacing.base.value)
+        }
+        .pageBackground()
+        .navigationDestination(for: ConvocatoriaSummaryDTO.self) { conv in
+            ConvocatoriaDetailView(convocatoria: conv)
+        }
     }
 
     private func load() async {
@@ -79,26 +122,67 @@ struct ConvocatoriaRow: View {
     let conv: ConvocatoriaSummaryDTO
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(conv.name).font(.headline)
-            if let descr = conv.description, !descr.isEmpty {
-                Text(descr).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-            }
-            HStack(spacing: 12) {
-                Label("\(conv.totalCandidates)", systemImage: "person.3")
-                    .font(.caption).foregroundStyle(.secondary)
-                Label("\(conv.plazas) plazas", systemImage: "ticket")
-                    .font(.caption).foregroundStyle(.secondary)
-                Spacer()
+        VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+            HStack(alignment: .top, spacing: Theme.spacing.sm.value) {
+                Text(conv.name)
+                    .font(.cardTitle)
+                    .foregroundStyle(Color.ink)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 if let status = conv.status {
-                    Text(status)
-                        .font(.caption2.weight(.medium))
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(.thinMaterial, in: Capsule())
+                    StatusBadge(text: status, kind: badgeKind(for: status))
                 }
             }
+
+            if let descr = conv.description, !descr.isEmpty {
+                Text(descr)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .lineLimit(2)
+            }
+
+            HStack(spacing: Theme.spacing.base.value) {
+                metric(icon: "person.3.fill", text: "\(conv.totalCandidates) candidatos")
+                metric(icon: "ticket.fill", text: "\(conv.plazas) plazas")
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Color.muted)
+                    .accessibilityHidden(true)
+            }
         }
-        .padding(.vertical, 4)
+        .cardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint("Tocar para ver detalle")
+    }
+
+    private func metric(icon: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+            Text(text)
+                .font(.metaCaption)
+        }
+        .foregroundStyle(Color.muted)
+    }
+
+    private func badgeKind(for status: String) -> BadgeKind {
+        switch status.uppercased() {
+        case "OPEN", "ACTIVE", "ACTIVA", "EN CURSO": return .success
+        case "CLOSED", "CERRADA":                    return .neutral
+        case "DRAFT", "BORRADOR":                    return .warning
+        default:                                     return .brand
+        }
+    }
+
+    private var accessibilitySummary: String {
+        var parts: [String] = [conv.name]
+        if let status = conv.status { parts.append(status) }
+        parts.append("\(conv.totalCandidates) candidatos")
+        parts.append("\(conv.plazas) plazas")
+        return parts.joined(separator: ", ")
     }
 }
 

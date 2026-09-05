@@ -1,6 +1,6 @@
 import Foundation
 
-struct ConvocatoriaSummaryDTO: Decodable, Identifiable, Hashable, Sendable {
+struct ConvocatoriaSummaryDTO: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
     let description: String?
@@ -11,6 +11,10 @@ struct ConvocatoriaSummaryDTO: Decodable, Identifiable, Hashable, Sendable {
     let updatedAt: String?
 }
 
-struct ConvocatoriasListDTO: Decodable, Sendable {
+nonisolated extension ConvocatoriaSummaryDTO: Decodable {}
+
+struct ConvocatoriasListDTO: Sendable {
     let items: [ConvocatoriaSummaryDTO]
 }
+
+nonisolated extension ConvocatoriasListDTO: Decodable {}

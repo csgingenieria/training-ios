@@ -5,7 +5,9 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if auth.isAuthenticated {
+            if !auth.hasRestoredSession {
+                LaunchView()
+            } else if auth.isAuthenticated {
                 DashboardView()
             } else {
                 LoginView()
@@ -14,6 +16,19 @@ struct RootView: View {
         .task {
             await auth.restoreFromKeychain()
         }
+    }
+}
+
+private struct LaunchView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .controlSize(.large)
+            Text("Restaurando sesión…")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

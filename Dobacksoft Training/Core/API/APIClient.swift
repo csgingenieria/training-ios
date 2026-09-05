@@ -6,8 +6,19 @@ actor APIClient {
     private let session: URLSession
     private let decoder: JSONDecoder
 
-    init(session: URLSession = .shared) {
-        self.session = session
+    init(session: URLSession? = nil) {
+        // `URLSession.shared` usa defaults muy permisivos (60s/request y 7 días/resource):
+        // si el endpoint no responde, la UI queda "trabada" varios minutos con
+        // `isLoading == true`. Acotamos a 15s/30s para fallar rápido y mostrar error.
+        if let session {
+            self.session = session
+        } else {
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 15
+            config.timeoutIntervalForResource = 30
+            config.waitsForConnectivity = false
+            self.session = URLSession(configuration: config)
+        }
         self.decoder = JSONDecoder()
     }
 
@@ -43,6 +54,14 @@ actor APIClient {
         try await get("/api/v1/me/convocatorias/\(convocatoriaId)/standing", token: accessToken)
     }
 
+    func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO] {
+        let response: MyAttemptsListDTO = try await get(
+            "/api/v1/me/convocatorias/\(convocatoriaId)/attempts",
+            token: accessToken
+        )
+        return response.items
+    }
+
     func convocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {
         let response: ConvocatoriasListDTO = try await get("/api/v1/convocatorias", token: accessToken)
         return response.items
@@ -58,6 +77,35 @@ actor APIClient {
 
     func attempt(id: String, accessToken: String) async throws -> AttemptDetailDTO {
         try await get("/api/v1/attempts/\(id)", token: accessToken)
+    }
+
+    func matrix(convocatoriaId: String, accessToken: String) async throws -> MatrixResponseDTO {
+        try await get("/api/v1/convocatorias/\(convocatoriaId)/matrix", token: accessToken)
+    }
+
+    // MARK: - Manager / Admin
+
+    func managerDashboard(accessToken: String) async throws -> ManagerDashboardDTO {
+        try await get("/api/v1/me/dashboard", token: accessToken)
+    }
+
+    func studentProfile(studentId: String, accessToken: String) async throws -> StudentProfileDTO {
+        try await get("/api/v1/students/\(studentId)/profile", token: accessToken)
+    }
+
+    // MARK: - Webfleet (alerts + sync)
+
+    /// Alertas operativas de enriquecimiento Webfleet (top-50, más recientes primero).
+    /// Read-only. Endpoint resuelve el 404 histórico tras PR backend #279.
+    func webfletAlerts(accessToken: String) async throws -> WebfletAlertsResponseDTO {
+        try await get("/api/v1/webfleet/alerts", token: accessToken)
+    }
+
+    /// Dispara sync on-demand (FTP pickup + Webfleet GPS+rotativo + autoclose).
+    /// ÚNICA escritura de dominio en la API móvil (excepción D-API-001).
+    /// Rate limit backend: 3/min — manejar 429 sin reintentar automático.
+    func webfletSync(accessToken: String) async throws -> SyncResultDTO {
+        try await post("/api/v1/me/webfleet/sync", body: [:], token: accessToken)
     }
 
     // MARK: - Internal

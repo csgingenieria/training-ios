@@ -1,24 +1,23 @@
 import Foundation
 
 enum AppEnvironment {
-    /// Base URL del backend Training. Cambiá para apuntar a VPS / staging.
-    /// - LOCAL Simulator: `http://localhost:5000` (Flask dev en la Mac).
-    /// - LOCAL device físico: reemplazá por la IP de la Mac en LAN, ej. `http://192.168.1.10:5000`.
-    /// - VPS prod: `https://<dominio-cmadrid>.com:4000`.
-    static var baseURL: URL {
-        #if DEBUG
-        return URL(string: "http://localhost:5000")!
-        #else
-        // TODO: poner el dominio público real cuando esté listo
-        return URL(string: "https://training.example.com")!
-        #endif
+    /// Base URL del backend Training. Lee de Info.plist injectado por .xcconfig.
+    /// - Debug:     http://localhost:5000
+    /// - Staging:   https://staging.cmadrid-training.com
+    /// - Release:   https://training.dobacksoft.com
+    nonisolated static var baseURL: URL {
+        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "BASE_URL") as? String,
+              let url = URL(string: urlString) else {
+            fatalError("BASE_URL no configurado en Info.plist. Revisar .xcconfig para el esquema activo.")
+        }
+        return url
     }
 
     /// Versión del cliente para User-Agent.
-    static let clientVersion = "ios-v1-alpha"
+    nonisolated static let clientVersion = "ios-v1-alpha"
 
     /// User-Agent estándar para todas las requests.
-    static var userAgent: String {
+    nonisolated static var userAgent: String {
         let device = "iOS"
         return "DobacksoftTraining/\(clientVersion) (\(device))"
     }

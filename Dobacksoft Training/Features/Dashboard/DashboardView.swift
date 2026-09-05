@@ -1,10 +1,38 @@
 import SwiftUI
 
+/// Entrada principal post-login. Adaptativo según size class:
+/// - Compact (iPhone, iPad Slide Over): `TabView` nativo.
+/// - Regular (iPad portrait/landscape): `NavigationSplitView` con sidebar.
+///
+/// Regla D-IOS-001: iPhone + iPad mismo target, layout adaptativo.
 struct DashboardView: View {
     @Environment(AuthSession.self) private var auth
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
+        Group {
+            if sizeClass == .regular {
+                splitLayout
+            } else {
+                tabLayout
+            }
+        }
+        .tint(Color.brand)
+    }
+
+    // MARK: - iPhone / Compact
+
+    @ViewBuilder
+    private var tabLayout: some View {
         TabView {
+            if auth.user?.isAdminLike == true {
+                Tab("Panel", systemImage: "chart.bar.doc.horizontal") {
+                    NavigationStack {
+                        ManagerPanelView()
+                    }
+                }
+            }
+
             Tab("Convocatorias", systemImage: "list.bullet.rectangle") {
                 NavigationStack {
                     ConvocatoriasListView()
@@ -26,36 +54,202 @@ struct DashboardView: View {
             }
         }
     }
+
+    // MARK: - iPad / Regular
+
+    @ViewBuilder
+    private var splitLayout: some View {
+        SidebarDashboard()
+    }
 }
+
+/// Layout iPad con sidebar permanente. La sección seleccionada se renderea en el
+/// detail. Mantiene `NavigationStack` por sección para que cada drill-down
+/// (detalle de convocatoria, ranking, intento) navegue dentro del detail pane.
+private struct SidebarDashboard: View {
+    @Environment(AuthSession.self) private var auth
+    @State private var selection: SidebarSection? = .convocatorias
+
+    var body: some View {
+        NavigationSplitView {
+            List(selection: $selection) {
+                Section("Inicio") {
+                    if auth.user?.isAdminLike == true {
+                        sidebarItem(.panel)
+                    }
+                    sidebarItem(.convocatorias)
+                    if auth.user?.isStudent == true {
+                        sidebarItem(.miPosicion)
+                    }
+                }
+                Section("Cuenta") {
+                    sidebarItem(.perfil)
+                }
+            }
+            .navigationTitle("Training")
+        } detail: {
+            NavigationStack {
+                detailView(for: selection ?? .convocatorias)
+            }
+        }
+        .onAppear {
+            // Si el rol no coincide con la sección por default, autoseleccionar.
+            if selection == .convocatorias, auth.user?.isAdminLike == true {
+                selection = .panel
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sidebarItem(_ section: SidebarSection) -> some View {
+        Label(section.title, systemImage: section.icon)
+            .tag(section as SidebarSection?)
+    }
+
+    @ViewBuilder
+    private func detailView(for section: SidebarSection) -> some View {
+        switch section {
+        case .panel:         ManagerPanelView()
+        case .convocatorias: ConvocatoriasListView()
+        case .miPosicion:    MyStandingTabView()
+        case .perfil:        ProfileView()
+        }
+    }
+}
+
+private enum SidebarSection: Hashable {
+    case panel, convocatorias, miPosicion, perfil
+
+    var title: String {
+        switch self {
+        case .panel:         return "Panel"
+        case .convocatorias: return "Convocatorias"
+        case .miPosicion:    return "Mi posición"
+        case .perfil:        return "Perfil"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .panel:         return "chart.bar.doc.horizontal"
+        case .convocatorias: return "list.bullet.rectangle"
+        case .miPosicion:    return "trophy.fill"
+        case .perfil:        return "person.crop.circle"
+        }
+    }
+}
+
+// MARK: - Profile
 
 struct ProfileView: View {
     @Environment(AuthSession.self) private var auth
+    @State private var showLogoutConfirmation = false
 
     var body: some View {
         Form {
             if let user = auth.user {
+                Section {
+                    profileHeader(user)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: Theme.spacing.lg.value, leading: 0, bottom: Theme.spacing.lg.value, trailing: 0))
+                }
+
                 Section("Mi cuenta") {
-                    LabeledContent("Nombre", value: user.name)
-                    LabeledContent("Email", value: user.email)
-                    LabeledContent("Rol", value: user.role)
+                    row("Nombre", value: user.name)
+                    row("Email", value: user.email)
+                    row("Rol", value: user.role.capitalized)
                     if let orgId = user.organizationId {
-                        LabeledContent("Organización", value: orgId)
+                        row("Organización", value: orgId)
                     }
                 }
             }
 
             Section("API") {
-                LabeledContent("Base URL", value: AppEnvironment.baseURL.absoluteString)
-                LabeledContent("Cliente", value: AppEnvironment.clientVersion)
+                row("Base URL", value: AppEnvironment.baseURL.host() ?? "—")
+                row("Cliente", value: AppEnvironment.clientVersion)
+            }
+
+            Section("Acerca de") {
+                row("Versión", value: Self.appVersion)
+                row("Build", value: Self.buildNumber)
+                row("Aplicación", value: "Dobacksoft Training")
             }
 
             Section {
-                Button("Cerrar sesión", role: .destructive) {
-                    Task { await auth.logout() }
+                Button(role: .destructive) {
+                    showLogoutConfirmation = true
+                } label: {
+                    HStack {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                        Text("Cerrar sesión")
+                    }
+                    .font(.bodyEmphasis)
                 }
+                .accessibilityLabel("Cerrar sesión")
             }
         }
         .navigationTitle("Perfil")
+        .confirmationDialog(
+            "¿Cerrar sesión?",
+            isPresented: $showLogoutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Cerrar sesión", role: .destructive) {
+                Task { await auth.logout() }
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Vas a salir de la app y tendrás que iniciar sesión de nuevo.")
+        }
+    }
+
+    @ViewBuilder
+    private func profileHeader(_ user: UserDTO) -> some View {
+        HStack(spacing: Theme.spacing.base.value) {
+            ZStack {
+                Circle()
+                    .fill(Color.brandTint)
+                Text(user.name.prefix(1).uppercased())
+                    .font(.display(size: 28, weight: .bold, italic: true, relativeTo: .title))
+                    .foregroundStyle(Color.brand)
+            }
+            .frame(width: 56, height: 56)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(user.name)
+                    .font(.cardTitle)
+                    .foregroundStyle(Color.ink)
+                Text(user.email)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+            }
+            Spacer()
+            StatusBadge(text: user.role.uppercased(), kind: .brand)
+        }
+        .padding(.horizontal, Theme.spacing.base.value)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func row(_ label: String, value: String) -> some View {
+        LabeledContent {
+            Text(value)
+                .font(.bodyText)
+                .foregroundStyle(Color.inkSecondary)
+        } label: {
+            Text(label)
+                .font(.bodyText)
+                .foregroundStyle(Color.muted)
+        }
+    }
+
+    private static var appVersion: String {
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "—"
+    }
+
+    private static var buildNumber: String {
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "—"
     }
 }
 

@@ -1,6 +1,6 @@
 import Foundation
 
-struct AuthLoginResponseDTO: Decodable, Sendable {
+struct AuthLoginResponseDTO: Sendable {
     let access_token: String
     let refresh_token: String
     let token_type: String
@@ -8,7 +8,11 @@ struct AuthLoginResponseDTO: Decodable, Sendable {
     let user: UserDTO
 }
 
-struct RefreshResponseDTO: Decodable, Sendable {
+nonisolated extension AuthLoginResponseDTO: Decodable {}
+
+struct RefreshResponseDTO: Sendable {
     let access_token: String
     let expires_in: Int
 }
+
+nonisolated extension RefreshResponseDTO: Decodable {}
