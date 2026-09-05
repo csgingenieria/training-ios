@@ -253,6 +253,67 @@ extension KeychainBacked {
             #expect(session.isAuthenticated == true)
         }
 
+        /// A tunnel is not a revoked session.
+        ///
+        /// The refresh used to collapse every failure into nil, and the caller
+        /// read nil as "the backend rejected us" and logged out. A firefighter
+        /// losing coverage for a moment was signed out and had to type their
+        /// credentials again.
+        @Test func transportFailureDuringRefreshKeepsTheSession() async throws {
+            let api = FakeTrainingAPI()
+            await api.setLoginResult(.success(.stub(access: "acc", refresh: "ref")))
+            await api.setRefreshResult(.failure(APIError.transport(URLError(.notConnectedToInternet))))
+            await api.setStandingResults([.failure(APIError.unauthenticated)])
+            let session = AuthSession(api: api)
+            try await session.login(email: "a@b.example", password: "x")
+
+            await #expect(throws: APIError.self) {
+                try await session.authorized { token in
+                    try await api.standing(convocatoriaId: "conv-1", accessToken: token)
+                }
+            }
+
+            #expect(session.isAuthenticated == true)
+            #expect(session.accessToken == "acc")
+            #expect(try TokenStore.load(for: .refreshToken) == "ref")
+        }
+
+        /// The backend actively rejecting the refresh token IS a dead session.
+        @Test func rejectedRefreshDoesEndTheSession() async throws {
+            let api = FakeTrainingAPI()
+            await api.setLoginResult(.success(.stub(access: "acc", refresh: "ref")))
+            await api.setRefreshResult(.failure(APIError.unauthenticated))
+            await api.setStandingResults([.failure(APIError.unauthenticated)])
+            let session = AuthSession(api: api)
+            try await session.login(email: "a@b.example", password: "x")
+
+            await #expect(throws: APIError.self) {
+                try await session.authorized { token in
+                    try await api.standing(convocatoriaId: "conv-1", accessToken: token)
+                }
+            }
+
+            #expect(session.isAuthenticated == false)
+        }
+
+        /// A server-side failure is not a verdict on the credentials either.
+        @Test func serverErrorDuringRefreshKeepsTheSession() async throws {
+            let api = FakeTrainingAPI()
+            await api.setLoginResult(.success(.stub(access: "acc", refresh: "ref")))
+            await api.setRefreshResult(.failure(APIError.server(message: "boom", status: 503)))
+            await api.setStandingResults([.failure(APIError.unauthenticated)])
+            let session = AuthSession(api: api)
+            try await session.login(email: "a@b.example", password: "x")
+
+            await #expect(throws: APIError.self) {
+                try await session.authorized { token in
+                    try await api.standing(convocatoriaId: "conv-1", accessToken: token)
+                }
+            }
+
+            #expect(session.isAuthenticated == true)
+        }
+
         @Test func authorizedFailsFastWithoutSession() async {
             let session = AuthSession(api: FakeTrainingAPI())
 

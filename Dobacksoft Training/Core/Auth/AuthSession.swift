@@ -19,7 +19,7 @@ final class AuthSession {
     var hasRestoredSession: Bool = false
 
     /// Refresco en curso, compartido por las llamadas que caducan a la vez.
-    @ObservationIgnored private var refreshTask: Task<String?, Never>?
+    @ObservationIgnored private var refreshTask: Task<RefreshOutcome, Never>?
 
     var isAuthenticated: Bool { user != nil && accessToken != nil }
 
@@ -99,47 +99,75 @@ final class AuthSession {
             AppLog.auth.info("401 recibido; intentando refrescar el token")
         }
 
-        guard let renewed = await refreshAccessToken() else {
-            await logout()
-            throw APIError.unauthenticated
-        }
+        switch await refreshAccessToken() {
+        case let .renewed(renewed):
+            do {
+                return try await operation(renewed)
+            } catch APIError.unauthenticated {
+                AppLog.auth.error("401 tras refrescar; se cierra la sesión")
+                await logout()
+                throw APIError.unauthenticated
+            }
 
-        do {
-            return try await operation(renewed)
-        } catch APIError.unauthenticated {
-            AppLog.auth.error("401 tras refrescar; se cierra la sesión")
+        case .rejected:
+            // El backend ha dicho que el refresh token ya no vale. Aquí sí no
+            // hay sesión que salvar.
+            AppLog.auth.error("El refresh token fue rechazado; se cierra la sesión")
             await logout()
             throw APIError.unauthenticated
+
+        case let .unavailable(error):
+            // No se ha podido PREGUNTAR: red caída, servidor con un 5xx, tiempo
+            // agotado. Cerrar sesión aquí echaría a un bombero por meterse en un
+            // túnel. Se propaga el fallo real y la sesión se queda como estaba.
+            AppLog.auth.notice("Refresco no disponible; se conserva la sesión")
+            throw error
         }
     }
 
-    /// Renueva el access token. Devuelve `nil` si no se pudo.
+    /// Resultado de intentar renovar el access token.
+    ///
+    /// La distinción entre «rechazado» y «no disponible» es la que decide si se
+    /// cierra la sesión. Colapsar ambos en un `nil` hacía que cualquier fallo de
+    /// red se tratara como credencial revocada.
+    private enum RefreshOutcome {
+        case renewed(String)
+        /// El backend rechazó el refresh token (401/403).
+        case rejected
+        /// No se pudo completar la pregunta. La sesión sigue siendo válida.
+        case unavailable(Error)
+    }
+
+    /// Renueva el access token.
     ///
     /// Las llamadas concurrentes esperan al refresco ya en curso en lugar de
     /// lanzar el suyo.
-    private func refreshAccessToken() async -> String? {
+    private func refreshAccessToken() async -> RefreshOutcome {
         if let inFlight = refreshTask {
             return await inFlight.value
         }
 
-        guard let refreshToken else { return nil }
+        guard let refreshToken else { return .rejected }
 
-        let task = Task { [api] () -> String? in
+        let task = Task { [api] () -> RefreshOutcome in
             do {
                 let response = try await api.refresh(refreshToken: refreshToken)
-                return response.access_token
+                return .renewed(response.access_token)
+            } catch APIError.unauthenticated, APIError.forbidden {
+                return .rejected
             } catch {
-                AppLog.auth.error("No se pudo refrescar el token: \(String(describing: error), privacy: .public)")
-                return nil
+                AppLog.auth.error("Refresco no disponible: \(String(describing: error), privacy: .public)")
+                return .unavailable(error)
             }
         }
         refreshTask = task
         defer { refreshTask = nil }
 
-        guard let renewed = await task.value else { return nil }
-
-        persistTokens(accessToken: renewed, refreshToken: refreshToken)
-        return renewed
+        let outcome = await task.value
+        if case let .renewed(renewed) = outcome {
+            persistTokens(accessToken: renewed, refreshToken: refreshToken)
+        }
+        return outcome
     }
 
     private func restorePersistedSession(
