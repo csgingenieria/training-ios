@@ -24,14 +24,19 @@ final class ManagerPanelViewModel {
         }
     }
 
-    func load(token: String) async {
+    func load(auth: AuthSession) async {
         state = .loading
         do {
             // Dashboard + convocatorias en paralelo: agregados del backend +
             // lista para la sección "Convocatorias activas".
-            async let dashboard = APIClient.shared.managerDashboard(accessToken: token)
-            async let convs = APIClient.shared.convocatorias(accessToken: token)
-            let (d, c) = try await (dashboard, convs)
+            //
+            // Ambas van dentro de la misma llamada autorizada: si el token
+            // caduca, se refresca una vez y se reintentan las dos juntas.
+            let (d, c) = try await auth.authorized { token in
+                async let dashboard = APIClient.shared.managerDashboard(accessToken: token)
+                async let convs = APIClient.shared.convocatorias(accessToken: token)
+                return try await (dashboard, convs)
+            }
             state = .loaded(d, c)
         } catch let err as APIError {
             state = .error(err.userMessage)
@@ -42,23 +47,25 @@ final class ManagerPanelViewModel {
 
     /// Dispara sync on-demand. Backend rate-limit 3/min — si vuelve 429 lo
     /// mostramos como error sin reintentar.
-    func triggerSync(token: String) async {
+    func triggerSync(auth: AuthSession) async {
         isSyncing = true
         syncResult = nil
         syncErrorMessage = nil
         defer { isSyncing = false }
 
         do {
-            let result = try await APIClient.shared.webfletSync(accessToken: token)
+            let result = try await auth.authorized { token in
+                try await APIClient.shared.webfletSync(accessToken: token)
+            }
             syncResult = result
             // Tras sync exitoso, refrescamos el dashboard para que los KPIs
             // (intentos hoy, última sync) reflejen el cambio.
-            await load(token: token)
+            await load(auth: auth)
         } catch APIError.rateLimited(let retryAfter) {
             if let retryAfter, retryAfter > 0 {
-                syncErrorMessage = "Demasiados intentos. Probá de nuevo en \(retryAfter) segundos."
+                syncErrorMessage = "Demasiadas peticiones. Inténtelo de nuevo en \(retryAfter) segundos."
             } else {
-                syncErrorMessage = "Demasiados intentos. Esperá un minuto antes de reintentar."
+                syncErrorMessage = "Demasiadas peticiones. Espere un minuto antes de volver a intentarlo."
             }
         } catch let err as APIError {
             syncErrorMessage = err.userMessage
@@ -353,13 +360,11 @@ struct ManagerPanelView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(token: token)
+        await viewModel.load(auth: auth)
     }
 
     private func runSync() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.triggerSync(token: token)
+        await viewModel.triggerSync(auth: auth)
         showSyncSheet = true
     }
 }

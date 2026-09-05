@@ -16,10 +16,12 @@ final class WebfletAlertsViewModel {
 
     var state: State = .loading
 
-    func load(token: String) async {
+    func load(auth: AuthSession) async {
         state = .loading
         do {
-            let response = try await APIClient.shared.webfletAlerts(accessToken: token)
+            let response = try await auth.authorized { token in
+                try await APIClient.shared.webfletAlerts(accessToken: token)
+            }
             state = response.items.isEmpty ? .empty : .loaded(response)
         } catch let err as APIError {
             state = .error(err.userMessage)
@@ -122,8 +124,7 @@ struct WebfletAlertsView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(token: token)
+        await viewModel.load(auth: auth)
     }
 }
 

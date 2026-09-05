@@ -20,13 +20,15 @@ final class RankingViewModel {
 
     var state: State = .loading
 
-    func load(convocatoriaId: String, token: String) async {
+    func load(convocatoriaId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let response = try await APIClient.shared.ranking(
-                convocatoriaId: convocatoriaId,
-                accessToken: token
-            )
+            let response = try await auth.authorized { token in
+                try await APIClient.shared.ranking(
+                    convocatoriaId: convocatoriaId,
+                    accessToken: token
+                )
+            }
             state = response.entries.isEmpty ? .empty : .loaded(response)
         } catch let err as APIError {
             state = .error(err.userMessage)
@@ -222,8 +224,7 @@ struct RankingView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(convocatoriaId: convocatoriaId, token: token)
+        await viewModel.load(convocatoriaId: convocatoriaId, auth: auth)
     }
 }
 

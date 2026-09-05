@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 actor APIClient {
     static let shared = APIClient()
@@ -111,7 +112,7 @@ actor APIClient {
     // MARK: - Internal
 
     private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
-        try await send(makeRequest(method: "GET", path: path, token: token))
+        try await send(try makeRequest(method: "GET", path: path, token: token))
     }
 
     private func post<T: Decodable>(
@@ -119,7 +120,7 @@ actor APIClient {
         body: [String: Any],
         token: String? = nil
     ) async throws -> T {
-        var request = makeRequest(method: "POST", path: path, token: token)
+        var request = try makeRequest(method: "POST", path: path, token: token)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if !body.isEmpty {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -127,8 +128,15 @@ actor APIClient {
         return try await send(request)
     }
 
-    private func makeRequest(method: String, path: String, token: String?) -> URLRequest {
-        let url = AppEnvironment.baseURL.appending(path: path)
+    private func makeRequest(method: String, path: String, token: String?) throws -> URLRequest {
+        let base: URL
+        do {
+            base = try AppEnvironment.baseURL()
+        } catch {
+            AppLog.api.fault("BASE_URL inservible: \(String(describing: error), privacy: .public)")
+            throw APIError.configuration(String(describing: error))
+        }
+        let url = base.appending(path: path)
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")

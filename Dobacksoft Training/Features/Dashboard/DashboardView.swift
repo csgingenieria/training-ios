@@ -165,7 +165,7 @@ struct ProfileView: View {
             }
 
             Section("API") {
-                row("Base URL", value: AppEnvironment.baseURL.host() ?? "—")
+                row("Base URL", value: AppEnvironment.baseURLHost ?? "sin configurar")
                 row("Cliente", value: AppEnvironment.clientVersion)
             }
 

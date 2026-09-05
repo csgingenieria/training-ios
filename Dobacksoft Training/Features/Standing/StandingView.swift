@@ -12,13 +12,15 @@ final class StandingViewModel {
 
     var state: State = .loading
 
-    func load(convocatoriaId: String, token: String) async {
+    func load(convocatoriaId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let standing = try await APIClient.shared.standing(
-                convocatoriaId: convocatoriaId,
-                accessToken: token
-            )
+            let standing = try await auth.authorized { token in
+                try await APIClient.shared.standing(
+                    convocatoriaId: convocatoriaId,
+                    accessToken: token
+                )
+            }
             state = .loaded(standing)
         } catch APIError.notFound {
             state = .notFound
@@ -44,7 +46,7 @@ struct StandingView: View {
                 ContentUnavailableView(
                     "Sin inscripción",
                     systemImage: "person.crop.circle.badge.questionmark",
-                    description: Text("No tenés una inscripción activa en esta convocatoria.")
+                    description: Text("No consta una inscripción activa en esta convocatoria.")
                 )
             case .loaded(let standing):
                 ScrollView {
@@ -71,8 +73,7 @@ struct StandingView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(convocatoriaId: convocatoriaId, token: token)
+        await viewModel.load(convocatoriaId: convocatoriaId, auth: auth)
     }
 }
 
@@ -207,7 +208,7 @@ struct MyStandingTabView: View {
             ContentUnavailableView(
                 "Sin convocatorias",
                 systemImage: "tray.fill",
-                description: Text("Todavía no estás inscripto en ninguna convocatoria.")
+                description: Text("Todavía no está inscrito en ninguna convocatoria.")
             )
         }
         .padding(.horizontal, Theme.spacing.base.value)
@@ -325,9 +326,10 @@ struct MyStandingTabView: View {
     private func load() async {
         isLoading = true
         defer { isLoading = false }
-        guard let token = auth.accessToken else { return }
         do {
-            convocatorias = try await APIClient.shared.myConvocatorias(accessToken: token)
+            convocatorias = try await auth.authorized { token in
+                try await APIClient.shared.myConvocatorias(accessToken: token)
+            }
             if selectedId == nil || !convocatorias.contains(where: { $0.id == selectedId }) {
                 selectedId = convocatorias.first?.id
             }
@@ -403,7 +405,7 @@ struct MyConvocatoriaContentView: View {
             ContentUnavailableView(
                 "Sin inscripción",
                 systemImage: "person.crop.circle.badge.questionmark",
-                description: Text("No tenés una inscripción activa en esta convocatoria.")
+                description: Text("No consta una inscripción activa en esta convocatoria.")
             )
             .cardStyle()
         case .error(let msg):
@@ -480,7 +482,7 @@ struct MyConvocatoriaContentView: View {
                     .themedShadow(.small)
                 }
             case .empty:
-                Text("Todavía no tenés intentos cerrados.")
+                Text("Todavía no hay intentos cerrados.")
                     .font(.bodyText)
                     .foregroundStyle(Color.muted)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -530,9 +532,8 @@ struct MyConvocatoriaContentView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        async let standing: Void = standingVM.load(convocatoriaId: convocatoriaId, token: token)
-        async let attempts: Void = attemptsVM.load(convocatoriaId: convocatoriaId, token: token)
+        async let standing: Void = standingVM.load(convocatoriaId: convocatoriaId, auth: auth)
+        async let attempts: Void = attemptsVM.load(convocatoriaId: convocatoriaId, auth: auth)
         _ = await (standing, attempts)
     }
 }
@@ -549,13 +550,15 @@ final class MyAttemptsViewModel {
 
     var state: State = .loading
 
-    func load(convocatoriaId: String, token: String) async {
+    func load(convocatoriaId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let items = try await APIClient.shared.myAttempts(
-                convocatoriaId: convocatoriaId,
-                accessToken: token
-            )
+            let items = try await auth.authorized { token in
+                try await APIClient.shared.myAttempts(
+                    convocatoriaId: convocatoriaId,
+                    accessToken: token
+                )
+            }
             state = items.isEmpty ? .empty : .loaded(items)
         } catch let err as APIError {
             state = .error(err.userMessage)

@@ -16,13 +16,15 @@ final class StudentProfileViewModel {
 
     var state: State = .loading
 
-    func load(studentId: String, token: String) async {
+    func load(studentId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let profile = try await APIClient.shared.studentProfile(
-                studentId: studentId,
-                accessToken: token
-            )
+            let profile = try await auth.authorized { token in
+                try await APIClient.shared.studentProfile(
+                    studentId: studentId,
+                    accessToken: token
+                )
+            }
             state = .loaded(profile)
         } catch APIError.notFound {
             // Defense in depth del backend: 404 también si es otra org o no
@@ -62,7 +64,7 @@ struct StudentProfileView: View {
                 ContentUnavailableView(
                     "Alumno no encontrado",
                     systemImage: "person.crop.circle.badge.questionmark",
-                    description: Text("No tenés acceso a este alumno o no existe.")
+                    description: Text("No dispone de acceso a este aspirante, o el aspirante no existe.")
                 )
             case .loaded(let profile):
                 content(profile)
@@ -188,8 +190,7 @@ struct StudentProfileView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(studentId: studentId, token: token)
+        await viewModel.load(studentId: studentId, auth: auth)
     }
 }
 

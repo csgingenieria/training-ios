@@ -13,20 +13,28 @@ enum APIError: Error, Sendable {
     case decoding(Error)
     case transport(Error)
     case unexpected(status: Int, body: String?)
+    /// El build no tiene una `BASE_URL` utilizable. No es un fallo de red: no se
+    /// llegó a emitir petición alguna.
+    case configuration(String)
 
+    /// Texto mostrado al usuario final.
+    ///
+    /// Castellano formal peninsular: lo lee un bombero de la Comunidad de
+    /// Madrid. Nada de voseo, aunque el equipo hable así entre nosotros.
     var userMessage: String {
         switch self {
-        case .unauthenticated: return "Sesión expirada o credenciales inválidas."
-        case .forbidden: return "No tenés permisos para esta sección."
-        case .notFound: return "Recurso no encontrado."
+        case .unauthenticated: return "La sesión ha caducado. Vuelva a iniciar sesión."
+        case .forbidden: return "No dispone de permisos para acceder a esta sección."
+        case .notFound: return "No se ha encontrado el recurso solicitado."
         case .rateLimited(let retryAfter):
-            if let s = retryAfter { return "Demasiadas peticiones. Probá en \(s)s." }
-            return "Demasiadas peticiones. Probá más tarde."
+            if let s = retryAfter { return "Demasiadas peticiones. Inténtelo de nuevo en \(s) s." }
+            return "Demasiadas peticiones. Inténtelo de nuevo más tarde."
         case .validation(let m, _): return m
         case .server(let m, _): return m
-        case .decoding: return "Respuesta inesperada del servidor."
-        case .transport: return "Error de conexión. Revisá tu red."
-        case .unexpected(let s, _): return "Error inesperado (\(s))."
+        case .decoding: return "La respuesta del servidor no tiene el formato esperado."
+        case .transport: return "No se ha podido conectar. Compruebe su conexión a la red."
+        case .unexpected(let s, _): return "Se ha producido un error inesperado (\(s))."
+        case .configuration: return "La aplicación no está configurada correctamente. Avise al soporte técnico."
         }
     }
 }

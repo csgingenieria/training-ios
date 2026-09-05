@@ -1,18 +1,60 @@
 import Foundation
 
 enum AppEnvironment {
+    /// Configuración ausente o inservible en el Info.plist del build.
+    enum ConfigurationError: Error, CustomStringConvertible {
+        case missingBaseURL
+        case malformedBaseURL(String)
+
+        var description: String {
+            switch self {
+            case .missingBaseURL:
+                "BASE_URL no está en Info.plist. Revisá el .xcconfig del esquema activo."
+            case let .malformedBaseURL(value):
+                "BASE_URL no es una URL absoluta válida: «\(value)». Debe incluir esquema y host."
+            }
+        }
+    }
+
     /// Base URL del backend Training. Lee de Info.plist inyectado por .xcconfig.
     ///
     /// Los valores reales viven en `Config/*.xcconfig` y son la única fuente de
     /// verdad; no duplicarlos aquí. Al cierre de esta nota, Debug apuntaba al
     /// VPS de staging, no a `localhost`: comprobá el `.xcconfig` de tu esquema
     /// antes de asumir contra qué entorno estás corriendo.
-    nonisolated static var baseURL: URL {
-        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "BASE_URL") as? String,
-              let url = URL(string: urlString) else {
-            fatalError("BASE_URL no configurado en Info.plist. Revisar .xcconfig para el esquema activo.")
+    ///
+    /// Antes esto llamaba a `fatalError`, así que un build mal configurado se
+    /// cerraba de golpe al arrancar en manos del usuario final. Ahora falla de
+    /// forma explícita y la app puede contarlo.
+    nonisolated static func baseURL() throws -> URL {
+        try resolveBaseURL(from: Bundle.main.infoDictionary ?? [:])
+    }
+
+    /// Núcleo de la resolución, aislado del `Bundle` para poder probarlo.
+    nonisolated static func resolveBaseURL(from info: [String: Any]) throws -> URL {
+        guard let raw = info["BASE_URL"] as? String else {
+            throw ConfigurationError.missingBaseURL
         }
+
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw ConfigurationError.missingBaseURL
+        }
+
+        // Una cadena relativa como "example.org" produce una URL válida pero
+        // inservible como base: las peticiones no irían a ninguna parte.
+        guard let url = URL(string: trimmed), url.scheme != nil, url.host() != nil else {
+            throw ConfigurationError.malformedBaseURL(trimmed)
+        }
+
         return url
+    }
+
+    /// Host de la base URL para mostrarlo en pantallas de diagnóstico.
+    /// Devuelve `nil` si la configuración es inválida, en lugar de propagar:
+    /// una etiqueta informativa no debe romper la vista que la contiene.
+    nonisolated static var baseURLHost: String? {
+        try? baseURL().host()
     }
 
     /// Versión del cliente para User-Agent.

@@ -12,14 +12,13 @@ final class ConvocatoriasListViewModel {
 
     var state: State = .loading
 
-    func load(token: String, isStudent: Bool) async {
+    func load(auth: AuthSession, isStudent: Bool) async {
         state = .loading
         do {
-            let items: [ConvocatoriaSummaryDTO]
-            if isStudent {
-                items = try await APIClient.shared.myConvocatorias(accessToken: token)
-            } else {
-                items = try await APIClient.shared.convocatorias(accessToken: token)
+            let items = try await auth.authorized { token in
+                isStudent
+                    ? try await APIClient.shared.myConvocatorias(accessToken: token)
+                    : try await APIClient.shared.convocatorias(accessToken: token)
             }
             state = items.isEmpty ? .empty : .loaded(items)
         } catch let err as APIError {
@@ -44,7 +43,7 @@ struct ConvocatoriasListView: View {
                 ContentUnavailableView(
                     "Sin convocatorias",
                     systemImage: "tray.fill",
-                    description: Text("No tenés convocatorias visibles para tu rol.")
+                    description: Text("No hay convocatorias visibles para su perfil.")
                 )
             case .loaded(let items):
                 let filtered = filter(items)
@@ -113,8 +112,7 @@ struct ConvocatoriasListView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(token: token, isStudent: auth.user?.isStudent ?? false)
+        await viewModel.load(auth: auth, isStudent: auth.user?.isStudent ?? false)
     }
 }
 

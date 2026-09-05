@@ -12,10 +12,12 @@ final class AttemptDetailViewModel {
 
     var state: State = .loading
 
-    func load(attemptId: String, token: String) async {
+    func load(attemptId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let attempt = try await APIClient.shared.attempt(id: attemptId, accessToken: token)
+            let attempt = try await auth.authorized { token in
+                try await APIClient.shared.attempt(id: attemptId, accessToken: token)
+            }
             state = .loaded(attempt)
         } catch APIError.notFound {
             state = .notFound
@@ -48,7 +50,7 @@ struct AttemptDetailView: View {
                 ContentUnavailableView(
                     "Intento no encontrado",
                     systemImage: "questionmark.folder",
-                    description: Text("No tenés acceso a este intento o no existe.")
+                    description: Text("No dispone de acceso a este intento, o el intento no existe.")
                 )
             case .loaded(let attempt):
                 AttemptDetailContent(attempt: attempt)
@@ -96,8 +98,7 @@ struct AttemptDetailView: View {
     }
 
     private func load() async {
-        guard let token = auth.accessToken else { return }
-        await viewModel.load(attemptId: attemptId, token: token)
+        await viewModel.load(attemptId: attemptId, auth: auth)
     }
 }
 

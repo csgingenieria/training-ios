@@ -68,7 +68,7 @@ struct LoginView: View {
 
             Spacer()
 
-            Text("v1 · API \(AppEnvironment.baseURL.host() ?? "")")
+            Text("v1 · API \(AppEnvironment.baseURLHost ?? "sin configurar")")
                 .font(.metaCaption)
                 .foregroundStyle(Color.muted)
                 .accessibilityHidden(true)
