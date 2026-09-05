@@ -21,3 +21,7 @@ Package.resolved
 
 # macOS
 .DS_Store
+
+# Herramientas locales de agentes (caché, no versionar)
+.atl/
+.claude/settings.local.json
