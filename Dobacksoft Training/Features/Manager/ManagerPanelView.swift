@@ -27,14 +27,29 @@ final class ManagerPanelViewModel {
     /// Es la lista que dirige el día del instructor y la web la tiene en su
     /// panel. No hace falta endpoint nuevo: el backend emite `position: null`
     /// exactamente para quien no ha conducido, así que el ranking ya lo dice.
-    var pendientes: [PendienteDeConducir] = []
+    var pendientes: [Aspirante] { aspirantes.filter { !$0.haConducido } }
 
-    struct PendienteDeConducir: Identifiable, Hashable {
+    /// Todos los inscritos de las convocatorias consultadas.
+    ///
+    /// Alimenta dos cosas con una sola lectura: la lista de quién no ha
+    /// conducido y el buscador. Llegar a la ficha de alguien exigía saber su
+    /// puesto y abrir el ranking; con esto se busca por nombre o por plaza.
+    var aspirantes: [Aspirante] = []
+
+    struct Aspirante: Identifiable, Hashable {
         let studentId: String
         let name: String
         let plaza: String?
         let convocatoriaName: String
+        let haConducido: Bool
         var id: String { studentId + "-" + convocatoriaName }
+
+        func matches(_ query: String) -> Bool {
+            let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
+            guard !needle.isEmpty else { return true }
+            return name.lowercased().contains(needle)
+                || (plaza?.lowercased().contains(needle) ?? false)
+        }
     }
 
     /// Cuántas convocatorias se consultan para armar la lista.
@@ -66,7 +81,7 @@ final class ManagerPanelViewModel {
                 return try await (dashboard, convs)
             }
             state = .loaded(d, c)
-            await loadPendientes(convocatorias: c, auth: auth)
+            await loadAspirantes(convocatorias: c, auth: auth)
         } catch let err as APIError {
             state = .error(err.userMessage)
         } catch {
@@ -74,21 +89,21 @@ final class ManagerPanelViewModel {
         }
     }
 
-    /// Deriva del ranking quién no ha conducido todavía.
+    /// Indexa a los inscritos de las convocatorias activas.
     ///
     /// Un fallo aquí **no** rompe el panel: es información complementaria, y
     /// perder los KPIs por no poder leer un ranking sería un mal negocio.
-    private func loadPendientes(
+    private func loadAspirantes(
         convocatorias: [ConvocatoriaSummaryDTO],
         auth: AuthSession
     ) async {
         let objetivo = activeConvocatorias(convocatorias).prefix(Self.maxConvocatoriasConsultadas)
         guard !objetivo.isEmpty else {
-            pendientes = []
+            aspirantes = []
             return
         }
 
-        var acumulado: [PendienteDeConducir] = []
+        var acumulado: [Aspirante] = []
         for convocatoria in objetivo {
             do {
                 let ranking = try await auth.authorized { token in
@@ -97,24 +112,23 @@ final class ManagerPanelViewModel {
                         accessToken: token
                     )
                 }
-                acumulado += ranking.entries
-                    .filter(\.hasNotDriven)
-                    .compactMap { entry in
-                        guard let id = entry.candidate.id, !id.isEmpty else { return nil }
-                        return PendienteDeConducir(
-                            studentId: id,
-                            name: entry.candidate.name ?? "—",
-                            plaza: entry.candidate.plaza,
-                            convocatoriaName: convocatoria.name
-                        )
-                    }
+                acumulado += ranking.entries.compactMap { entry in
+                    guard let id = entry.candidate.id, !id.isEmpty else { return nil }
+                    return Aspirante(
+                        studentId: id,
+                        name: entry.candidate.name ?? "—",
+                        plaza: entry.candidate.plaza,
+                        convocatoriaName: convocatoria.name,
+                        haConducido: !entry.hasNotDriven
+                    )
+                }
             } catch {
                 AppLog.api.notice(
-                    "No se pudo leer el ranking de una convocatoria para la lista de pendientes: \(String(describing: error), privacy: .public)"
+                    "No se pudo leer el ranking de una convocatoria para el índice de aspirantes: \(String(describing: error), privacy: .public)"
                 )
             }
         }
-        pendientes = acumulado
+        aspirantes = acumulado
     }
 
     /// Dispara sync on-demand. Backend rate-limit 3/min — si vuelve 429 lo
@@ -151,6 +165,7 @@ struct ManagerPanelView: View {
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = ManagerPanelViewModel()
     @State private var showSyncSheet = false
+    @State private var studentQuery = ""
 
     var body: some View {
         Group {
@@ -211,6 +226,7 @@ struct ManagerPanelView: View {
                 activityKPIs(dashboard: dashboard)
                 syncCard(dashboard: dashboard)
                 alertsShortcut(lowQuality: dashboard.convocatoriasWithLowQuality)
+                buscadorSection
                 pendientesSection
                 activeConvocatoriasSection(convocatorias: convocatorias)
             }
@@ -365,6 +381,109 @@ struct ManagerPanelView: View {
         .cardStyle()
     }
 
+    /// Buscador de aspirante por nombre o plaza.
+    ///
+    /// Antes solo se llegaba a una ficha sabiendo el puesto y abriendo el
+    /// ranking. Un instructor que atiende a alguien en el parque necesita ir
+    /// por su nombre, no por su posición.
+    ///
+    /// Filtra sobre el índice ya cargado: no hace peticiones al teclear.
+    @ViewBuilder
+    private var buscadorSection: some View {
+        if !viewModel.aspirantes.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+                Text("Buscar aspirante")
+                    .font(.sectionTitle)
+                    .foregroundStyle(Color.ink)
+                    .padding(.horizontal, Theme.spacing.xs.value)
+
+                HStack(spacing: Theme.spacing.sm.value) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(Color.muted)
+                        .accessibilityHidden(true)
+                    TextField("Nombre o plaza", text: $studentQuery)
+                        .textFieldStyle(.plain)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.words)
+                    if !studentQuery.isEmpty {
+                        Button {
+                            studentQuery = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(Color.muted)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Borrar búsqueda")
+                    }
+                }
+                .padding(.horizontal, Theme.spacing.base.value)
+                .padding(.vertical, Theme.spacing.md.value)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                        .fill(Color.paperElevated)
+                )
+
+                if !studentQuery.isEmpty {
+                    let resultados = viewModel.aspirantes.filter { $0.matches(studentQuery) }
+                    if resultados.isEmpty {
+                        Text("Ningún aspirante coincide con «\(studentQuery)».")
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.muted)
+                            .padding(.horizontal, Theme.spacing.xs.value)
+                    } else {
+                        aspiranteList(Array(resultados.prefix(12)))
+                    }
+                }
+            }
+        }
+    }
+
+    /// Filas de aspirante, compartidas por el buscador y por «sin conducir».
+    @ViewBuilder
+    private func aspiranteList(_ items: [ManagerPanelViewModel.Aspirante]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { index, aspirante in
+                NavigationLink(value: PanelStudentRoute(studentId: aspirante.studentId)) {
+                    HStack(spacing: Theme.spacing.md.value) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(aspirante.name)
+                                .font(.bodyEmphasis)
+                                .foregroundStyle(Color.ink)
+                            HStack(spacing: Theme.spacing.sm.value) {
+                                if let plaza = aspirante.plaza {
+                                    Text("Plaza \(plaza)")
+                                }
+                                Text(aspirante.convocatoriaName)
+                                    .lineLimit(1)
+                            }
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.muted)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Color.muted)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.horizontal, Theme.spacing.base.value)
+                    .padding(.vertical, Theme.spacing.md.value)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Tocar para ver la ficha del aspirante")
+
+                if index < items.count - 1 {
+                    Divider().padding(.leading, Theme.spacing.base.value)
+                }
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                .fill(Color.paperElevated)
+        )
+        .themedShadow(.small)
+    }
+
     /// Quién todavía no ha conducido.
     ///
     /// Junto a los KPIs de volumen, esta es la única lista accionable del
@@ -384,47 +503,7 @@ struct ManagerPanelView: View {
                 }
                 .padding(.horizontal, Theme.spacing.xs.value)
 
-                VStack(spacing: 0) {
-                    ForEach(Array(viewModel.pendientes.prefix(10).enumerated()), id: \.offset) { index, pendiente in
-                        NavigationLink(value: PanelStudentRoute(studentId: pendiente.studentId)) {
-                            HStack(spacing: Theme.spacing.md.value) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(pendiente.name)
-                                        .font(.bodyEmphasis)
-                                        .foregroundStyle(Color.ink)
-                                    HStack(spacing: Theme.spacing.sm.value) {
-                                        if let plaza = pendiente.plaza {
-                                            Text("Plaza \(plaza)")
-                                        }
-                                        Text(pendiente.convocatoriaName)
-                                            .lineLimit(1)
-                                    }
-                                    .font(.metaCaption)
-                                    .foregroundStyle(Color.muted)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(Color.muted)
-                                    .accessibilityHidden(true)
-                            }
-                            .padding(.horizontal, Theme.spacing.base.value)
-                            .padding(.vertical, Theme.spacing.md.value)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("Tocar para ver la ficha del aspirante")
-
-                        if index < min(viewModel.pendientes.count, 10) - 1 {
-                            Divider().padding(.leading, Theme.spacing.base.value)
-                        }
-                    }
-                }
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
-                        .fill(Color.paperElevated)
-                )
-                .themedShadow(.small)
+                aspiranteList(Array(viewModel.pendientes.prefix(10)))
 
                 if viewModel.pendientes.count > 10 {
                     Text("y \(viewModel.pendientes.count - 10) más")
