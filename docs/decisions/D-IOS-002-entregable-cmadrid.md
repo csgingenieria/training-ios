@@ -45,6 +45,8 @@ El usuario final no es técnico y no tiene a quién preguntarle. Un `fatalError`
 
 Los targets Watch y Widgets muestran datos `.sample` hardcodeados. El widget anuncia «Mi posición» en la pantalla de bloqueo y no existe ni App Group ni Keychain compartido. **Entregar un widget que muestra datos falsos a un cliente público no es una feature incompleta: es información incorrecta.** O se integran de verdad, o salen del build de entrega.
 
+> **Resuelto (2026-09-06).** El widget se integró: la app deposita un `StandingSnapshot` fechado en el App Group y el widget lo lee, sin credenciales ni red propias. El reloj se retiró del proyecto — ver `D-IOS-003`.
+
 ### 4. Trazabilidad
 
 Una suite de tests que no compila no es cobertura. Arreglada en Fase 0 (48 tests en verde).

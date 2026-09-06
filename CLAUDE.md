@@ -28,7 +28,7 @@ App nativa iOS **dentro del entregable oficial a CMadrid** desde el 2026-09-05 (
 
 - **Lenguaje:** Swift (iOS 26 SDK).
 - **UI:** SwiftUI nativo. Nada de UIKit nuevo, nada de cross-platform (sin React Native, Flutter, KMM, Catalyst).
-- **Plataformas soportadas:** iPhone + iPad (mismo target, layout adaptativo) + Apple Watch (target separado, ligero). **Sin macOS, sin visionOS.** Regla en `D-IOS-001` (`/Users/antoniohermoso/repos/training/memory/decision-ios-platform-rule.md`).
+- **Plataformas soportadas:** iPhone + iPad (mismo target, layout adaptativo), más una extensión de widget. **Sin Apple Watch, sin macOS, sin visionOS.** `D-IOS-001` (`/Users/antoniohermoso/repos/training/memory/decision-ios-platform-rule.md`) admitía el reloj; `D-IOS-003` lo retira.
 - **Concurrencia:** `async/await` + `actor` (ej: `APIClient` es un actor singleton).
 - **HTTP:** `URLSession` directo. Sin Alamofire, sin Moya.
 - **Persistencia local de tokens:** Keychain a través de `TokenStore`. **No** usar `UserDefaults` para tokens.
@@ -63,8 +63,9 @@ Cada feature es una carpeta con `*View.swift` (SwiftUI) y, cuando aplique, `*Vie
 ## Reglas firmes
 
 ### Plataforma
-- iPhone + iPad + Watch. **Nada más.** Si Xcode regenera `pbxproj` y mete `macOS` o `xrOS`, sacarlos.
-- Watch comparte modelos `Codable` y un `APIClient` lite a través de package interno; **NO** comparte SwiftUI Views.
+- iPhone + iPad, más la extensión de widget. **Nada más.** Si Xcode regenera `pbxproj` y mete `macOS`, `xrOS` o watchOS, sacarlos.
+- El widget **no tiene credenciales y no hace red**: la app deposita un `StandingSnapshot` fechado en el App Group `group.Com.Dobacksoft-Training` y el widget solo lo lee. No darle nunca el token ni un cliente HTTP.
+- El código que comparten app y widget vive en `SharedSnapshot/`, un grupo sincronizado propio añadido a ambos targets. **No** puede depender de nada del target de la app (por eso `SnapshotStore` usa su propio `Logger` y no `AppLog`).
 
 ### API
 - Toda llamada HTTP pasa por `APIClient` (actor singleton). No instanciar `URLSession` ad-hoc en Views.
@@ -150,4 +151,5 @@ Backend local para desarrollo: `http://localhost:5000` (Flask del repo training 
 ## Histórico
 
 - 2026-04-30 · creado por agente Claude del repo training en sesión de dirección de Antonio. Track separado de Training equipo.
+- 2026-09-06 · `D-IOS-003`: se retira el Apple Watch del proyecto. Ver `docs/decisions/D-IOS-003-retirada-apple-watch.md`.
 - 2026-09-05 · `D-IOS-002`: la app entra al **entregable oficial a CMadrid** (decisión de Antonio). Se documenta el vocabulario prohibido por RGPD art. 22, se corrige la fuente de verdad del contrato del API (el blueprint, no la doc) y se registra la desalineación de `plazas` frente a `CMADRID-ENTREGA.md` v1.1. Ver `docs/decisions/D-IOS-002-entregable-cmadrid.md`.

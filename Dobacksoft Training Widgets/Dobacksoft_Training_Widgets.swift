@@ -319,14 +319,20 @@ struct StandingWidget: Widget {
         }
         .configurationDisplayName(SnapshotCopy.widgetName)
         .description(SnapshotCopy.widgetDescription)
-        // Sin `.accessoryInline`: es texto plano en la pantalla de bloqueo y el
-        // sistema no lo redacta, así que la posición quedaría a la vista de
-        // cualquiera con el teléfono bloqueado sobre la mesa.
+        // Solo pantalla de inicio en la primera entrega.
+        //
+        // Las familias `accessory*` viven en la pantalla de bloqueo, donde el
+        // dato lo ve cualquiera que pase junto al teléfono sin desbloquearlo.
+        // Hablamos de la posición de una persona en una oposición pública, con
+        // datos bajo NDA: `.privacySensitive()` mitiga, pero el riesgo no
+        // compensa mientras nadie las haya pedido.
+        //
+        // `.accessoryInline` queda descartada del todo: es texto plano que el
+        // sistema no redacta. Las otras dos se activan añadiéndolas aquí, y las
+        // vistas que las pintan siguen escritas más arriba.
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
-            .accessoryCircular,
-            .accessoryRectangular,
         ])
     }
 }
