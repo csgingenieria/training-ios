@@ -20,8 +20,11 @@ final class SnapshotPublisher {
     /// protección de datos por defecto).
     private static let enabledKey = "snapshot.quickViewEnabled"
 
-    init(store: SnapshotStore = SnapshotStore(), defaults: UserDefaults = .standard) {
-        self.store = store
+    /// El almacén se construye dentro, no como valor por defecto del
+    /// parámetro: esos se evalúan fuera del aislamiento de la clase y en
+    /// aislamiento estricto eso es un error, no un aviso.
+    init(store: SnapshotStore? = nil, defaults: UserDefaults = .standard) {
+        self.store = store ?? SnapshotStore()
         self.defaults = defaults
     }
 

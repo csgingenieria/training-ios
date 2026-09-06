@@ -11,10 +11,14 @@ import os
 /// **Nunca registrar tokens, credenciales ni datos personales de aspirantes.**
 /// Los datos de CMadrid están bajo NDA y el registro unificado es legible por
 /// cualquiera con acceso al dispositivo.
+///
+/// Los tres son `nonisolated`: los usa `APIClient`, que es un `actor`, y en
+/// aislamiento estricto un global aislado al hilo principal no se puede leer
+/// desde ahí. `Logger` es `Sendable`, así que no hace falta más.
 enum AppLog {
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.dobacksoft.training"
+    nonisolated private static let subsystem = Bundle.main.bundleIdentifier ?? "com.dobacksoft.training"
 
-    static let auth = Logger(subsystem: subsystem, category: "auth")
-    static let api = Logger(subsystem: subsystem, category: "api")
-    static let keychain = Logger(subsystem: subsystem, category: "keychain")
+    nonisolated static let auth = Logger(subsystem: subsystem, category: "auth")
+    nonisolated static let api = Logger(subsystem: subsystem, category: "api")
+    nonisolated static let keychain = Logger(subsystem: subsystem, category: "keychain")
 }
