@@ -279,12 +279,20 @@ private struct AttemptDetailContent: View {
                     .font(.bodyEmphasis)
                     .foregroundStyle(Color.ink)
             case .notMeasured, .missingData:
-                // Sin números: «— / 0» se leía como un cero que el aspirante
-                // no sacó. El backend sabe el motivo exacto, pero todavía no lo
-                // envía, así que la app dice lo que sabe y nada más.
-                Text(item.presentation.label)
-                    .font(.metaCaption)
-                    .foregroundStyle(Color.muted)
+                // Sin números —«— / 0» se leía como un cero que el aspirante no
+                // sacó— y ahora con el motivo, que el contrato ya envía.
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(item.presentation.label)
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                    if let detail = item.unavailabilityDetail {
+                        Text(detail)
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.muted)
+                            .multilineTextAlignment(.trailing)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             }
         }
         .padding(.vertical, Theme.spacing.sm.value)
@@ -320,20 +328,34 @@ private struct AttemptDetailContent: View {
                         // De dónde salió y con qué intensidad lo registró el
                         // sensor. Sin esto, todos los eventos se leen igual de
                         // graves y sin procedencia.
-                        // Solo la procedencia.
+                        // La intensidad vuelve, ahora que el contrato dice
+                        // cuáles descontaron de verdad.
                         //
-                        // La intensidad NO se pinta, y no por falta de dato:
-                        // hay eventos informativos por diseño —ralentí,
-                        // badén, acelerón— que deducen 0,0 puntos y aun así
-                        // llegan con intensidad alta. Un ralentí de 25 minutos
-                        // saldría como «crítico» sin haber restado nada, y eso
-                        // le atribuye al aspirante una penalización que no
-                        // existió. Vuelve cuando el contrato envíe
-                        // `aplicaANota`, que ya está pedido.
-                        if let source = ev.sourceLabel {
-                            Label(source, systemImage: "dot.radiowaves.left.and.right")
+                        // Sin ese dato no se podía pintar: hay eventos
+                        // informativos por diseño —el badén— que llegan con
+                        // intensidad alta y no restan nada. Mostrarlos como
+                        // incidencias que penalizaron le atribuía al aspirante
+                        // algo que no ocurrió.
+                        HStack(spacing: Theme.spacing.sm.value) {
+                            if let source = ev.sourceLabel {
+                                Label(source, systemImage: "dot.radiowaves.left.and.right")
+                                    .font(.metaCaption)
+                                    .foregroundStyle(Color.muted)
+                            }
+                            if ev.didPenalise, let intensity = ev.intensity {
+                                Text("Intensidad \(intensity.rawValue.lowercased())")
+                                    .font(.metaCaption)
+                                    .foregroundStyle(Color.muted)
+                            }
+                        }
+
+                        // Y si no descontó, se dice. Un evento en la lista sin
+                        // más contexto se lee como algo que restó.
+                        if !ev.didPenalise {
+                            Text(ev.noPenaltyLabel)
                                 .font(.metaCaption)
-                                .foregroundStyle(Color.muted)
+                                .foregroundStyle(Color.inkSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .padding(.vertical, Theme.spacing.sm.value)

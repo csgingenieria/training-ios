@@ -7,8 +7,20 @@ import Foundation
 /// numbers. Rendering "obtained / max" for all of them printed "— / 0" for a
 /// component nobody could measure — which reads as a zero the candidate scored.
 struct ScoreBreakdownRowTests {
-    private func row(_ obtained: Double?, _ max: Double?) -> AttemptScoreFamilyDTO {
-        AttemptScoreFamilyDTO(family: "Estabilidad (deducciones)", obtained: obtained, max: max)
+    private func row(
+        _ obtained: Double?,
+        _ max: Double?,
+        state: String? = nil,
+        reason: String? = nil
+    ) -> AttemptScoreFamilyDTO {
+        AttemptScoreFamilyDTO(
+            key: "estabilidad",
+            family: "Estabilidad (deducciones)",
+            obtained: obtained,
+            max: max,
+            state: state,
+            reason: reason
+        )
     }
 
     @Test func measuredRowKeepsBothNumbers() {

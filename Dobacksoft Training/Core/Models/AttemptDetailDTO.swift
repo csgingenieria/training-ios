@@ -56,12 +56,57 @@ nonisolated extension AttemptRouteDTO: Decodable {}
 /// etiqueta. Por eso este tipo **no** es `Identifiable` — usar el índice del
 /// array como identidad de render.
 struct AttemptScoreFamilyDTO: Hashable, Sendable {
+    /// Identidad ESTABLE del componente (`estabilidad`, `freno_motor`,
+    /// `allison`…). `family` es la etiqueta traducible y no sirve para
+    /// identificar: dos filas del mismo componente la comparten.
+    let key: String?
+
     let family: String?
     let obtained: Double?
 
     /// Peso efectivo del componente por 10. **No es un máximo fijo**: varía por
     /// recorrido desde que existen los pesos por recorrido.
     let max: Double?
+
+    /// Por qué el componente no se midió con normalidad.
+    ///
+    /// `nil` = se midió bien. El resto son los estados del backend:
+    /// `no_medido`, `no_evaluable`, `pendiente_enrichment`, `invalido`.
+    let state: String?
+
+    /// Motivo concreto. Solo tiene sentido con `state` presente.
+    let reason: String?
+
+    /// Explicación en castellano de por qué esta fila no tiene valor.
+    ///
+    /// Antes la app decía «No evaluado» sin más, porque el contrato no traía el
+    /// motivo. Ahora puede decir *cuál*, que es la diferencia entre entender la
+    /// nota y tener que preguntar.
+    var unavailabilityDetail: String? {
+        // El motivo concreto manda sobre el estado, que es más genérico.
+        // Ojo con la forma: un `switch` con `default: break` es un statement,
+        // no una expresión, así que aquí hace falta `return` explícito — sin
+        // él los textos se evaluaban y se descartaban en silencio.
+        switch reason {
+        case "sin_datos_can":
+            return "El vehículo no entregó datos de la caja."
+        case "sin_minimo_configurado":
+            return "Este recorrido no tiene mínimo fijado para este apartado."
+        case "config_invalida":
+            return "La configuración de este apartado no era válida."
+        case "no_registrado":
+            return "No se registró actividad en este apartado."
+        default:
+            break
+        }
+
+        switch state {
+        case "pendiente_enrichment": return "Pendiente de recibir los datos de flota."
+        case "invalido":             return "El intento no superó las comprobaciones de validez."
+        case "no_evaluable":         return "Este apartado no era evaluable en este recorrido."
+        default:                     return nil
+        }
+    }
 
     /// Cómo debe representarse la fila.
     ///
@@ -131,6 +176,27 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     let timestamp: String?
     let source: String?
 
+    /// Gravedad que le puso el DETECTOR. **No es necesariamente lo que restó**:
+    /// el sensor detecta y la nota decide, y son cosas distintas.
+    let penaltyPoints: Double?
+
+    let categoria: String?
+
+    /// Si la deducción de ESTE evento llegó a descontar.
+    ///
+    /// Es el campo que faltaba para poder mostrar la intensidad sin mentir. Hay
+    /// eventos informativos por diseño —el badén— que llegan con gravedad alta
+    /// y **no restan nada**. Sin esto, la app los presentaba como incidencias
+    /// que penalizaron, atribuyéndole al aspirante algo que no ocurrió.
+    let affectsScore: Bool?
+
+    /// Por qué no penalizó, cuando `affectsScore` es falso.
+    let noPenaltyReason: String?
+
+    /// Etiqueta real del sensor (`LEVE`, `MODERADO`, `CRITICO`), en vez del
+    /// número en cubos que había que reconstruir.
+    let sensorSeverity: String?
+
     var id: String { (type ?? "ev") + "-" + (timestamp ?? UUID().uuidString) }
 
     /// De dónde salió el evento, en castellano.
@@ -159,19 +225,45 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
         case critica = "Crítica"
     }
 
-    /// Reconstruye la etiqueta a partir del cubo que envía el backend.
+    /// Intensidad, preferentemente desde la etiqueta que ahora envía el
+    /// contrato, y solo si hace falta reconstruida del número.
     ///
-    /// El backend usa 0,5 como valor centinela cuando no supo clasificar la
-    /// severidad. Eso NO es «moderada»: es que nadie la midió, y afirmarlo
-    /// sería inventar. Hoy ese caso es inalcanzable —la columna no admite
-    /// nulos— pero el día que llegue un dato migrado, la app debe callarse.
-    var sensorSeverity: SensorSeverity? {
-        guard let severity else { return nil }
+    /// La etiqueta es mejor fuente: el número venía en cubos y con un centinela
+    /// 0,5 para «no se supo clasificar», que reconstruido caía en «moderada» —
+    /// una intensidad que nadie midió.
+    var intensity: SensorSeverity? {
+        switch (sensorSeverity ?? "").uppercased() {
+        case "LEVE":     return .leve
+        case "MODERADO": return .moderada
+        case "CRITICO":  return .critica
+        default: break
+        }
+        guard let severity, severity != 0.5 else { return nil }
         switch severity {
-        case 0.5:     return nil
         case ..<0.45: return .leve
         case ..<0.8:  return .moderada
         default:      return .critica
+        }
+    }
+
+    /// `true` cuando este evento restó de verdad.
+    ///
+    /// Ante la ausencia del campo se responde `false`: afirmar que penalizó sin
+    /// que el contrato lo diga es justo el error que este campo vino a cerrar.
+    var didPenalise: Bool { affectsScore == true }
+
+    /// Qué decirle al aspirante cuando el evento no descontó.
+    ///
+    /// Descriptivo, no tranquilizador: el hecho es que no restó, y explicar por
+    /// qué cuando el contrato lo dice.
+    var noPenaltyLabel: String {
+        switch noPenaltyReason {
+        case "informativo", "evento_informativo":
+            "Registrado a título informativo: no ha restado puntuación."
+        case "dentro_de_tolerancia", "franquicia":
+            "Dentro de la tolerancia admitida: no ha restado puntuación."
+        default:
+            "No ha restado puntuación."
         }
     }
 }
