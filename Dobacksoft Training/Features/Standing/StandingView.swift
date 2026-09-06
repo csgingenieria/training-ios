@@ -668,7 +668,7 @@ struct AttemptSummaryRow: View {
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
                 HStack(spacing: Theme.spacing.sm.value) {
-                    if let date = attempt.createdAt, !date.isEmpty {
+                    if let date = APIDate.shortDateTime(attempt.createdAt) {
                         Text(date)
                             .font(.metaCaption)
                             .foregroundStyle(Color.muted)

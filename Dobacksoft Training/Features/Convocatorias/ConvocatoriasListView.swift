@@ -33,6 +33,7 @@ struct ConvocatoriasListView: View {
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = ConvocatoriasListViewModel()
     @State private var searchText = ""
+    @State private var scope: ConvocatoriaScope = .activas
 
     var body: some View {
         Group {
@@ -65,14 +66,26 @@ struct ConvocatoriasListView: View {
         }
         .navigationTitle("Convocatorias")
         .searchable(text: $searchText, prompt: "Buscar convocatoria")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Picker("Mostrar", selection: $scope) {
+                    ForEach(ConvocatoriaScope.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(Color.brand)
+            }
+        }
         .task { await load() }
         .refreshable { await load() }
     }
 
     private func filter(_ items: [ConvocatoriaSummaryDTO]) -> [ConvocatoriaSummaryDTO] {
+        let byScope = items.filter(scope.matches)
         let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !query.isEmpty else { return items }
-        return items.filter {
+        guard !query.isEmpty else { return byScope }
+        return byScope.filter {
             $0.name.lowercased().contains(query) ||
             ($0.description?.lowercased().contains(query) ?? false)
         }
@@ -186,5 +199,35 @@ struct ConvocatoriaRow: View {
     NavigationStack {
         ConvocatoriasListView()
             .environment(AuthSession.previewAuthenticated)
+    }
+}
+
+/// Separa convocatorias en curso de las ya cerradas.
+///
+/// El portal web las presenta en dos listas distintas; aquí estaban todas
+/// mezcladas y con el tiempo la lista se vuelve inservible: un instructor
+/// trabaja sobre las abiertas y consulta las cerradas de tarde en tarde.
+enum ConvocatoriaScope: String, CaseIterable, Identifiable {
+    case activas
+    case cerradas
+    case todas
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .activas:  "En curso"
+        case .cerradas: "Cerradas"
+        case .todas:    "Todas"
+        }
+    }
+
+    private static let closedStates: Set<String> = ["CLOSED", "LOCKED", "CERRADA"]
+
+    func matches(_ convocatoria: ConvocatoriaSummaryDTO) -> Bool {
+        guard self != .todas else { return true }
+        let status = (convocatoria.status ?? "").uppercased()
+        let isClosed = Self.closedStates.contains(status)
+        return self == .cerradas ? isClosed : !isClosed
     }
 }

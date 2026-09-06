@@ -90,8 +90,6 @@
 		};
 		BDA1000B2FE0000200AA0002 /* SharedSnapshot */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SharedSnapshot;
 			sourceTree = "<group>";
 		};
@@ -105,15 +103,11 @@
 		};
 		BDF87DBA2FA236C4003D3A05 /* Dobacksoft TrainingTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Dobacksoft TrainingTests";
 			sourceTree = "<group>";
 		};
 		BDF87DC42FA236C4003D3A05 /* Dobacksoft TrainingUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Dobacksoft TrainingUITests";
 			sourceTree = "<group>";
 		};
@@ -296,20 +290,6 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
-					BD1F39572FD9614400DE1E50 = {
-						CreatedOnToolsVersion = 26.5;
-					};
-					BD1F395C2FD9614500DE1E50 = {
-						CreatedOnToolsVersion = 26.5;
-					};
-					BD1F396B2FD9615000DE1E50 = {
-						CreatedOnToolsVersion = 26.5;
-						TestTargetID = BD1F395C2FD9614500DE1E50;
-					};
-					BD1F39752FD9615000DE1E50 = {
-						CreatedOnToolsVersion = 26.5;
-						TestTargetID = BD1F395C2FD9614500DE1E50;
-					};
 					BD1F398E2FD9619A00DE1E50 = {
 						CreatedOnToolsVersion = 26.5;
 					};

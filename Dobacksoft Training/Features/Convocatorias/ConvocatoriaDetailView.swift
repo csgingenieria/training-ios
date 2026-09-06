@@ -56,10 +56,20 @@ struct ConvocatoriaDetailView: View {
                 Spacer()
             }
 
-            if let updated = convocatoria.updatedAt {
-                Text("Actualizado · \(updated)")
-                    .font(.metaCaption)
-                    .foregroundStyle(Color.muted)
+            VStack(alignment: .leading, spacing: 2) {
+                // La fecha de cierre marca hasta cuándo puede cambiar la nota.
+                // El portal web la pone en cabecera; aquí no se mostraba nunca,
+                // pese a llegar en el contrato desde el principio.
+                if let closed = APIDate.shortDate(convocatoria.closedAt) {
+                    Text("Cierre · \(closed)")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                }
+                if let updated = APIDate.shortDateTime(convocatoria.updatedAt) {
+                    Text("Actualizado · \(updated)")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                }
             }
         }
         .cardStyle()
@@ -97,11 +107,11 @@ struct ConvocatoriaDetailView: View {
         VStack(spacing: 0) {
             if auth.user?.isAdminLike == true {
                 actionRow(icon: "list.number", label: "Ranking completo") {
-                    RankingView(convocatoriaId: convocatoria.id)
+                    RankingView(convocatoriaId: convocatoria.id, convocatoriaName: convocatoria.name)
                 }
                 Divider().padding(.leading, 52)
                 actionRow(icon: "tablecells", label: "Matriz de puntuaciones") {
-                    MatrixView(convocatoriaId: convocatoria.id)
+                    MatrixView(convocatoriaId: convocatoria.id, convocatoriaName: convocatoria.name)
                 }
             }
             if auth.user?.isStudent == true {

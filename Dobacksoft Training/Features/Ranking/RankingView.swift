@@ -69,6 +69,11 @@ enum RankingSortMode: String, CaseIterable, Identifiable {
 
 struct RankingView: View {
     let convocatoriaId: String
+
+    /// Nombre de la convocatoria, para que el detalle del intento no muestre
+    /// un identificador crudo.
+    var convocatoriaName: String?
+
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = RankingViewModel()
     @State private var searchText = ""
@@ -178,7 +183,7 @@ struct RankingView: View {
         }
         .pageBackground()
         .navigationDestination(for: AttemptRoute.self) { route in
-            AttemptDetailView(attemptId: route.attemptId)
+            AttemptDetailView(attemptId: route.attemptId, convocatoriaName: convocatoriaName)
         }
         .navigationDestination(for: StudentProfileRoute.self) { route in
             StudentProfileView(studentId: route.studentId)

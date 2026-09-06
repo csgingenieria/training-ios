@@ -1,4 +1,9 @@
 import SwiftUI
+import os
+
+private struct PanelStudentRoute: Hashable {
+    let studentId: String
+}
 
 @MainActor
 @Observable
@@ -15,6 +20,29 @@ final class ManagerPanelViewModel {
     var isSyncing: Bool = false
     var syncResult: SyncResultDTO?
     var syncErrorMessage: String?
+
+    /// Inscritos que todavía no han conducido ningún recorrido, con la
+    /// convocatoria a la que pertenecen.
+    ///
+    /// Es la lista que dirige el día del instructor y la web la tiene en su
+    /// panel. No hace falta endpoint nuevo: el backend emite `position: null`
+    /// exactamente para quien no ha conducido, así que el ranking ya lo dice.
+    var pendientes: [PendienteDeConducir] = []
+
+    struct PendienteDeConducir: Identifiable, Hashable {
+        let studentId: String
+        let name: String
+        let plaza: String?
+        let convocatoriaName: String
+        var id: String { studentId + "-" + convocatoriaName }
+    }
+
+    /// Cuántas convocatorias se consultan para armar la lista.
+    ///
+    /// El endpoint de ranking va a 30 peticiones por minuto y esta pantalla se
+    /// refresca al tirar hacia abajo. Con un tope bajo la función es útil sin
+    /// convertir un panel en una ráfaga de peticiones.
+    private static let maxConvocatoriasConsultadas = 3
 
     /// Convocatorias consideradas "activas" para la sección de atajos.
     func activeConvocatorias(_ all: [ConvocatoriaSummaryDTO]) -> [ConvocatoriaSummaryDTO] {
@@ -38,11 +66,55 @@ final class ManagerPanelViewModel {
                 return try await (dashboard, convs)
             }
             state = .loaded(d, c)
+            await loadPendientes(convocatorias: c, auth: auth)
         } catch let err as APIError {
             state = .error(err.userMessage)
         } catch {
             state = .error(error.localizedDescription)
         }
+    }
+
+    /// Deriva del ranking quién no ha conducido todavía.
+    ///
+    /// Un fallo aquí **no** rompe el panel: es información complementaria, y
+    /// perder los KPIs por no poder leer un ranking sería un mal negocio.
+    private func loadPendientes(
+        convocatorias: [ConvocatoriaSummaryDTO],
+        auth: AuthSession
+    ) async {
+        let objetivo = activeConvocatorias(convocatorias).prefix(Self.maxConvocatoriasConsultadas)
+        guard !objetivo.isEmpty else {
+            pendientes = []
+            return
+        }
+
+        var acumulado: [PendienteDeConducir] = []
+        for convocatoria in objetivo {
+            do {
+                let ranking = try await auth.authorized { token in
+                    try await APIClient.shared.ranking(
+                        convocatoriaId: convocatoria.id,
+                        accessToken: token
+                    )
+                }
+                acumulado += ranking.entries
+                    .filter(\.hasNotDriven)
+                    .compactMap { entry in
+                        guard let id = entry.candidate.id, !id.isEmpty else { return nil }
+                        return PendienteDeConducir(
+                            studentId: id,
+                            name: entry.candidate.name ?? "—",
+                            plaza: entry.candidate.plaza,
+                            convocatoriaName: convocatoria.name
+                        )
+                    }
+            } catch {
+                AppLog.api.notice(
+                    "No se pudo leer el ranking de una convocatoria para la lista de pendientes: \(String(describing: error), privacy: .public)"
+                )
+            }
+        }
+        pendientes = acumulado
     }
 
     /// Dispara sync on-demand. Backend rate-limit 3/min — si vuelve 429 lo
@@ -101,6 +173,9 @@ struct ManagerPanelView: View {
         .navigationTitle("Panel")
         .task { await load() }
         .refreshable { await load() }
+        .navigationDestination(for: PanelStudentRoute.self) { route in
+            StudentProfileView(studentId: route.studentId)
+        }
         .navigationDestination(for: ConvocatoriaSummaryDTO.self) { conv in
             ConvocatoriaDetailView(convocatoria: conv)
         }
@@ -136,6 +211,7 @@ struct ManagerPanelView: View {
                 activityKPIs(dashboard: dashboard)
                 syncCard(dashboard: dashboard)
                 alertsShortcut(lowQuality: dashboard.convocatoriasWithLowQuality)
+                pendientesSection
                 activeConvocatoriasSection(convocatorias: convocatorias)
             }
             .padding(.horizontal, Theme.spacing.base.value)
@@ -258,7 +334,7 @@ struct ManagerPanelView: View {
                     Text("Última sincronización Webfleet")
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
-                    Text(dashboard.lastWebfleetSyncAt ?? "Sin datos sincronizados todavía")
+                    Text(APIDate.shortDateTime(dashboard.lastWebfleetSyncAt) ?? "Sin datos sincronizados todavía")
                         .font(.bodyEmphasis)
                         .foregroundStyle(Color.ink)
                         .lineLimit(1)
@@ -287,6 +363,77 @@ struct ManagerPanelView: View {
             .accessibilityLabel(viewModel.isSyncing ? "Sincronizando" : "Sincronizar Webfleet ahora")
         }
         .cardStyle()
+    }
+
+    /// Quién todavía no ha conducido.
+    ///
+    /// Junto a los KPIs de volumen, esta es la única lista accionable del
+    /// panel: dice sobre quién hay que actuar hoy, no cuánto se hizo ayer.
+    @ViewBuilder
+    private var pendientesSection: some View {
+        if !viewModel.pendientes.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+                HStack {
+                    Text("Todavía sin conducir")
+                        .font(.sectionTitle)
+                        .foregroundStyle(Color.ink)
+                    Spacer()
+                    Text("\(viewModel.pendientes.count)")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                }
+                .padding(.horizontal, Theme.spacing.xs.value)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(viewModel.pendientes.prefix(10).enumerated()), id: \.offset) { index, pendiente in
+                        NavigationLink(value: PanelStudentRoute(studentId: pendiente.studentId)) {
+                            HStack(spacing: Theme.spacing.md.value) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(pendiente.name)
+                                        .font(.bodyEmphasis)
+                                        .foregroundStyle(Color.ink)
+                                    HStack(spacing: Theme.spacing.sm.value) {
+                                        if let plaza = pendiente.plaza {
+                                            Text("Plaza \(plaza)")
+                                        }
+                                        Text(pendiente.convocatoriaName)
+                                            .lineLimit(1)
+                                    }
+                                    .font(.metaCaption)
+                                    .foregroundStyle(Color.muted)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(Color.muted)
+                                    .accessibilityHidden(true)
+                            }
+                            .padding(.horizontal, Theme.spacing.base.value)
+                            .padding(.vertical, Theme.spacing.md.value)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Tocar para ver la ficha del aspirante")
+
+                        if index < min(viewModel.pendientes.count, 10) - 1 {
+                            Divider().padding(.leading, Theme.spacing.base.value)
+                        }
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                        .fill(Color.paperElevated)
+                )
+                .themedShadow(.small)
+
+                if viewModel.pendientes.count > 10 {
+                    Text("y \(viewModel.pendientes.count - 10) más")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                        .padding(.horizontal, Theme.spacing.xs.value)
+                }
+            }
+        }
     }
 
     @ViewBuilder

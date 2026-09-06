@@ -44,6 +44,10 @@ final class MatrixViewModel {
 
 struct MatrixView: View {
     let convocatoriaId: String
+
+    /// Nombre de la convocatoria, para el detalle del intento.
+    var convocatoriaName: String?
+
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = MatrixViewModel()
 
@@ -87,7 +91,7 @@ struct MatrixView: View {
         .task { await load() }
         .refreshable { await load() }
         .navigationDestination(for: MatrixAttemptRoute.self) { route in
-            AttemptDetailView(attemptId: route.attemptId)
+            AttemptDetailView(attemptId: route.attemptId, convocatoriaName: convocatoriaName)
         }
         .navigationDestination(for: MatrixStudentRoute.self) { route in
             StudentProfileView(studentId: route.studentId)
@@ -109,6 +113,7 @@ struct MatrixView: View {
                     }
                 } header: {
                     VStack(spacing: 0) {
+                        matrixHeader(response)
                         headerRow(response.circuits)
                         Divider()
                     }
@@ -116,6 +121,29 @@ struct MatrixView: View {
                 }
             }
         }
+    }
+
+    /// Contexto de la matriz.
+    ///
+    /// El ranking ya decía de qué convocatoria era y cuánta gente había; la
+    /// matriz no, así que abierta desde un atajo no se sabía qué se miraba.
+    @ViewBuilder
+    private func matrixHeader(_ response: MatrixResponseDTO) -> some View {
+        VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
+            Text(response.convocatoria.name)
+                .font(.cardTitle)
+                .foregroundStyle(Color.ink)
+            HStack(spacing: Theme.spacing.sm.value) {
+                Text("\(response.rows.count) candidatos")
+                Text("·")
+                Text("\(response.circuits.count) recorridos")
+            }
+            .font(.metaCaption)
+            .foregroundStyle(Color.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Theme.spacing.base.value)
+        .padding(.vertical, Theme.spacing.md.value)
     }
 
     // MARK: - Header Row

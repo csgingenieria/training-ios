@@ -163,7 +163,7 @@ private struct WebfletAlertRow: View {
                 }
 
                 HStack {
-                    if let ts = alert.timestamp, !ts.isEmpty {
+                    if let ts = APIDate.shortDateTime(alert.timestamp) {
                         Text(ts)
                             .font(.metaCaption)
                             .foregroundStyle(Color.muted)

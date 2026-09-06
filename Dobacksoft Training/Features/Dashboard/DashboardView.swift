@@ -145,6 +145,7 @@ struct ProfileView: View {
     @Environment(AuthSession.self) private var auth
     @State private var showLogoutConfirmation = false
     @State private var quickViewEnabled = SnapshotPublisher.shared.isQuickViewEnabled
+    @State private var serverHealth: String?
 
     var body: some View {
         Form {
@@ -185,6 +186,10 @@ struct ProfileView: View {
             Section("API") {
                 row("Base URL", value: AppEnvironment.baseURLHost ?? "sin configurar")
                 row("Cliente", value: AppEnvironment.clientVersion)
+                // El endpoint de salud existía en el contrato y en el cliente,
+                // y no lo llamaba nadie. Aquí sirve para lo que sirve: saber si
+                // el problema es del servidor antes de llamar a soporte.
+                row("Estado del servidor", value: serverHealth ?? "comprobando…")
             }
 
             Section("Acerca de") {
@@ -206,6 +211,7 @@ struct ProfileView: View {
                 .accessibilityLabel("Cerrar sesión")
             }
         }
+        .task { await checkHealth() }
         .navigationTitle("Perfil")
         .confirmationDialog(
             "¿Cerrar sesión?",
@@ -259,6 +265,23 @@ struct ProfileView: View {
             Text(label)
                 .font(.bodyText)
                 .foregroundStyle(Color.muted)
+        }
+    }
+
+    /// Consulta el endpoint de salud.
+    ///
+    /// No es autenticado y no toca `authorized`: si la sesión estuviera rota,
+    /// esta comprobación es justo la que dice si el problema es del servidor.
+    private func checkHealth() async {
+        do {
+            let health = try await APIClient.shared.health()
+            serverHealth = [health.status, health.version]
+                .compactMap { $0 }
+                .joined(separator: " · ")
+        } catch let error as APIError {
+            serverHealth = error.userMessage
+        } catch {
+            serverHealth = "No disponible"
         }
     }
 

@@ -31,6 +31,11 @@ final class AttemptDetailViewModel {
 
 struct AttemptDetailView: View {
     let attemptId: String
+
+    /// Nombre de la convocatoria del intento. El contrato solo envía el
+    /// identificador, así que lo aporta quien navega hasta aquí y lo conoce.
+    var convocatoriaName: String?
+
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = AttemptDetailViewModel()
 
@@ -53,7 +58,7 @@ struct AttemptDetailView: View {
                     description: Text("No dispone de acceso a este intento, o el intento no existe.")
                 )
             case .loaded(let attempt):
-                AttemptDetailContent(attempt: attempt)
+                AttemptDetailContent(convocatoriaName: convocatoriaName, attempt: attempt)
             case .error(let msg):
                 ContentUnavailableView {
                     Label("Error", systemImage: "exclamationmark.triangle.fill")
@@ -102,7 +107,17 @@ struct AttemptDetailView: View {
     }
 }
 
+private struct AttemptStudentRoute: Hashable {
+    let studentId: String
+}
+
 private struct AttemptDetailContent: View {
+    @Environment(AuthSession.self) private var auth
+
+    /// Nombre de la convocatoria, resuelto por quien navega hasta aquí. El
+    /// contrato solo envía el identificador.
+    var convocatoriaName: String?
+
     let attempt: AttemptDetailDTO
 
     var body: some View {
@@ -120,6 +135,9 @@ private struct AttemptDetailContent: View {
             .padding(.vertical, Theme.spacing.base.value)
         }
         .pageBackground()
+        .navigationDestination(for: AttemptStudentRoute.self) { route in
+            StudentProfileView(studentId: route.studentId)
+        }
     }
 
     @ViewBuilder
@@ -144,13 +162,30 @@ private struct AttemptDetailContent: View {
 
             VStack(spacing: Theme.spacing.sm.value) {
                 if let cand = attempt.candidate {
-                    summaryRow(label: "Alumno", value: cand.name ?? "—")
+                    // Desde el ranking y la matriz se llega al perfil del
+                    // aspirante; entrando por una alerta de Webfleet no había
+                    // salida hacia él.
+                    if let candidateId = cand.id, !candidateId.isEmpty, auth.user?.isAdminLike == true {
+                        NavigationLink(value: AttemptStudentRoute(studentId: candidateId)) {
+                            summaryRow(
+                                label: "Alumno",
+                                value: cand.name ?? "—",
+                                showsDisclosure: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        summaryRow(label: "Alumno", value: cand.name ?? "—")
+                    }
                 }
                 if let route = attempt.route {
                     summaryRow(label: "Ruta", value: route.label ?? route.id ?? "—")
                 }
-                if let convId = attempt.convocatoriaId, !convId.isEmpty {
-                    summaryRow(label: "Convocatoria", value: convId)
+                // El contrato solo trae el identificador; el nombre se resuelve
+                // contra la lista que la app ya tiene cargada. Si no está, no se
+                // pinta un UUID al usuario.
+                if let convocatoriaName {
+                    summaryRow(label: "Convocatoria", value: convocatoriaName)
                 }
             }
         }
@@ -158,7 +193,11 @@ private struct AttemptDetailContent: View {
     }
 
     @ViewBuilder
-    private func summaryRow(label: String, value: String) -> some View {
+    private func summaryRow(
+        label: String,
+        value: String,
+        showsDisclosure: Bool = false
+    ) -> some View {
         HStack {
             Text(label)
                 .font(.bodyText)
@@ -167,7 +206,15 @@ private struct AttemptDetailContent: View {
             Text(value)
                 .font(.bodyEmphasis)
                 .foregroundStyle(Color.ink)
+                .multilineTextAlignment(.trailing)
+            if showsDisclosure {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Color.muted)
+                    .accessibilityHidden(true)
+            }
         }
+        .contentShape(Rectangle())
     }
 
     /// Desglose de la nota por componente.
@@ -236,7 +283,7 @@ private struct AttemptDetailContent: View {
                                 .font(.bodyEmphasis)
                                 .foregroundStyle(Color.ink)
                             Spacer()
-                            if let ts = ev.timestamp {
+                            if let ts = APIDate.shortDateTime(ev.timestamp) {
                                 Text(ts)
                                     .font(.metaCaption)
                                     .foregroundStyle(Color.muted)
@@ -247,6 +294,21 @@ private struct AttemptDetailContent: View {
                                 .font(.metaCaption)
                                 .foregroundStyle(Color.inkSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
+                        }
+                        // De dónde salió y con qué intensidad lo registró el
+                        // sensor. Sin esto, todos los eventos se leen igual de
+                        // graves y sin procedencia.
+                        HStack(spacing: Theme.spacing.sm.value) {
+                            if let source = ev.sourceLabel {
+                                Label(source, systemImage: "dot.radiowaves.left.and.right")
+                                    .font(.metaCaption)
+                                    .foregroundStyle(Color.muted)
+                            }
+                            if let severity = ev.sensorSeverity {
+                                Text("Intensidad \(severity.rawValue.lowercased())")
+                                    .font(.metaCaption)
+                                    .foregroundStyle(Color.muted)
+                            }
                         }
                     }
                     .padding(.vertical, Theme.spacing.sm.value)
