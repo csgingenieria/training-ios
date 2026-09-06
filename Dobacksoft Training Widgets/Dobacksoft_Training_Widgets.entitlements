@@ -2,12 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!--
-	  Mismo contenedor que la app, y NADA más.
-
-	  Sin keychain-access-groups a propósito: el widget no ve el token porque no
-	  hace red. La app es el único proceso con credenciales.
-	-->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.Com.Dobacksoft-Training</string>

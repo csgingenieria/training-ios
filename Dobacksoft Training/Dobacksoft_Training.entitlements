@@ -2,20 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!--
-	  Contenedor compartido con el widget. La app deposita ahí la instantánea
-	  de la vista rápida; el widget solo la lee.
-
-	  Debe registrarse en el portal de Apple Developer y añadirse a los App IDs
-	  de la app y del widget. Mientras no lo esté, el contenedor no se resuelve,
-	  la lectura da «ilegible» y las superficies dicen que no hay datos: degrada
-	  sin mentir.
-
-	  Se retiraron aps-environment y las claves de iCloud/CloudKit que había
-	  aquí: no hay una sola línea de push ni de CloudKit en el repositorio, y
-	  este fichero no lo referenciaba ningún target, así que pedían permisos que
-	  nadie usaba. Si se planifica push, se vuelven a añadir.
-	-->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.Com.Dobacksoft-Training</string>
