@@ -6,7 +6,8 @@ import Foundation
 enum APIError: Error, Sendable {
     case unauthenticated
     case forbidden
-    case notFound
+    /// Con el motivo, cuando el backend lo distingue. Ver `NotFoundReason`.
+    case notFound(NotFoundReason)
     case rateLimited(retryAfter: Int?)
     case validation(message: String, details: [String: [String]]?)
     case server(message: String, status: Int)
@@ -25,7 +26,7 @@ enum APIError: Error, Sendable {
         switch self {
         case .unauthenticated: return "La sesión ha caducado. Vuelva a iniciar sesión."
         case .forbidden: return "No dispone de permisos para acceder a esta sección."
-        case .notFound: return "No se ha encontrado el recurso solicitado."
+        case .notFound(let reason): return reason.detail
         case .rateLimited(let retryAfter):
             if let s = retryAfter { return "Demasiadas peticiones. Inténtelo de nuevo en \(s) s." }
             return "Demasiadas peticiones. Inténtelo de nuevo más tarde."
@@ -36,6 +37,14 @@ enum APIError: Error, Sendable {
         case .unexpected(let s, _): return "Se ha producido un error inesperado (\(s))."
         case .configuration: return "La aplicación no está configurada correctamente. Avise al soporte técnico."
         }
+    }
+}
+
+extension APIError {
+    /// El motivo del 404, o `nil` si este error no es un 404.
+    var notFoundReason: NotFoundReason? {
+        if case let .notFound(reason) = self { return reason }
+        return nil
     }
 }
 

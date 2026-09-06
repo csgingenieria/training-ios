@@ -19,7 +19,7 @@ final class AttemptDetailViewModel {
                 try await APIClient.shared.attempt(id: attemptId, accessToken: token)
             }
             state = .loaded(attempt)
-        } catch APIError.notFound {
+        } catch let error as APIError where error.notFoundReason != nil {
             state = .notFound
         } catch let err as APIError {
             state = .error(err.userMessage)

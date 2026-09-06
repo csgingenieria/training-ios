@@ -170,7 +170,10 @@ actor APIClient {
         case 403:
             throw APIError.forbidden
         case 404:
-            throw APIError.notFound
+            // Tres 404 distintos comparten estado y solo se separan por la
+            // clave `error` del cuerpo. Dos de ellos no son fallos.
+            let body = try? decoder.decode(APIErrorBody.self, from: data)
+            throw APIError.notFound(NotFoundReason(apiCode: body?.error))
         case 422:
             let body = try? decoder.decode(APIErrorBody.self, from: data)
             throw APIError.validation(

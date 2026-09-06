@@ -81,8 +81,13 @@ final class SnapshotPublisher {
                 attemptsTotal: standing.attemptsTotal,
                 finality: finality.snapshotValue
             ))
-        case .notFound:
-            return .sinPosicion(convocatoriaName: convocatoriaName ?? "")
+        case let .notFound(reason):
+            // Sin inscripción no hay convocatoria de la que hablar; sin
+            // posición todavía, sí. El widget no puede decir lo mismo en los
+            // dos casos.
+            return reason == .notEnrolled
+                ? .sinConvocatoria
+                : .sinPosicion(convocatoriaName: convocatoriaName ?? "")
         case .loading, .error:
             return nil
         }

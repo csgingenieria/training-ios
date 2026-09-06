@@ -26,7 +26,7 @@ final class StudentProfileViewModel {
                 )
             }
             state = .loaded(profile)
-        } catch APIError.notFound {
+        } catch let error as APIError where error.notFoundReason != nil {
             // Defense in depth del backend: 404 también si es otra org o no
             // tiene rol STUDENT. No leakeamos cuál es la razón.
             state = .notFound

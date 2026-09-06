@@ -6,7 +6,9 @@ final class StandingViewModel {
     enum State {
         case loading
         case loaded(StandingDTO)
-        case notFound
+        /// Con el motivo: no estar inscrito y no tener posición todavía son
+        /// estados legítimos, no fallos, y se cuentan distinto.
+        case notFound(NotFoundReason)
         case error(String)
     }
 
@@ -27,8 +29,8 @@ final class StandingViewModel {
                 )
             }
             state = .loaded(standing)
-        } catch APIError.notFound {
-            state = .notFound
+        } catch let err as APIError where err.notFoundReason != nil {
+            state = .notFound(err.notFoundReason ?? .resourceMissing)
         } catch let err as APIError {
             state = .error(err.userMessage)
         } catch {
@@ -65,16 +67,13 @@ struct StandingView: View {
             switch viewModel.state {
             case .loading:
                 centeredLoading("Cargando posición…")
-            case .notFound:
+            case .notFound(let reason):
+                // El contrato ya distingue los tres 404, así que cada uno dice
+                // lo suyo en vez de un texto que valiera para todos.
                 ContentUnavailableView(
-                    "Todavía sin posición",
-                    systemImage: "person.crop.circle.badge.questionmark",
-                    // El backend devuelve el mismo 404 a quien no está inscrito
-                    // y a quien lo está pero aún no ha conducido — el caso más
-                    // común al abrir una convocatoria. Afirmar que no consta la
-                    // inscripción era falso para el segundo, así que el texto
-                    // cubre ambos sin dar por cierto ninguno.
-                    description: Text("Su posición aparecerá cuando se registre el primer recorrido calificado.")
+                    reason.title,
+                    systemImage: reason.symbol,
+                    description: Text(reason.detail)
                 )
             case .loaded(let standing):
                 ScrollView {
@@ -538,11 +537,11 @@ struct MyConvocatoriaContentView: View {
                 standing: standing,
                 finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
             )
-        case .notFound:
+        case .notFound(let reason):
             ContentUnavailableView(
-                "Todavía sin posición",
-                systemImage: "person.crop.circle.badge.questionmark",
-                description: Text("Su posición aparecerá cuando se registre el primer recorrido calificado.")
+                reason.title,
+                systemImage: reason.symbol,
+                description: Text(reason.detail)
             )
             .cardStyle()
         case .error(let msg):

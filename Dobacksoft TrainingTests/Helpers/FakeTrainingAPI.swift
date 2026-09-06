@@ -10,8 +10,8 @@ import Foundation
 actor FakeTrainingAPI: TrainingAPI {
     // MARK: Scripted results
 
-    var loginResult: Result<AuthLoginResponseDTO, Error> = .failure(APIError.notFound)
-    var refreshResult: Result<RefreshResponseDTO, Error> = .failure(APIError.notFound)
+    var loginResult: Result<AuthLoginResponseDTO, Error> = .failure(APIError.notFound(.resourceMissing))
+    var refreshResult: Result<RefreshResponseDTO, Error> = .failure(APIError.notFound(.resourceMissing))
 
     /// Consumed in order, one per `me(accessToken:)` call, so a test can say
     /// "first call fails with 401, the retry succeeds".
@@ -35,13 +35,13 @@ actor FakeTrainingAPI: TrainingAPI {
     func setStandingResults(_ results: [Result<StandingDTO, Error>]) { standingResults = results }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
-        guard !queue.isEmpty else { throw APIError.notFound }
+        guard !queue.isEmpty else { throw APIError.notFound(.resourceMissing) }
         return try queue.removeFirst().get()
     }
 
     // MARK: TrainingAPI
 
-    func health() async throws -> HealthDTO { throw APIError.notFound }
+    func health() async throws -> HealthDTO { throw APIError.notFound(.resourceMissing) }
 
     func login(email: String, password: String) async throws -> AuthLoginResponseDTO {
         loginCalls.append((email, password))
@@ -64,37 +64,37 @@ actor FakeTrainingAPI: TrainingAPI {
     }
 
     func myConvocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO] {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func convocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func convocatoriaDetail(id: String, accessToken: String) async throws -> ConvocatoriaSummaryDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func ranking(convocatoriaId: String, accessToken: String) async throws -> RankingResponseDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func matrix(convocatoriaId: String, accessToken: String) async throws -> MatrixResponseDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func attempt(id: String, accessToken: String) async throws -> AttemptDetailDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func managerDashboard(accessToken: String) async throws -> ManagerDashboardDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func studentProfile(studentId: String, accessToken: String) async throws -> StudentProfileDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func webfletAlerts(accessToken: String) async throws -> WebfletAlertsResponseDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
     func webfletSync(accessToken: String) async throws -> SyncResultDTO {
-        throw APIError.notFound
+        throw APIError.notFound(.resourceMissing)
     }
 }
 

@@ -16,7 +16,7 @@ struct APIErrorTests {
     }
 
     @Test func notFoundMessage() {
-        #expect(APIError.notFound.userMessage == "No se ha encontrado el recurso solicitado.")
+        #expect(APIError.notFound(.resourceMissing).userMessage == "No se ha encontrado el recurso solicitado.")
     }
 
     @Test func rateLimitedWithRetryAfter() {
@@ -66,7 +66,7 @@ struct APIErrorTests {
     /// a blank error state.
     @Test func noMessageIsEmpty() {
         let all: [APIError] = [
-            .unauthenticated, .forbidden, .notFound,
+            .unauthenticated, .forbidden, .notFound(.resourceMissing),
             .rateLimited(retryAfter: nil), .rateLimited(retryAfter: 5),
             .validation(message: "x", details: nil),
             .server(message: "y", status: 500),
@@ -83,7 +83,7 @@ struct APIErrorTests {
     /// Rioplatense voseo endings that must never reach the UI.
     @Test func copyAvoidsVoseo() {
         let all: [APIError] = [
-            .unauthenticated, .forbidden, .notFound,
+            .unauthenticated, .forbidden, .notFound(.resourceMissing),
             .rateLimited(retryAfter: nil),
             .decoding(NSError(domain: "t", code: 0)),
             .transport(URLError(.timedOut)),
