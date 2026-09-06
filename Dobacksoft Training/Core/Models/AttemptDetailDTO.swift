@@ -125,9 +125,16 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
         case critica = "Crítica"
     }
 
+    /// Reconstruye la etiqueta a partir del cubo que envía el backend.
+    ///
+    /// El backend usa 0,5 como valor centinela cuando no supo clasificar la
+    /// severidad. Eso NO es «moderada»: es que nadie la midió, y afirmarlo
+    /// sería inventar. Hoy ese caso es inalcanzable —la columna no admite
+    /// nulos— pero el día que llegue un dato migrado, la app debe callarse.
     var sensorSeverity: SensorSeverity? {
         guard let severity else { return nil }
         switch severity {
+        case 0.5:     return nil
         case ..<0.45: return .leve
         case ..<0.8:  return .moderada
         default:      return .critica

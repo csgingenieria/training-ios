@@ -181,11 +181,19 @@ private struct AttemptDetailContent: View {
                 if let route = attempt.route {
                     summaryRow(label: "Ruta", value: route.label ?? route.id ?? "—")
                 }
-                // El contrato solo trae el identificador; el nombre se resuelve
-                // contra la lista que la app ya tiene cargada. Si no está, no se
-                // pinta un UUID al usuario.
+                // El contrato solo trae el identificador, así que el nombre lo
+                // aporta quien navega hasta aquí. Cuando no lo sabe, se degrada
+                // en vez de desaparecer: al instructor le sirve una referencia
+                // corta para cotejar, y al aspirante no se le enseña un
+                // identificador de base de datos que no significa nada para él.
                 if let convocatoriaName {
                     summaryRow(label: "Convocatoria", value: convocatoriaName)
+                } else if
+                    auth.user?.isAdminLike == true,
+                    let reference = attempt.convocatoriaId?.prefix(8),
+                    !reference.isEmpty
+                {
+                    summaryRow(label: "Convocatoria", value: "Ref. \(reference)")
                 }
             }
         }
@@ -283,7 +291,7 @@ private struct AttemptDetailContent: View {
                                 .font(.bodyEmphasis)
                                 .foregroundStyle(Color.ink)
                             Spacer()
-                            if let ts = APIDate.shortDateTime(ev.timestamp) {
+                            if let ts = APIDate.displayInstant(ev.timestamp) {
                                 Text(ts)
                                     .font(.metaCaption)
                                     .foregroundStyle(Color.muted)
@@ -298,17 +306,20 @@ private struct AttemptDetailContent: View {
                         // De dónde salió y con qué intensidad lo registró el
                         // sensor. Sin esto, todos los eventos se leen igual de
                         // graves y sin procedencia.
-                        HStack(spacing: Theme.spacing.sm.value) {
-                            if let source = ev.sourceLabel {
-                                Label(source, systemImage: "dot.radiowaves.left.and.right")
-                                    .font(.metaCaption)
-                                    .foregroundStyle(Color.muted)
-                            }
-                            if let severity = ev.sensorSeverity {
-                                Text("Intensidad \(severity.rawValue.lowercased())")
-                                    .font(.metaCaption)
-                                    .foregroundStyle(Color.muted)
-                            }
+                        // Solo la procedencia.
+                        //
+                        // La intensidad NO se pinta, y no por falta de dato:
+                        // hay eventos informativos por diseño —ralentí,
+                        // badén, acelerón— que deducen 0,0 puntos y aun así
+                        // llegan con intensidad alta. Un ralentí de 25 minutos
+                        // saldría como «crítico» sin haber restado nada, y eso
+                        // le atribuye al aspirante una penalización que no
+                        // existió. Vuelve cuando el contrato envíe
+                        // `aplicaANota`, que ya está pedido.
+                        if let source = ev.sourceLabel {
+                            Label(source, systemImage: "dot.radiowaves.left.and.right")
+                                .font(.metaCaption)
+                                .foregroundStyle(Color.muted)
                         }
                     }
                     .padding(.vertical, Theme.spacing.sm.value)

@@ -95,9 +95,42 @@ struct ConvocatoriaScopeTests {
         #expect(!ConvocatoriaScope.cerradas.matches(convocatoria(status: nil)))
     }
 
+    /// PREVIEW and CLOSING are real backend states. Treating them as closed
+    /// made a convocatoria being wrapped up lose its candidates from the
+    /// instructor's search — exactly when he needs to know who is missing.
+    @Test func previewAndClosingAreStillInProgress() {
+        #expect(ConvocatoriaScope.activas.matches(convocatoria(status: "PREVIEW")))
+        #expect(ConvocatoriaScope.activas.matches(convocatoria(status: "CLOSING")))
+        #expect(!ConvocatoriaScope.cerradas.matches(convocatoria(status: "CLOSING")))
+    }
+
     @Test func todasKeepsEverything() {
         for status in ["OPEN", "CLOSED", "LOCKED", nil] {
             #expect(ConvocatoriaScope.todas.matches(convocatoria(status: status)))
         }
+    }
+}
+
+/// The API is not homogeneous about instants, and assuming it was cost a
+/// regression: event times vanished from the attempt detail.
+struct DisplayInstantTests {
+    /// Events arrive already formatted in Madrid time (`%H:%M:%S` from the
+    /// backend's own helper), not as ISO. Parsing them as ISO yields nil and
+    /// the whole column goes blank.
+    @Test func preformattedTimeSurvives() {
+        #expect(APIDate.displayInstant("08:33:12") == "08:33:12")
+    }
+
+    @Test func isoStillGetsFormatted() {
+        #expect(APIDate.displayInstant("2026-09-03T14:22:11Z") == "03/09/2026 16:22")
+    }
+
+    /// The backend writes a dash when an event has no timestamp. That is
+    /// absence, not a value to print.
+    @Test func absenceMarkersAreDropped() {
+        #expect(APIDate.displayInstant("—") == nil)
+        #expect(APIDate.displayInstant("-") == nil)
+        #expect(APIDate.displayInstant("  ") == nil)
+        #expect(APIDate.displayInstant(nil) == nil)
     }
 }

@@ -58,6 +58,44 @@ struct AspiranteIndexTests {
         #expect(a.id != b.id)
     }
 
+    /// Spanish surnames carry accents and phone keyboards do not. Without
+    /// folding, searching "Munoz" claimed nobody matched.
+    @Test func searchIgnoresAccents() {
+        let munoz = aspirante(name: "Juan Muñoz Núñez")
+        #expect(munoz.matches("Munoz"))
+        #expect(munoz.matches("nunez"))
+        #expect(munoz.matches("MUÑOZ"))
+    }
+
+    /// A partial index must never be reported as a complete answer: saying
+    /// "nobody matches" about people the app never looked up is a false
+    /// statement, not a search result.
+    @Test func partialCoverageAnnouncesItself() {
+        var coverage = ManagerPanelViewModel.IndexCoverage(consultadas: 3, disponibles: 5)
+        #expect(!coverage.esCompleta)
+        #expect(coverage.aviso?.contains("3 de 5") == true)
+
+        coverage = ManagerPanelViewModel.IndexCoverage(consultadas: 2, disponibles: 2)
+        #expect(coverage.esCompleta)
+        #expect(coverage.aviso == nil)
+    }
+
+    /// A failed read is not an empty convocatoria.
+    @Test func failedReadsCountAsIncomplete() {
+        let coverage = ManagerPanelViewModel.IndexCoverage(
+            consultadas: 2, disponibles: 2, fallidas: 1
+        )
+        #expect(!coverage.esCompleta)
+        #expect(coverage.aviso?.contains("1 de 2") == true)
+    }
+
+    @Test func totalFailureSaysSo() {
+        let coverage = ManagerPanelViewModel.IndexCoverage(
+            consultadas: 2, disponibles: 2, fallidas: 2
+        )
+        #expect(coverage.aviso?.contains("No se ha podido") == true)
+    }
+
     /// `pendientes` is derived, so it can never drift from the index.
     @Test func pendientesAreTheOnesWhoHaveNotDriven() {
         let viewModel = ManagerPanelViewModel()

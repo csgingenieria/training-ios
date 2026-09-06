@@ -78,6 +78,23 @@ enum APIDate {
         parse(value).map(longDateTimeFormatter.string(from:))
     }
 
+    /// Texto de instante para pintar tal cual.
+    ///
+    /// La API **no es homogénea**: la mayoría de campos llegan en ISO-8601 UTC,
+    /// pero los eventos de un intento traen la hora YA FORMATEADA en Madrid
+    /// (`%H:%M:%S` desde `_hora_madrid`), porque el backend la compuso en
+    /// Python. Pasarles un parser de ISO devuelve `nil` y la hora desaparece
+    /// de la pantalla.
+    ///
+    /// Así que: si parsea como ISO, se formatea; si no, se devuelve lo que vino
+    /// —que ya es legible— y solo se descarta el marcador de ausencia.
+    static func displayInstant(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, trimmed != "—", trimmed != "-" else { return nil }
+        return shortDateTime(trimmed) ?? trimmed
+    }
+
     /// `hace 5 minutos`. Para listas de actividad, donde importa lo reciente
     /// que es algo más que el instante exacto.
     static func relative(from date: Date, to reference: Date = Date()) -> String {

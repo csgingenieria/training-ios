@@ -307,7 +307,10 @@ struct MyStandingTabView: View {
         }
         .pageBackground()
         .navigationDestination(for: StudentAttemptRoute.self) { route in
-            AttemptDetailView(attemptId: route.attemptId)
+            AttemptDetailView(
+                attemptId: route.attemptId,
+                convocatoriaName: selectedConvocatoria?.name
+            )
         }
     }
 
@@ -439,7 +442,7 @@ struct MyConvocatoriaContentView: View {
                 }
                 .pageBackground()
                 .navigationDestination(for: StudentAttemptRoute.self) { route in
-                    AttemptDetailView(attemptId: route.attemptId)
+                    AttemptDetailView(attemptId: route.attemptId, convocatoriaName: convocatoriaName)
                 }
             }
         }

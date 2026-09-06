@@ -36,6 +36,34 @@ final class ManagerPanelViewModel {
     /// puesto y abrir el ranking; con esto se busca por nombre o por plaza.
     var aspirantes: [Aspirante] = []
 
+    /// Qué parte del censo se pudo indexar.
+    ///
+    /// El índice sale de leer rankings, y eso puede quedarse corto por el tope
+    /// de consultas o por un fallo de red. Sin este dato la app diría «ningún
+    /// aspirante coincide» y «sin conducir: 18» como si fueran hechos, cuando
+    /// son el resultado de no haber mirado. Afirmar un número sobre un grupo de
+    /// personas que no se ha medido es justo lo que este proyecto no hace.
+    struct IndexCoverage: Equatable {
+        var consultadas: Int = 0
+        var disponibles: Int = 0
+        var fallidas: Int = 0
+
+        var esCompleta: Bool { fallidas == 0 && consultadas >= disponibles }
+
+        var aviso: String? {
+            guard !esCompleta else { return nil }
+            // Fallaron TODAS las que se intentaron: no hay índice, no un
+            // índice corto. `consultadas` cuenta intentos, no éxitos.
+            if fallidas > 0 && fallidas >= consultadas {
+                return "No se ha podido consultar el censo de aspirantes."
+            }
+            let leidas = consultadas - fallidas
+            return "Índice parcial: \(leidas) de \(disponibles) convocatorias en curso."
+        }
+    }
+
+    var coverage = IndexCoverage()
+
     struct Aspirante: Identifiable, Hashable {
         let studentId: String
         let name: String
@@ -44,11 +72,22 @@ final class ManagerPanelViewModel {
         let haConducido: Bool
         var id: String { studentId + "-" + convocatoriaName }
 
+        /// Compara ignorando tildes y mayúsculas.
+        ///
+        /// Muñoz, Núñez, Pérez y Martínez cubren buena parte de un censo
+        /// español, y en el teclado del móvil se escriben sin tilde. Sin este
+        /// plegado, buscar «Munoz» respondía que nadie coincide.
         func matches(_ query: String) -> Bool {
-            let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
+            let needle = Self.fold(query)
             guard !needle.isEmpty else { return true }
-            return name.lowercased().contains(needle)
-                || (plaza?.lowercased().contains(needle) ?? false)
+            return Self.fold(name).contains(needle)
+                || Self.fold(plaza ?? "").contains(needle)
+        }
+
+        private static func fold(_ value: String) -> String {
+            value
+                .trimmingCharacters(in: .whitespaces)
+                .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "es_ES"))
         }
     }
 
@@ -59,12 +98,15 @@ final class ManagerPanelViewModel {
     /// convertir un panel en una ráfaga de peticiones.
     private static let maxConvocatoriasConsultadas = 3
 
-    /// Convocatorias consideradas "activas" para la sección de atajos.
+    /// Convocatorias en curso.
+    ///
+    /// Usa la misma definición que la lista de convocatorias (`ConvocatoriaScope`)
+    /// para que «en curso» no signifique dos cosas distintas en la misma app.
+    /// La lista blanca anterior dejaba fuera `PREVIEW` y `CLOSING` —estados
+    /// reales del backend—, así que una convocatoria en pleno cierre perdía a
+    /// sus aspirantes del buscador justo cuando hacían falta.
     func activeConvocatorias(_ all: [ConvocatoriaSummaryDTO]) -> [ConvocatoriaSummaryDTO] {
-        all.filter { conv in
-            guard let status = conv.status?.uppercased() else { return true }
-            return ["OPEN", "ACTIVE", "ACTIVA", "EN CURSO"].contains(status)
-        }
+        all.filter(ConvocatoriaScope.activas.matches)
     }
 
     func load(auth: AuthSession) async {
@@ -97,7 +139,10 @@ final class ManagerPanelViewModel {
         convocatorias: [ConvocatoriaSummaryDTO],
         auth: AuthSession
     ) async {
-        let objetivo = activeConvocatorias(convocatorias).prefix(Self.maxConvocatoriasConsultadas)
+        let activas = activeConvocatorias(convocatorias)
+        let objetivo = activas.prefix(Self.maxConvocatoriasConsultadas)
+        coverage = IndexCoverage(consultadas: objetivo.count, disponibles: activas.count)
+
         guard !objetivo.isEmpty else {
             aspirantes = []
             return
@@ -123,6 +168,7 @@ final class ManagerPanelViewModel {
                     )
                 }
             } catch {
+                coverage.fallidas += 1
                 AppLog.api.notice(
                     "No se pudo leer el ranking de una convocatoria para el índice de aspirantes: \(String(describing: error), privacy: .public)"
                 )
@@ -423,15 +469,35 @@ struct ManagerPanelView: View {
                         .fill(Color.paperElevated)
                 )
 
+                if let aviso = viewModel.coverage.aviso {
+                    Text(aviso)
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.warning)
+                        .padding(.horizontal, Theme.spacing.xs.value)
+                }
+
                 if !studentQuery.isEmpty {
                     let resultados = viewModel.aspirantes.filter { $0.matches(studentQuery) }
                     if resultados.isEmpty {
-                        Text("Ningún aspirante coincide con «\(studentQuery)».")
-                            .font(.metaCaption)
-                            .foregroundStyle(Color.muted)
-                            .padding(.horizontal, Theme.spacing.xs.value)
+                        // Sin resultados NO es lo mismo que «no está inscrito».
+                        // Si el índice está incompleto, decirlo: la app no ha
+                        // mirado en todas partes.
+                        Text(
+                            viewModel.coverage.esCompleta
+                                ? "Ningún aspirante coincide con «\(studentQuery)»."
+                                : "Ningún aspirante coincide entre los consultados. El índice está incompleto."
+                        )
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                        .padding(.horizontal, Theme.spacing.xs.value)
                     } else {
                         aspiranteList(Array(resultados.prefix(12)))
+                        if resultados.count > 12 {
+                            Text("y \(resultados.count - 12) más. Afine la búsqueda.")
+                                .font(.metaCaption)
+                                .foregroundStyle(Color.muted)
+                                .padding(.horizontal, Theme.spacing.xs.value)
+                        }
                     }
                 }
             }

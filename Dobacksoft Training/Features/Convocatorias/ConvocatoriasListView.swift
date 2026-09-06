@@ -50,6 +50,19 @@ struct ConvocatoriasListView: View {
                 let filtered = filter(items)
                 if filtered.isEmpty && !searchText.isEmpty {
                     ContentUnavailableView.search(text: searchText)
+                } else if filtered.isEmpty {
+                    // El filtro de ámbito vació la lista. Sin esta rama la
+                    // pantalla quedaba en blanco: al final de campaña, con todo
+                    // cerrado, el instructor no veía nada ni sabía que hay un
+                    // selector arriba puesto en «En curso».
+                    ContentUnavailableView {
+                        Label("Sin convocatorias \(scope.title.lowercased())", systemImage: "line.3.horizontal.decrease.circle")
+                    } description: {
+                        Text("Hay \(items.count) convocatorias en total. Cambie el filtro para verlas.")
+                    } actions: {
+                        Button("Ver todas") { scope = .todas }
+                            .buttonStyle(.brandPrimary(fullWidth: false))
+                    }
                 } else {
                     loadedList(filtered)
                 }
