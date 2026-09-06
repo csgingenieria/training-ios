@@ -81,13 +81,22 @@ struct ConvocatoriasListView: View {
         .searchable(text: $searchText, prompt: "Buscar convocatoria")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Picker("Mostrar", selection: $scope) {
-                    ForEach(ConvocatoriaScope.allCases) { option in
-                        Text(option.title).tag(option)
+                // Un Picker(.menu) suelto en el toolbar se estira hasta ocupar
+                // todo el ancho disponible: tres palabras cortas quedaban dentro
+                // de una cápsula de media pantalla, con el texto pegado al borde
+                // derecho. Envuelto en un Menu con etiqueta propia dimensiona al
+                // contenido y, de paso, se lee como filtro y no como título.
+                Menu {
+                    Picker("Mostrar", selection: $scope) {
+                        ForEach(ConvocatoriaScope.allCases) { option in
+                            Text(option.title).tag(option)
+                        }
                     }
+                } label: {
+                    Label(scope.title, systemImage: "line.3.horizontal.decrease.circle")
                 }
-                .pickerStyle(.menu)
                 .tint(Color.brand)
+                .accessibilityLabel("Filtrar convocatorias. Actual: \(scope.title)")
             }
         }
         .task { await load() }
@@ -155,7 +164,8 @@ struct ConvocatoriaRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if let status = conv.status {
-                    StatusBadge(text: status, kind: badgeKind(for: status))
+                    let estado = StatusVocabulary.convocatoria(status)
+                    StatusBadge(text: estado.label, kind: estado.kind)
                 }
             }
 
@@ -191,18 +201,10 @@ struct ConvocatoriaRow: View {
         .foregroundStyle(Color.muted)
     }
 
-    private func badgeKind(for status: String) -> BadgeKind {
-        switch status.uppercased() {
-        case "OPEN", "ACTIVE", "ACTIVA", "EN CURSO": return .success
-        case "CLOSED", "CERRADA":                    return .neutral
-        case "DRAFT", "BORRADOR":                    return .warning
-        default:                                     return .brand
-        }
-    }
 
     private var accessibilitySummary: String {
         var parts: [String] = [conv.name]
-        if let status = conv.status { parts.append(status) }
+        if let status = conv.status { parts.append(StatusVocabulary.convocatoria(status).label) }
         parts.append("\(conv.totalCandidates) candidatos")
         return parts.joined(separator: ", ")
     }

@@ -7,7 +7,7 @@ struct AuthLoginDTOTests {
     @Test func decodeLoginResponse() throws {
         let dto: AuthLoginResponseDTO = try JSONFixture.decode("login-response")
         #expect(dto.access_token == "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMDAxMjM0NTY3ODkiLCJleHAiOjk5OTk5OTk5OTl9.test-signature")
-        #expect(dto.refresh_token != nil)
+        #expect(!dto.refresh_token.isEmpty)
         #expect(dto.token_type == "Bearer")
         #expect(dto.expires_in == 3600)
         #expect(dto.user.id == "00123456789")

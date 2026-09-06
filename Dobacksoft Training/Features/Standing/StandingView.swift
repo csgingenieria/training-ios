@@ -175,11 +175,12 @@ struct StandingCard: View {
             }
 
             VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
+                let enrolment = StatusVocabulary.enrolment(standing.status)
                 HStack(spacing: Theme.spacing.sm.value) {
-                    Text("Estado de tu matrícula")
+                    Text("Estado de su matrícula")
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
-                    StatusBadge(text: standing.status, kind: badgeKind(for: standing.status))
+                    StatusBadge(text: enrolment.label, kind: enrolment.kind)
                 }
                 Text("La asignación de plaza la decide CMadrid al cierre de la convocatoria.")
                     .font(.metaCaption)
@@ -255,13 +256,6 @@ struct StandingCard: View {
         }
     }
 
-    private func badgeKind(for status: String) -> BadgeKind {
-        switch status.uppercased() {
-        case "ACTIVE", "ACTIVA": return .success
-        case "WITHDRAWN", "INVALIDATED", "BAJA": return .danger
-        default: return .neutral
-        }
-    }
 }
 
 struct StandingMetric: View {

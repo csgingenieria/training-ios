@@ -223,7 +223,7 @@ struct ProfileView: View {
             }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("Vas a salir de la app y tendrás que iniciar sesión de nuevo.")
+            Text("Saldrá de la aplicación y tendrá que iniciar sesión de nuevo.")
         }
     }
 

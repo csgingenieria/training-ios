@@ -18,7 +18,7 @@ import Foundation
 ///
 /// Cuando el backend publique `gradeIsFinal`, este tipo es el único sitio a
 /// cambiar.
-enum GradeFinality: Sendable {
+nonisolated enum GradeFinality: Sendable {
     /// La convocatoria sigue abierta: la nota puede cambiar por conducción.
     case provisional
     /// El acta está firmada pero sigue dentro de la ventana de revocación.

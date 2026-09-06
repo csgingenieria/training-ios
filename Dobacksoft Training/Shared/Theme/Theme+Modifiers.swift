@@ -33,10 +33,15 @@ extension View {
 
 // MARK: - Status badge
 
-enum BadgeKind {
+nonisolated enum BadgeKind {
     case neutral, brand, success, warning, danger
 
-    var foreground: Color {
+    // Los símbolos de color los genera Xcode desde el catálogo de assets y
+    // salen aislados al MainActor, así que estas dos propiedades lo están
+    // también. El tipo sigue siendo `nonisolated` para que su conformidad
+    // sintetizada a Equatable no lo esté: eso era lo que producía avisos
+    // «error en modo Swift 6» en cada comparación de insignia.
+    @MainActor var foreground: Color {
         switch self {
         case .neutral: return .inkSecondary
         case .brand:   return .brand
@@ -46,7 +51,7 @@ enum BadgeKind {
         }
     }
 
-    var background: Color {
+    @MainActor var background: Color {
         switch self {
         case .neutral: return .paperElevated
         case .brand:   return .brandTint

@@ -5,7 +5,7 @@ import Foundation
 /// Anclado siempre en `capturedAt`, nunca en «cuándo se leyó»: un puesto de
 /// hace tres días presentado como actual es la misma afirmación falsa que uno
 /// inventado, solo que más creíble.
-enum SnapshotFreshness: Sendable, Equatable {
+nonisolated enum SnapshotFreshness: Sendable, Equatable {
     /// Se muestran las cifras sin adorno.
     case fresco
     /// Se muestran las cifras **y** la fecha en que se consultaron.

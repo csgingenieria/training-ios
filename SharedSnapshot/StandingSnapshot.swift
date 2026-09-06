@@ -13,7 +13,7 @@ import Foundation
 /// correo, nombre de persona, identificador de convocatoria, plaza, cupo ni
 /// línea de corte. Un campo que no existe no se puede pintar por error. No
 /// añadirlos «solo para la vista pequeña».
-struct StandingSnapshot: Codable, Sendable, Equatable {
+nonisolated struct StandingSnapshot: Codable, Sendable, Equatable {
     /// Versión del formato. Un lector que encuentre una mayor que la suya debe
     /// tratarla como ilegible, no intentar adivinar.
     static let currentSchemaVersion = 1

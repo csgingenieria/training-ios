@@ -55,7 +55,7 @@ nonisolated extension AttemptRouteDTO: Decodable {}
 /// máquina: una fila medida y otra sin medir del mismo componente comparten
 /// etiqueta. Por eso este tipo **no** es `Identifiable` — usar el índice del
 /// array como identidad de render.
-struct AttemptScoreFamilyDTO: Hashable, Sendable {
+nonisolated struct AttemptScoreFamilyDTO: Hashable, Sendable {
     /// Identidad ESTABLE del componente (`estabilidad`, `freno_motor`,
     /// `allison`…). `family` es la etiqueta traducible y no sirve para
     /// identificar: dos filas del mismo componente la comparten.

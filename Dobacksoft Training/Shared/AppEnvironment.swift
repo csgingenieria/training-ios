@@ -2,6 +2,10 @@ import Foundation
 
 enum AppEnvironment {
     /// Configuración ausente o inservible en el Info.plist del build.
+    ///
+    /// Diagnóstico de desarrollo, en inglés: nunca lo lee el usuario final
+    /// (`APIError.configuration` ignora este payload y muestra su propio
+    /// mensaje formal), pero sí acaba en logs y en el informe de soporte.
     enum ConfigurationError: Error, CustomStringConvertible {
         case missingBaseURL
         case malformedBaseURL(String)
@@ -9,9 +13,9 @@ enum AppEnvironment {
         var description: String {
             switch self {
             case .missingBaseURL:
-                "BASE_URL no está en Info.plist. Revisá el .xcconfig del esquema activo."
+                "BASE_URL is missing from Info.plist. Check the active scheme's .xcconfig."
             case let .malformedBaseURL(value):
-                "BASE_URL no es una URL absoluta válida: «\(value)». Debe incluir esquema y host."
+                "BASE_URL is not a valid absolute URL: «\(value)». It must include scheme and host."
             }
         }
     }

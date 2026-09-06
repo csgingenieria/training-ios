@@ -17,7 +17,7 @@ private let snapshotLog = Logger(
 /// lectura antes del primer desbloqueo se le presenten al usuario como «no ha
 /// iniciado sesión» — una afirmación falsa sobre su cuenta, tan falsa como el
 /// puesto inventado que este trabajo viene a eliminar, solo que menos vistosa.
-enum SnapshotReadResult: Sendable, Equatable {
+nonisolated enum SnapshotReadResult: Sendable, Equatable {
     /// No se pudo leer. **Nunca** se traduce como «inicie sesión».
     case ilegible(Reason)
     /// El contenedor es legible y no hay instantánea: no hay sesión.

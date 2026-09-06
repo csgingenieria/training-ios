@@ -210,7 +210,8 @@ private struct ProfileStandingRow: View {
                         .foregroundStyle(Color.muted)
                 }
                 Spacer()
-                StatusBadge(text: standing.status, kind: statusKind(standing.status))
+                let estado = StatusVocabulary.enrolment(standing.status)
+                StatusBadge(text: estado.label, kind: estado.kind)
             }
 
             HStack(spacing: Theme.spacing.lg.value) {
@@ -242,11 +243,4 @@ private struct ProfileStandingRow: View {
         }
     }
 
-    private func statusKind(_ status: String) -> BadgeKind {
-        switch status.uppercased() {
-        case "ACTIVE", "ACTIVA":              return .success
-        case "WITHDRAWN", "INVALIDATED", "BAJA": return .danger
-        default:                              return .neutral
-        }
-    }
 }

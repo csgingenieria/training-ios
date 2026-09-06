@@ -10,7 +10,7 @@ import Foundation
 /// de todo el mundo al abrir una convocatoria, antes de conducir. Enseñar una
 /// pantalla de error para eso le dice a un aspirante que algo ha fallado cuando
 /// no ha fallado nada.
-enum NotFoundReason: Sendable, Equatable {
+nonisolated enum NotFoundReason: Sendable, Equatable {
     /// No consta su inscripción en esa convocatoria.
     case notEnrolled
     /// Inscrito, pero todavía sin ningún recorrido calificado.

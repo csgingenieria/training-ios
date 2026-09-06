@@ -47,7 +47,8 @@ struct ConvocatoriaDetailView: View {
                     .lineLimit(3)
                 Spacer()
                 if let status = convocatoria.status {
-                    StatusBadge(text: status, kind: badgeKind(for: status))
+                    let estado = StatusVocabulary.convocatoria(status)
+                    StatusBadge(text: estado.label, kind: estado.kind)
                 }
             }
 
@@ -165,12 +166,4 @@ struct ConvocatoriaDetailView: View {
         .accessibilityHint("Tocar para abrir")
     }
 
-    private func badgeKind(for status: String) -> BadgeKind {
-        switch status.uppercased() {
-        case "OPEN", "ACTIVE", "ACTIVA", "EN CURSO": return .success
-        case "CLOSED", "CERRADA":                    return .neutral
-        case "DRAFT", "BORRADOR":                    return .warning
-        default:                                     return .brand
-        }
-    }
 }

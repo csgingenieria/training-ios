@@ -34,18 +34,25 @@ struct LoginView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .accessibilityLabel("Correo electrónico")
+                    .accessibilityIdentifier("login.email")
 
                 SecureField("Contraseña", text: $password)
                     .textFieldStyle(.roundedBorder)
                     .font(.bodyText)
                     .textContentType(.password)
                     .accessibilityLabel("Contraseña")
+                    .accessibilityIdentifier("login.password")
 
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.bodyText)
                         .foregroundStyle(Color.danger)
                         .multilineTextAlignment(.center)
+                        // Sin esto el texto se queda en una línea y se corta:
+                        // «No se ha podido conectar. Compruebe s…». Es el único
+                        // mensaje que ve alguien que no consigue entrar, así que
+                        // truncado no le dice nada.
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity)
                         .accessibilityLabel("Error: \(errorMessage)")
                 }
@@ -63,6 +70,7 @@ struct LoginView: View {
                 .buttonStyle(.brandPrimary)
                 .disabled(isLoading || email.isEmpty || password.isEmpty)
                 .accessibilityLabel(isLoading ? "Iniciando sesión" : "Iniciar sesión")
+                .accessibilityIdentifier("login.submit")
             }
             .padding(.horizontal, Theme.spacing.xl.value)
 
