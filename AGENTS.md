@@ -8,8 +8,8 @@ Hay dos repos físicamente separados, owner único Antonio:
 
 | Repo | Local | GitHub | Visibilidad | Stack | Engram project |
 |------|-------|--------|-------------|-------|----------------|
-| Training (equipo) | `/Users/antoniohermoso/repos/training` | [`cosigein/training`](https://github.com/cosigein/training) | PUBLIC | Flask + Postgres | `training` |
-| Dobacksoft Training (iOS personal) | `/Users/antoniohermoso/IOS/Dobacksoft Training` | [`cosigein/training-ios`](https://github.com/cosigein/training-ios) | PRIVATE | Swift + SwiftUI | `training-ios` |
+| Training (equipo) | `/Users/antoniohermoso/repos/training` | [`csgingenieria/training`](https://github.com/csgingenieria/training) | PRIVADO | Flask + Postgres | `training` |
+| Dobacksoft Training (iOS) | `/Users/antoniohermoso/IOS/Dobacksoft Training` | [`csgingenieria/training-ios`](https://github.com/csgingenieria/training-ios) | PRIVADO | Swift + SwiftUI | `training-ios` |
 
 La decisión que separa los dos tracks: `D-DIR-001`, en `/Users/antoniohermoso/repos/training/memory/decision-tracks-paralelos.md`.
 
@@ -21,10 +21,10 @@ El único acoplamiento permitido es **el contrato del API móvil v1**. La app iO
 
 1. **Memoria aislada por `project`.** Detalles de implementación iOS → `project: "training-ios"`. Detalles del backend → `project: "training"`. Nunca cruzados.
 2. **Comunicación por engram con topic keys conocidos** (sección siguiente). Sin IPC en vivo, sin sockets, sin archivos compartidos. Engram es el canal **primario**.
-3. **GitHub Issues como canal secundario formal.** Cuando una necesidad cross-track tenga que ser visible para humanos del equipo training (Jesús, Alejandro, Joel) o requiera tracking más allá de la sesión actual, se abre issue en `cosigein/training` con label `cross-ios` (a crear cuando haga falta). Engram sigue siendo la fuente de verdad para los agentes; GitHub es para humanos.
+3. **GitHub Issues como canal secundario formal.** Cuando una necesidad cross-track tenga que ser visible para humanos del equipo training (Jesús, Alejandro, Joel) o requiera tracking más allá de la sesión actual, se abre issue en `csgingenieria/training` con label `cross-ios` (a crear cuando haga falta). Engram sigue siendo la fuente de verdad para los agentes; GitHub es para humanos.
 4. **El humano (Antonio) es el único canal síncrono.** Si algo es urgente, se le dice a él; él decide.
 5. **Sin commits cruzados.** Ningún archivo `.swift` entra al repo training. Ningún archivo `.py` entra al repo iOS. Sólo metadocumentación (este AGENTS.md, decisiones D-XXX, etc.).
-6. **Cuidado con el repo training siendo PUBLIC.** El repo backend `cosigein/training` es PUBLIC en GitHub. Cualquier issue, comentario o commit es visible. **Cero datos reales CMadrid, cero capturas con info confidencial, cero credenciales.**
+6. **Confidencialidad, sean privados o no.** Los dos repos son privados (verificado el 2026-09-06; este archivo declaraba el backend como público, y no lo es). Eso no cambia el criterio: **cero datos reales CMadrid, cero capturas con info confidencial, cero credenciales** en commits, issues o comentarios. Un repo privado se comparte, se clona y cambia de visibilidad; lo escrito no se borra.
 
 ## Topic keys del protocolo
 

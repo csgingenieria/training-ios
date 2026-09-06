@@ -15,7 +15,9 @@ Usuarios finales:
 - **Bomberos aspirantes** (rol `STUDENT`) — consultan su posición, su nota y su historial de intentos.
 - **Instructores** (rol `MANAGER`) — operativa diaria: panel, ranking, matriz, alertas Webfleet, sincronización manual.
 
-El repo sigue siendo privado y separado (`cosigein/training-ios`). No cambia la regla de no commits cruzados con `cosigein/training`.
+El repo sigue siendo privado y separado (`csgingenieria/training-ios`). No cambia la regla de no commits cruzados con `csgingenieria/training`.
+
+> Nota del 2026-09-06: hasta esa fecha esta decisión citaba `cosigein/*`, una organización inexistente. El repo iOS se creó ese día y recibió sus primeros dieciséis commits.
 
 ## Por qué
 

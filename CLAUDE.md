@@ -11,8 +11,12 @@ App nativa iOS **dentro del entregable oficial a CMadrid** desde el 2026-09-05 (
 - Nació como track **paralelo** al sprint del equipo Training (Jesús, Alejandro, Joel) — ver `D-DIR-001` en `/Users/antoniohermoso/repos/training/memory/decision-tracks-paralelos.md`. Sigue siendo un repo aparte, pero ya no es un experimento personal.
 
 **Repos relevantes:**
-- Este repo iOS (PRIVATE): [`cosigein/training-ios`](https://github.com/cosigein/training-ios)
-- Repo backend del equipo (PUBLIC): [`cosigein/training`](https://github.com/cosigein/training) ← cuidado, es público; cero datos reales CMadrid en commits, issues o capturas.
+- Este repo iOS (PRIVADO): [`csgingenieria/training-ios`](https://github.com/csgingenieria/training-ios)
+- Repo backend del equipo (PRIVADO): [`csgingenieria/training`](https://github.com/csgingenieria/training)
+
+> Ambos son privados y verificados el 2026-09-06. Hasta esa fecha este archivo citaba `cosigein/*`, una organización que **no existe**, y declaraba el backend como público. El repo iOS nunca había tenido remoto válido: dieciséis commits vivían solo en el disco de Antonio.
+>
+> Que sean privados **no relaja la confidencialidad**: los datos de CMadrid siguen bajo NDA y el criterio de qué se escribe en un commit no cambia.
 
 **Nada de este repo se commitea al repo training, ni viceversa.** El único acoplamiento permitido es el contrato del API móvil v1.
 
@@ -100,7 +104,7 @@ Lo que sí se muestra: posición en el ranking, nota, número de participantes, 
 ### Confidencialidad
 - Datos CMadrid bajo NDA. Para desarrollo, usar el VPS staging o seed local — nunca la base de producción.
 - Sin capturas con datos reales en commits, issues, gists, screenshots públicos ni herramientas de terceros.
-- El repo backend `cosigein/training` es **PUBLIC**. Este repo es privado, pero cualquier cosa que cruce hacia allá (issues, decisiones) es visible.
+- Ambos repos son privados, pero eso **no baja el listón**: los datos de CMadrid están bajo NDA y lo que se escribe en un commit, un issue o una captura sigue el mismo criterio que si fueran públicos.
 
 ## Memoria persistente (engram)
 
