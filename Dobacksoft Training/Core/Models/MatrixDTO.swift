@@ -2,9 +2,25 @@ import Foundation
 
 // MARK: - Circuit
 
+/// Una columna de la matriz.
 struct MatrixCircuitDTO: Sendable, Identifiable {
     let id: String
     let label: String
+
+    /// `true` cuando la columna no es un recorrido real.
+    ///
+    /// Los intentos sin recorrido asignado —existen en producción, y con nota—
+    /// reciben un identificador inventado (`U00`, `U01`…). No se ocultan,
+    /// porque esconderlos borraría intentos reales de la pantalla, pero
+    /// tampoco pueden presentarse como si fueran el nombre de un recorrido.
+    ///
+    /// Opcional porque el contrato lo añadió después.
+    let synthetic: Bool?
+
+    var isSynthetic: Bool { synthetic == true }
+
+    /// Cabecera de la columna.
+    var displayLabel: String { isSynthetic ? "Sin recorrido" : label }
 }
 
 nonisolated extension MatrixCircuitDTO: Decodable {}

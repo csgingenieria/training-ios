@@ -10,22 +10,63 @@
     "updatedAt": "2026-05-20T10:30:00Z"
   },
   "circuits": [
-    { "id": "RECORRIDO_A", "label": "Recorrido A" },
-    { "id": "RECORRIDO_B", "label": "Recorrido B" }
+    {
+      "id": "RECORRIDO_A",
+      "label": "Recorrido A",
+      "synthetic": false
+    },
+    {
+      "id": "RECORRIDO_B",
+      "label": "Recorrido B",
+      "synthetic": false
+    },
+    {
+      "id": "U00",
+      "label": "U00",
+      "synthetic": true
+    }
   ],
   "rows": [
     {
-      "candidate": { "id": "cand-001", "name": "María García" },
+      "candidate": {
+        "id": "cand-001",
+        "name": "María García"
+      },
       "scores": [
-        { "circuitId": "RECORRIDO_A", "score": 9.0 },
-        { "circuitId": "RECORRIDO_B", "score": 8.4 }
+        {
+          "circuitId": "RECORRIDO_A",
+          "score": 9.0
+        },
+        {
+          "circuitId": "RECORRIDO_B",
+          "score": 8.4
+        },
+        {
+          "circuitId": "U00",
+          "score": 3.2,
+          "attemptId": "att-u00"
+        }
       ]
     },
     {
-      "candidate": { "id": "cand-002", "name": "Carlos López" },
+      "candidate": {
+        "id": "cand-002",
+        "name": "Carlos López"
+      },
       "scores": [
-        { "circuitId": "RECORRIDO_A", "score": 8.2 },
-        { "circuitId": "RECORRIDO_B", "score": 8.8 }
+        {
+          "circuitId": "RECORRIDO_A",
+          "score": 8.2
+        },
+        {
+          "circuitId": "RECORRIDO_B",
+          "score": 8.8
+        },
+        {
+          "circuitId": "U00",
+          "score": 3.2,
+          "attemptId": "att-u00"
+        }
       ]
     }
   ]

@@ -136,7 +136,7 @@ struct MatrixView: View {
             HStack(spacing: Theme.spacing.sm.value) {
                 Text("\(response.rows.count) candidatos")
                 Text("·")
-                Text("\(response.circuits.count) recorridos")
+                Text("\(response.circuits.filter { !$0.isSynthetic }.count) recorridos")
             }
             .font(.metaCaption)
             .foregroundStyle(Color.muted)
@@ -158,9 +158,13 @@ struct MatrixView: View {
                 .padding(.vertical, Theme.spacing.md.value)
 
             ForEach(circuits) { circuit in
-                Text(circuit.label)
+                // Una columna sintética agrupa intentos sin recorrido
+                // asignado. Pintar su identificador inventado —«U00»— la haría
+                // pasar por un recorrido que no existe.
+                Text(circuit.displayLabel)
                     .font(.body(size: 12, weight: .semibold, relativeTo: .caption))
                     .foregroundStyle(Color.muted)
+                    .italic(circuit.isSynthetic)
                     .frame(minWidth: cellMinWidth, alignment: .center)
                     .padding(.horizontal, Theme.spacing.sm.value)
                     .padding(.vertical, Theme.spacing.md.value)
@@ -177,7 +181,7 @@ struct MatrixView: View {
 
             ForEach(circuits) { circuit in
                 let cell = row.scores.first(where: { $0.circuitId == circuit.id })
-                scoreCell(cell, candidateName: row.candidate.name, circuitLabel: circuit.label)
+                scoreCell(cell, candidateName: row.candidate.name, circuitLabel: circuit.displayLabel)
             }
         }
     }
