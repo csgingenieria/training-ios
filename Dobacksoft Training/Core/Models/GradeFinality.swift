@@ -19,27 +19,34 @@ import Foundation
 /// Cuando el backend publique `gradeIsFinal`, este tipo es el único sitio a
 /// cambiar.
 enum GradeFinality: Sendable {
+    /// La convocatoria sigue abierta: la nota puede cambiar por conducción.
     case provisional
+    /// El acta está firmada pero sigue dentro de la ventana de revocación.
+    case pendingConfirmation
+    /// La nota ya no puede cambiar.
     case definitive
     /// No se conoce el estado de la convocatoria: no se afirma nada.
     case unknown
-
-    /// Estados de convocatoria en los que la nota ya no cambia.
-    private static let finalStates: Set<String> = ["CLOSED", "LOCKED"]
-
-    /// Estados en los que la nota todavía puede moverse.
-    private static let openStates: Set<String> = ["OPEN", "PREVIEW", "CLOSING"]
 
     init(convocatoriaStatus: String?) {
         let normalised = (convocatoriaStatus ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .uppercased()
 
-        if Self.finalStates.contains(normalised) {
+        switch normalised {
+        case "LOCKED":
+            // Único estado en el que la nota es realmente inamovible.
             self = .definitive
-        } else if Self.openStates.contains(normalised) {
+        case "CLOSED":
+            // Acta firmada, pero el administrador dispone de 24 horas para
+            // revertir el cierre por error grave. Llamar «definitiva» a una
+            // nota que aún puede moverse es afirmar de más sobre una persona
+            // en una oposición pública.
+            self = .pendingConfirmation
+        case "OPEN", "PREVIEW", "CLOSING":
+            // CLOSING es un cierre iniciado y no consumado: sigue abierta.
             self = .provisional
-        } else {
+        default:
             // Un estado que no reconocemos no autoriza a afirmar nada. Elegir
             // por defecto sería inventarse el dato en una u otra dirección.
             self = .unknown
@@ -49,7 +56,8 @@ enum GradeFinality: Sendable {
     /// Rótulo de la métrica de nota.
     var scoreLabel: String {
         switch self {
-        case .provisional: "Nota provisional"
+        case .provisional:          "Nota provisional"
+        case .pendingConfirmation:  "Nota pendiente de confirmación"
         case .definitive, .unknown: "Nota"
         }
     }
@@ -59,6 +67,8 @@ enum GradeFinality: Sendable {
         switch self {
         case .provisional:
             "La convocatoria sigue abierta: esta nota puede variar hasta su cierre."
+        case .pendingConfirmation:
+            "El acta está firmada. Durante las 24 horas siguientes al cierre aún puede revisarse."
         case .definitive, .unknown:
             nil
         }

@@ -19,7 +19,31 @@ struct StandingDTO: Sendable {
     let score: Double
     let attemptsCompleted: Int
     let attemptsTotal: Int
+
+    /// Estado de la **matrícula** (`ACTIVE`, `COMPLETED`), no de la
+    /// convocatoria. No usarlo para decidir si la nota es definitiva.
     let status: String
+
+    // MARK: Composición de la nota
+    //
+    // Opcionales porque el contrato los añadió después: una app que decodifique
+    // una respuesta anterior no debe romperse.
+
+    let requiredRoutes: [String]?
+    let completedRequired: Int?
+    let pendingRequired: Int?
+    let scoreOfCompleted: Double?
+
+    /// De qué está hecha la nota, o `nil` si el backend todavía no lo envía.
+    var composition: GradeComposition? {
+        guard let completedRequired, let pendingRequired else { return nil }
+        return GradeComposition(
+            requiredRoutes: requiredRoutes,
+            completedRequired: completedRequired,
+            pendingRequired: pendingRequired,
+            scoreOfCompleted: scoreOfCompleted
+        )
+    }
 }
 
 nonisolated extension StandingDTO: Decodable {}

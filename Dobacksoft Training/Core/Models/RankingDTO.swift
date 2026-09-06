@@ -31,11 +31,26 @@ struct RankingEntryDTO: Identifiable, Hashable, Sendable {
     let attemptsTotal: Int
     let attemptId: String?
 
+    /// `true` si la persona ha conducido y entra en el orden de méritos.
+    ///
+    /// Opcional porque el contrato lo añadió después.
+    let presented: Bool?
+
+    /// `true` si comparte puesto con alguien por tener la misma nota.
+    ///
+    /// El backend usa numeración de competición: 1, 2, 2, 4. Sin este dato, dos
+    /// filas con el mismo número parecen un error de la app.
+    let tied: Bool?
+
     /// `true` cuando la persona está inscrita pero no ha conducido.
     ///
-    /// Derivado de la ausencia de puesto, que es el único indicio disponible
-    /// hoy: el backend todavía no envía un campo `presentado`.
-    var hasNotDriven: Bool { position == nil }
+    /// Prefiere el dato del backend sobre la heurística. Derivarlo de la
+    /// ausencia de puesto funcionaba, pero ataba la app a un detalle de
+    /// implementación del ranking.
+    var hasNotDriven: Bool {
+        if let presented { return !presented }
+        return position == nil
+    }
 
     /// Nota que puede mostrarse, o `nil` si no hay ninguna que mostrar.
     ///

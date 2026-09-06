@@ -245,9 +245,18 @@ struct RankingEntryRow: View {
             positionBadge
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.candidate.name ?? "—")
-                    .font(.bodyEmphasis)
-                    .foregroundStyle(Color.ink)
+                HStack(spacing: Theme.spacing.xs.value) {
+                    Text(entry.candidate.name ?? "—")
+                        .font(.bodyEmphasis)
+                        .foregroundStyle(Color.ink)
+                    // Numeración de competición: 1, 2, 2, 4. Sin decirlo, dos
+                    // filas con el mismo puesto parecen un fallo de la app.
+                    if entry.tied == true {
+                        Text("empate")
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.muted)
+                    }
+                }
                 if let plaza = entry.candidate.plaza {
                     Text("Plaza \(plaza)")
                         .font(.metaCaption)

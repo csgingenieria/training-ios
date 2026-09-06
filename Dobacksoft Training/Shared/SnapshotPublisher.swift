@@ -93,6 +93,11 @@ extension GradeFinality {
     var snapshotValue: StandingSnapshot.Finality {
         switch self {
         case .provisional: .provisional
+        // Dentro de la ventana de revocación la nota todavía puede cambiar, así
+        // que para el widget cuenta como provisional. Perder ahí el matiz de
+        // «pendiente de confirmación» es aceptable —el resumen no da para
+        // explicarlo— pero llamarla definitiva no lo sería.
+        case .pendingConfirmation: .provisional
         case .definitive:  .definitiva
         case .unknown:     .desconocida
         }

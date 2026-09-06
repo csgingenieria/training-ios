@@ -17,6 +17,22 @@ struct ProfileStandingDTO: Sendable, Identifiable, Hashable {
     let attemptsTotal: Int
     let status: String
 
+    let requiredRoutes: [String]?
+    let completedRequired: Int?
+    let pendingRequired: Int?
+    let scoreOfCompleted: Double?
+
+    /// De qué está hecha la nota. Ver `GradeComposition`.
+    var composition: GradeComposition? {
+        guard let completedRequired, let pendingRequired else { return nil }
+        return GradeComposition(
+            requiredRoutes: requiredRoutes,
+            completedRequired: completedRequired,
+            pendingRequired: pendingRequired,
+            scoreOfCompleted: scoreOfCompleted
+        )
+    }
+
     var id: String { convocatoriaId }
 }
 

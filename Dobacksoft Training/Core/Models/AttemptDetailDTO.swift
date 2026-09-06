@@ -7,9 +7,43 @@ struct AttemptCandidateDTO: Hashable, Sendable {
 
 nonisolated extension AttemptCandidateDTO: Decodable {}
 
+/// El recorrido de un intento.
+///
+/// `id` y `label` son AMBOS el código crudo del recorrido («2A1»). El nombre
+/// legible («Parque → Hoyo de Manzanares») viaja aparte en `name`, y el
+/// contrato es así por historia: en la matriz, en cambio, `label` sí trae el
+/// nombre. No confiar en `label` para mostrar al usuario.
 struct AttemptRouteDTO: Hashable, Sendable {
     let id: String?
     let label: String?
+
+    /// Nombre legible. **Nulable**: vale `nil` si el intento no tiene recorrido
+    /// asignado o si la fila del recorrido no aparece. Y sí, existen intentos
+    /// sin recorrido en producción, con nota.
+    let name: String?
+
+    /// `EXAMEN` o `PRACTICA`. **Nulable** por el mismo motivo que `name`.
+    let categoria: String?
+
+    /// Lo que se muestra: el nombre si lo hay, y si no el código, que al menos
+    /// identifica algo.
+    var displayName: String? {
+        name ?? label ?? id
+    }
+
+    /// `true` si es un recorrido de prácticas.
+    ///
+    /// Importa porque **un intento de prácticas no mueve la nota oficial**: se
+    /// puntúa y se ve, pero no ordena la oposición. Sin marcarlo, un aspirante
+    /// ve un 10 en su lista que no cambia su nota y no entiende por qué.
+    /// `nil` cuando el contrato no lo dice: entonces no se afirma nada.
+    var isPractice: Bool? {
+        switch (categoria ?? "").uppercased() {
+        case "PRACTICA": true
+        case "EXAMEN":   false
+        default:         nil
+        }
+    }
 }
 
 nonisolated extension AttemptRouteDTO: Decodable {}

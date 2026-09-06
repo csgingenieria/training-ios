@@ -61,7 +61,11 @@ struct StandingDTOTests {
             score: 8.0,
             attemptsCompleted: 2,
             attemptsTotal: 3,
-            status: "ACTIVE"
+            status: "ACTIVE",
+            requiredRoutes: nil,
+            completedRequired: nil,
+            pendingRequired: nil,
+            scoreOfCompleted: nil
         )
         let profile = ProfileStandingDTO(
             convocatoriaId: "c",
@@ -71,7 +75,11 @@ struct StandingDTOTests {
             score: 8.0,
             attemptsCompleted: 2,
             attemptsTotal: 3,
-            status: "ACTIVE"
+            status: "ACTIVE",
+            requiredRoutes: nil,
+            completedRequired: nil,
+            pendingRequired: nil,
+            scoreOfCompleted: nil
         )
         let convocatoria = ConvocatoriaSummaryDTO(
             id: "c",

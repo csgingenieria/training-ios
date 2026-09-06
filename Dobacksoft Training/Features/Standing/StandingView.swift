@@ -163,6 +163,10 @@ struct StandingCard: View {
                 )
             }
 
+            if let composition = standing.composition {
+                compositionBlock(composition)
+            }
+
             if let note = finality.note {
                 Text(note)
                     .font(.metaCaption)
@@ -191,6 +195,65 @@ struct StandingCard: View {
                 .fill(Color.paperElevated)
         )
         .themedShadow(.medium)
+    }
+
+    /// De qué está hecha la nota.
+    ///
+    /// Es la diferencia entre leer «4,75» y entender «4,75, que son cinco
+    /// recorridos conducidos con un 9,50 de media más cinco que aún no has
+    /// hecho y computan como cero». Sin esto, alguien concluye que conduce mal
+    /// cuando lo que pasa es que va por la mitad del examen.
+    @ViewBuilder
+    private func compositionBlock(_ composition: GradeComposition) -> some View {
+        // Sin recorridos exigidos la nota es el mejor intento global: no hay
+        // composición que explicar.
+        if !composition.isGlobalBest {
+            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+                Divider()
+
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Recorridos exigidos")
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                    Spacer()
+                    Text("\(composition.completedRequired) de \(composition.totalRequired)")
+                        .font(.bodyEmphasis)
+                        .foregroundStyle(Color.ink)
+                }
+
+                if let progress = composition.progress {
+                    ProgressView(value: progress)
+                        .tint(Color.brand)
+                        .accessibilityLabel(
+                            "\(composition.completedRequired) de \(composition.totalRequired) recorridos exigidos conducidos"
+                        )
+                }
+
+                if let explanation = composition.explanation {
+                    Text(explanation)
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // La media de lo conducido es el dato que responde «¿cómo
+                // conduzco?», frente a la nota oficial, que responde «¿cómo voy
+                // en el examen?». Son preguntas distintas y confundirlas es lo
+                // que hacía que un 9,50 se leyera como un 4,75.
+                if let conducted = composition.scoreOfCompleted {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Media de lo conducido")
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.muted)
+                        Spacer()
+                        Text(String(format: "%.2f", conducted))
+                            .font(.bodyEmphasis)
+                            .foregroundStyle(Color.ink)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private func badgeKind(for status: String) -> BadgeKind {
@@ -517,7 +580,7 @@ struct MyConvocatoriaContentView: View {
             // adivinarlo por el código del recorrido está expresamente
             // desaconsejado. Se dice lo que se sabe, sin insinuar el resto.
             if case .loaded = attemptsVM.state {
-                Text("Este listado recoge todos tus recorridos cerrados, prácticas incluidas. No todos intervienen en la nota oficial.")
+                Text("Los recorridos marcados como prácticas se puntúan, pero no intervienen en la nota oficial.")
                     .font(.metaCaption)
                     .foregroundStyle(Color.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -667,7 +730,7 @@ struct AttemptSummaryRow: View {
     var body: some View {
         HStack(spacing: Theme.spacing.md.value) {
             VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
-                Text(attempt.route?.label ?? attempt.route?.id ?? "Intento")
+                Text(attempt.route?.displayName ?? "Intento")
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
                 HStack(spacing: Theme.spacing.sm.value) {
@@ -675,6 +738,12 @@ struct AttemptSummaryRow: View {
                         Text(date)
                             .font(.metaCaption)
                             .foregroundStyle(Color.muted)
+                    }
+                    if attempt.route?.isPractice == true {
+                        // Ahora que el contrato manda la categoría, la app puede
+                        // señalar qué intentos no cuentan para la nota. Antes
+                        // solo podía poner una advertencia genérica en la lista.
+                        StatusBadge(text: "Prácticas", kind: .neutral)
                     }
                     if let quality = attempt.quality {
                         StatusBadge(text: quality.label, kind: quality.badgeKind)

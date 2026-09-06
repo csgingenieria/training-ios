@@ -65,3 +65,92 @@ struct RankingDTOTests {
         #expect(sorted.last?.position == nil)
     }
 }
+
+/// The contract now states who has driven and who ties, instead of the app
+/// inferring it from a missing position.
+struct RankingPresentedTests {
+    @Test func presentedFlagBeatsTheHeuristic() throws {
+        let json = Data("""
+        {
+          "position": null, "candidate": {"id": "c", "name": "X", "plaza": "1"},
+          "score": 0.0, "attemptsCompleted": 0, "attemptsTotal": 0,
+          "presented": false, "tied": false
+        }
+        """.utf8)
+
+        let entry = try JSONDecoder().decode(RankingEntryDTO.self, from: json)
+
+        #expect(entry.hasNotDriven)
+        #expect(entry.displayScore == nil)
+    }
+
+    /// The backend can report someone as presented while still computing their
+    /// position. The explicit flag must win over the inference.
+    @Test func presentedWithoutPositionIsStillPresented() throws {
+        let json = Data("""
+        {
+          "position": null, "candidate": {"id": "c", "name": "X", "plaza": "1"},
+          "score": 6.0, "attemptsCompleted": 2, "attemptsTotal": 3,
+          "presented": true, "tied": false
+        }
+        """.utf8)
+
+        let entry = try JSONDecoder().decode(RankingEntryDTO.self, from: json)
+
+        #expect(!entry.hasNotDriven)
+        #expect(entry.displayScore == 6.0)
+    }
+
+    /// Older responses without the flag fall back to the previous inference.
+    @Test func absentFlagFallsBackToPosition() throws {
+        let dto: RankingResponseDTO = try JSONFixture.decode("ranking")
+        #expect(dto.entries.last?.hasNotDriven == true)
+        #expect(dto.entries[0].hasNotDriven == false)
+    }
+
+    /// Competition numbering is 1, 2, 2, 4. Two rows sharing a number look like
+    /// a bug unless the app says they are tied.
+    @Test func tiesAreCarried() throws {
+        let json = Data("""
+        {
+          "position": 2, "candidate": {"id": "c", "name": "X", "plaza": "1"},
+          "score": 8.0, "attemptsCompleted": 3, "attemptsTotal": 3,
+          "presented": true, "tied": true
+        }
+        """.utf8)
+
+        let entry = try JSONDecoder().decode(RankingEntryDTO.self, from: json)
+        #expect(entry.tied == true)
+    }
+}
+
+/// Route naming and category, both nullable by contract.
+struct AttemptRouteTests {
+    private func route(name: String?, categoria: String?) -> AttemptRouteDTO {
+        .init(id: "2A1", label: "2A1", name: name, categoria: categoria)
+    }
+
+    /// `label` is the raw code, so falling back to it beats showing nothing.
+    @Test func displayNamePrefersTheReadableName() {
+        #expect(route(name: "Parque → Hoyo", categoria: "EXAMEN").displayName == "Parque → Hoyo")
+        #expect(route(name: nil, categoria: "EXAMEN").displayName == "2A1")
+    }
+
+    @Test func practiceRoutesAreIdentified() {
+        #expect(route(name: "X", categoria: "PRACTICA").isPractice == true)
+        #expect(route(name: "X", categoria: "EXAMEN").isPractice == false)
+    }
+
+    /// Attempts with no route exist in production, with a grade. Claiming they
+    /// are exam routes would be inventing.
+    @Test func absentCategoryClaimsNothing() {
+        #expect(route(name: nil, categoria: nil).isPractice == nil)
+        #expect(route(name: nil, categoria: "").isPractice == nil)
+    }
+
+    @Test func decodesFromTheFixture() throws {
+        let dto: MyAttemptsListDTO = try JSONFixture.decode("my-attempts")
+        #expect(dto.items.contains { $0.route?.isPractice == true })
+        #expect(dto.items.contains { $0.route?.name != nil })
+    }
+}

@@ -19,7 +19,9 @@
       },
       "score": 9.2,
       "attemptsCompleted": 5,
-      "attemptsTotal": 5
+      "attemptsTotal": 5,
+      "presented": true,
+      "tied": false
     },
     {
       "position": 2,
@@ -30,7 +32,9 @@
       },
       "score": 8.5,
       "attemptsCompleted": 4,
-      "attemptsTotal": 5
+      "attemptsTotal": 5,
+      "presented": true,
+      "tied": false
     },
     {
       "position": 3,
@@ -41,7 +45,9 @@
       },
       "score": 7.5,
       "attemptsCompleted": 3,
-      "attemptsTotal": 5
+      "attemptsTotal": 5,
+      "presented": true,
+      "tied": false
     },
     {
       "position": null,
@@ -52,7 +58,9 @@
       },
       "score": 0.0,
       "attemptsCompleted": 0,
-      "attemptsTotal": 0
+      "attemptsTotal": 0,
+      "presented": false,
+      "tied": false
     }
   ]
 }

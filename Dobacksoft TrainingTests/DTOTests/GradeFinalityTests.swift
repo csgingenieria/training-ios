@@ -4,9 +4,22 @@ import Foundation
 @testable import Dobacksoft_Training
 
 struct GradeFinalityTests {
-    @Test func closedAndLockedAreDefinitive() {
-        #expect(GradeFinality(convocatoriaStatus: "CLOSED") == .definitive)
+    /// Only LOCKED is truly final.
+    @Test func onlyLockedIsDefinitive() {
         #expect(GradeFinality(convocatoriaStatus: "LOCKED") == .definitive)
+    }
+
+    /// CLOSED means the record is signed but still inside the 24-hour window
+    /// in which an administrator can revoke the closure. Calling that grade
+    /// "final" tells a candidate their result cannot change when it still can.
+    @Test func closedIsStillRevocable() {
+        #expect(GradeFinality(convocatoriaStatus: "CLOSED") == .pendingConfirmation)
+        #expect(GradeFinality(convocatoriaStatus: "CLOSED").note?.contains("24 horas") == true)
+    }
+
+    /// A closure begun is not a closure done.
+    @Test func closingIsStillProvisional() {
+        #expect(GradeFinality(convocatoriaStatus: "CLOSING") == .provisional)
     }
 
     @Test func openStatesAreProvisional() {
@@ -16,7 +29,7 @@ struct GradeFinalityTests {
     }
 
     @Test func parsingIsCaseInsensitiveAndTrims() {
-        #expect(GradeFinality(convocatoriaStatus: "  closed ") == .definitive)
+        #expect(GradeFinality(convocatoriaStatus: "  locked ") == .definitive)
     }
 
     /// Absent or unrecognised status claims nothing. Defaulting to "definitive"
@@ -31,6 +44,7 @@ struct GradeFinalityTests {
     @Test func onlyProvisionalCarriesALabel() {
         #expect(GradeFinality.provisional.scoreLabel == "Nota provisional")
         #expect(GradeFinality.definitive.scoreLabel == "Nota")
+        #expect(GradeFinality.pendingConfirmation.scoreLabel == "Nota pendiente de confirmación")
         #expect(GradeFinality.unknown.scoreLabel == "Nota")
     }
 

@@ -136,7 +136,13 @@ extension RefreshResponseDTO {
 }
 
 extension StandingDTO {
-    static func stub(position: Int = 3) -> StandingDTO {
+    static func stub(
+        position: Int = 3,
+        requiredRoutes: [String]? = nil,
+        completedRequired: Int? = nil,
+        pendingRequired: Int? = nil,
+        scoreOfCompleted: Double? = nil
+    ) -> StandingDTO {
         StandingDTO(
             convocatoriaId: "conv-1",
             position: position,
@@ -144,7 +150,11 @@ extension StandingDTO {
             score: 7.5,
             attemptsCompleted: 3,
             attemptsTotal: 5,
-            status: "ACTIVE"
+            status: "ACTIVE",
+            requiredRoutes: requiredRoutes,
+            completedRequired: completedRequired,
+            pendingRequired: pendingRequired,
+            scoreOfCompleted: scoreOfCompleted
         )
     }
 }

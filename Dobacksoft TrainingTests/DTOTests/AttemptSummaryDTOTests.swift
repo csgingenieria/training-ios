@@ -6,7 +6,7 @@ import Foundation
 struct AttemptSummaryDTOTests {
     @Test func decodeListWithMixedScoresAndRoutes() throws {
         let dto: MyAttemptsListDTO = try JSONFixture.decode("my-attempts")
-        #expect(dto.items.count == 3)
+        #expect(dto.items.count == 4)
 
         // Primer intento: completo, todos los campos.
         let first = dto.items[0]

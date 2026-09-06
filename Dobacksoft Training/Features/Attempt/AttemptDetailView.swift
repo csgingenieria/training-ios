@@ -160,6 +160,17 @@ private struct AttemptDetailContent: View {
                 Divider()
             }
 
+            // Un intento de prácticas se puntúa y se ve, pero no ordena la
+            // oposición. Decirlo aquí evita que alguien no entienda por qué su
+            // 10 no le movió la nota.
+            if attempt.route?.isPractice == true {
+                Text("Recorrido de prácticas: puntúa, pero no interviene en la nota oficial.")
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             VStack(spacing: Theme.spacing.sm.value) {
                 if let cand = attempt.candidate {
                     // Desde el ranking y la matriz se llega al perfil del
@@ -179,7 +190,10 @@ private struct AttemptDetailContent: View {
                     }
                 }
                 if let route = attempt.route {
-                    summaryRow(label: "Ruta", value: route.label ?? route.id ?? "—")
+                    summaryRow(label: "Recorrido", value: route.displayName ?? "—")
+                    if route.isPractice == true {
+                        summaryRow(label: "Tipo", value: "Prácticas")
+                    }
                 }
                 // El contrato solo trae el identificador, así que el nombre lo
                 // aporta quien navega hasta aquí. Cuando no lo sabe, se degrada

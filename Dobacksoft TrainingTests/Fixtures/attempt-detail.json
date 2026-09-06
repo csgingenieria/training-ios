@@ -6,7 +6,9 @@
   },
   "route": {
     "id": "RECORRIDO_A",
-    "label": "Recorrido A"
+    "label": "Recorrido A",
+    "name": "Parque → Hoyo de Manzanares",
+    "categoria": "EXAMEN"
   },
   "score": 7.5,
   "dataQuality": "HIGH",
