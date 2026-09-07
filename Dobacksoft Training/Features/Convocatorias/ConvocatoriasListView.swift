@@ -41,11 +41,19 @@ struct ConvocatoriasListView: View {
             case .loading:
                 loadingView
             case .empty:
-                ContentUnavailableView(
-                    "Sin convocatorias",
-                    systemImage: "tray.fill",
-                    description: Text("No hay convocatorias visibles para su perfil.")
-                )
+                // Con «Actualizar»: a quien inscriben después de abrir la app
+                // se le queda esta pantalla puesta, y el gesto de tirar hacia
+                // abajo no funciona aquí —no hay contenedor con scroll— así
+                // que sin botón no había forma de volver a preguntar.
+                ContentUnavailableView {
+                    Label("Sin convocatorias", systemImage: "tray.fill")
+                } description: {
+                    Text("No hay convocatorias visibles para su perfil.")
+                } actions: {
+                    Button("Actualizar") { Task { await load() } }
+                        .buttonStyle(.brandPrimary(fullWidth: false))
+                        .accessibilityIdentifier("convocatorias.refresh")
+                }
             case .loaded(let items):
                 let filtered = filter(items)
                 if filtered.isEmpty && !searchText.isEmpty {

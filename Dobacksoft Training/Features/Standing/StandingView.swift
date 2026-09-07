@@ -538,15 +538,19 @@ struct MyConvocatoriaContentView: View {
             )
             .cardStyle()
         case .error(let msg):
-            VStack(spacing: Theme.spacing.sm.value) {
-                Label("Error cargando posición", systemImage: "exclamationmark.triangle.fill")
-                    .font(.cardTitle)
-                    .foregroundStyle(Color.danger)
+            // Con botón. Antes era una etiqueta roja y nada más: para volver a
+            // intentarlo había que adivinar que la pantalla se tira hacia
+            // abajo, y empotrada aquí ese gesto ni siquiera lo recoge esta
+            // vista. El aspirante se quedaba mirando un error sin salida.
+            ContentUnavailableView {
+                Label("No se ha podido cargar su posición", systemImage: "exclamationmark.triangle.fill")
+            } description: {
                 Text(msg)
-                    .font(.metaCaption)
-                    .foregroundStyle(Color.muted)
+            } actions: {
+                Button("Reintentar") { Task { await load() } }
+                    .buttonStyle(.brandPrimary(fullWidth: false))
+                    .accessibilityIdentifier("standing.retry")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .cardStyle()
         }
     }
@@ -674,17 +678,30 @@ struct MyConvocatoriaContentView: View {
                     .themedShadow(.small)
                 }
             case .empty:
-                Text("Todavía no hay intentos cerrados.")
-                    .font(.bodyText)
-                    .foregroundStyle(Color.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .cardStyle()
+                // Con «Actualizar»: un aspirante que acaba de conducir abre la
+                // app esperando ver su vuelta, y esta pantalla se cargó antes.
+                // Sin control, la única salida era cerrar la app y volver.
+                ContentUnavailableView {
+                    Label("Todavía no hay intentos cerrados", systemImage: "tray.fill")
+                } description: {
+                    Text("Aquí aparecerán sus recorridos en cuanto queden calificados.")
+                } actions: {
+                    Button("Actualizar") { Task { await load() } }
+                        .buttonStyle(.brandPrimary(fullWidth: false))
+                        .accessibilityIdentifier("attempts.refresh")
+                }
+                .cardStyle()
             case .error(let msg):
-                Text(msg)
-                    .font(.bodyText)
-                    .foregroundStyle(Color.danger)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .cardStyle()
+                ContentUnavailableView {
+                    Label("No se han podido cargar sus intentos", systemImage: "exclamationmark.triangle.fill")
+                } description: {
+                    Text(msg)
+                } actions: {
+                    Button("Reintentar") { Task { await load() } }
+                        .buttonStyle(.brandPrimary(fullWidth: false))
+                        .accessibilityIdentifier("attempts.retry")
+                }
+                .cardStyle()
             }
         }
     }
