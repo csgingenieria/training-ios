@@ -1,6 +1,7 @@
 # Pedido de contrato: paridad del portal del aspirante en el API móvil v1
 
-**Fecha:** 2026-09-07 (v2, tras verificación adversarial del texto contra el código del backend)
+**Fecha:** 2026-09-07 (v3: verificación adversarial del texto contra el código del backend, más las
+tres decisiones de Antonio que la verificación dejó abiertas — todas cerradas, ver bloques E y F)
 **Origen:** repo `training-ios` (cliente nativo iOS, entregable oficial a CMadrid — `D-IOS-002`)
 **Destino:** repo `training`, blueprint `app/blueprints/mobile_api/`
 **Decide:** Antonio (único enlace humano entre los dos tracks)
@@ -51,6 +52,10 @@ y el coste es casi nulo.
 - **Cierre de sesión y recuperación de contraseña.** El portal enlaza `POST /auth/logout` (cookies)
   y `/auth/recuperar` (`auth/routes.py:535`); `mobile_api` no tiene revocación de refresh token.
   El cliente borra tokens localmente; no se pide nada aquí.
+- **Cambio de email.** Fuera por decisión de Antonio (2026-09-07): el email es dato administrativo
+  y lo cambia ADMIN, como ya dice `student/routes.py:429-430`. Que `/auth/change-email` acepte
+  cualquier rol autenticado (`auth/routes.py:396-398`) es una incoherencia del backend que se
+  señala, pero no se pide exponer desde el móvil.
 
 ---
 
@@ -92,8 +97,8 @@ y el coste es casi nulo.
    E `/me/card`, F `/me/pin` → `@require_role(["STUDENT"])` como `me_standing`
    (`mobile_api/routes.py:126`). B `/attempts/<id>/gps` → `@jwt_required()` +
    `can_user_view_attempt` + 404 como `/attempts/<id>` (`:382-383`), para que el instructor
-   también pueda abrir el mapa. F `/me/password`, `/me/email` → `@jwt_required()` cualquier rol,
-   como `/auth/change-*`. Tests en `tests/api/test_mobile_api.py`; añadir los endpoints nuevos a
+   también pueda abrir el mapa. F `/me/password` → `@jwt_required()` cualquier rol, como
+   `/auth/change-password`. Tests en `tests/api/test_mobile_api.py`; añadir los endpoints nuevos a
    `test_ninguna_respuesta_expone_plazas_ni_total_plazas` (`:953`), que enumera endpoints a mano.
 
 ---
@@ -318,55 +323,47 @@ Qué tarjeta le asignó el sistema al aspirante. **Confirmado en alcance por Ant
 - **Campos:**
   - `hasCard` (bool) — **el campo que de verdad cierra el caso de uso.** Es el que contesta
     «¿puedo abrir un intento hoy?» sin depender de que el aspirante sepa leer un UID.
-  - `cardUid` (string, `allow_none`) — ver la pregunta abierta de abajo antes de decidir su forma.
+  - `cardUid` (string, `allow_none`) — el UID **completo**, tal como lo devuelve
+    `tarjeta_de_aspirante`. Decisión cerrada, ver abajo.
   - `webfleetDriverNo` (string, `allow_none`).
 
-#### Pregunta abierta que hay que contestar antes de implementar esto
+#### Decisión de Antonio (2026-09-07): igual que la web
 
-`tarjeta_de_aspirante` devuelve el UID completo. De cómo se exponga depende el diseño del campo:
+`cardUid` viaja **completo**, sin enmascarar, y **sin audit nuevo**: paridad exacta con lo que el
+portal web ya hace. La evidencia que sustenta la decisión, para que nadie la reabra:
 
-- **Paridad con la web:** devolverlo completo. Es lo único que permite la comparación visual que
-  justifica la pantalla.
-- **Endurecer en el móvil:** devolver `hasCard` más un UID enmascarado (últimos 4), y la pantalla
-  se limita a «tenés tarjeta asignada» / «no tenés tarjeta — avisá a tu instructor antes de la
-  prueba».
-
-No implementéis el campo completo por defecto: es una decisión de exposición de datos y la
-contesta Antonio con la evidencia del apartado siguiente, no el cliente.
-
-**Lo que el backend ya decidió, para que la pregunta se conteste con evidencia y no con una visita
-al almacén.** (a) La web del aspirante pinta el UID **completo** en el panel y en el perfil
-(`student/routes.py:140` `tarjeta=tarjeta_de_aspirante(...)`, `:468` `tarjeta=tarjeta.uid`), y el
-comentario de `edit_profile()` (`:455-456`) dice que «el código del plástico es el que se compara
-con lo impreso en la tarjeta»: es decir, según el propio backend el UID va impreso. (b) El kiosko
-define ese mismo UID como credencial (`kiosko/routes.py:477-478`: «El UID de la tarjeta ES la
-credencial de esa vía: quien lo tenga entra como ese aspirante»), y la web audita la consulta del
-PIN por esa razón (`KIOSK_PIN_VIEWED`) pero **no** la de la tarjeta. La decisión que queda, y es
-de Antonio: (1) paridad con la web — `cardUid` completo — y, en ese caso, si `GET /me/card` se
-audita como `/me/pin` (haría falta un `AuditAction` nuevo; hoy solo existen
-`RFID_CARD_CREATED/ASSIGNED/REVOKED/DELETED`); o (2) el móvil endurece — `hasCard` + últimos 4.
-(c) Fuente única: `tarjeta_de_aspirante` (scopea por organización y ordena por `assignedAt`,
-`manager/tarjetas_service.py:464-475`). **No** copiar la consulta inline de `edit_profile()`
-(`student/routes.py:459-463`: sin filtro por organización, ordena por `createdAt`): con dos
-tarjetas activas dan resultados distintos.
+- La web del aspirante pinta el UID completo en el panel y en el perfil (`student/routes.py:140`
+  `tarjeta=tarjeta_de_aspirante(...)`, `:468` `tarjeta=tarjeta.uid`), y el comentario de
+  `edit_profile()` (`:455-456`) dice que «el código del plástico es el que se compara con lo
+  impreso en la tarjeta»: el UID va impreso, y mostrarlo es lo que permite la comparación visual
+  que justifica la pantalla.
+- La web **no** audita la consulta de la tarjeta (solo `RFID_CARD_CREATED/ASSIGNED/REVOKED/DELETED`
+  existen como `AuditAction`; el audit `KIOSK_PIN_VIEWED` es del PIN). El móvil tampoco: mismo
+  comportamiento, misma superficie. Se deja constancia de que el kiosko define ese UID como
+  credencial (`kiosko/routes.py:477-478`), por si en el futuro se decide auditar en los dos sitios
+  a la vez — pero eso sería un cambio de la web, no de este pedido.
+- **Fuente única:** `tarjeta_de_aspirante` (scopea por organización y ordena por `assignedAt`,
+  `manager/tarjetas_service.py:464-475`). **No** copiar la consulta inline de `edit_profile()`
+  (`student/routes.py:459-463`: sin filtro por organización, ordena por `createdAt`): con dos
+  tarjetas activas dan resultados distintos.
 
 ### F. Cuenta del aspirante
 
-**Requiere enmienda explícita de D-API-001 antes de empezar.** `memory/decision-mobile-api-v1.md:52`
-fija «cero endpoints `POST/PUT/PATCH/DELETE` de dominio» y la enmienda de 2026-06-09 (`:62`) deja
-escrito que «cualquier `POST/PUT/PATCH/DELETE` de recursos de dominio» sigue prohibido y que la
-excepción de `/me/webfleet/sync` es «puntual y enumerada, no una apertura general».
-`PATCH /me/password` y `PATCH /me/email` serían los primeros `PATCH` del blueprint
-(`mobile_api/routes.py:61-383` solo tiene `GET` y tres `POST`). El argumento para la enmienda: son
-escrituras de **cuenta**, no de dominio — no tocan nota, intento, inscripción ni convocatoria, y el
-usuario ya puede hacerlas hoy por la web con el mismo JWT. Antonio tiene que enumerarlas como
-excepción en el memo antes de que el backend las implemente.
+**Alcance cerrado por Antonio (2026-09-07): `/me/pin` y `/me/password`. El cambio de email queda
+fuera** — el email es dato administrativo y lo cambia ADMIN (`student/routes.py:429-430`). Que
+`/auth/change-email` acepte cualquier rol autenticado (`auth/routes.py:396-398`) es una
+incoherencia del backend que se señala aquí, pero no se pide exponer desde el móvil.
 
-**Pregunta abierta:** `student/routes.py:429-430` dice que «DNI, NSS y email son datos
-administrativos — solo ADMIN puede cambiarlos», mientras `/auth/change-email` acepta cualquier rol
-autenticado (`auth/routes.py:396-398`). Que el backend resuelva si el STUDENT puede cambiar su
-email antes de exponer `PATCH /me/email`; si no puede, el bloque F se reduce a `/me/pin` y
-`/me/password`.
+**Requiere enmienda explícita de D-API-001 antes de empezar — Antonio la autoriza con este
+documento.** `memory/decision-mobile-api-v1.md:52` fija «cero endpoints `POST/PUT/PATCH/DELETE` de
+dominio» y la enmienda de 2026-06-09 (`:62`) deja escrito que «cualquier `POST/PUT/PATCH/DELETE`
+de recursos de dominio» sigue prohibido y que la excepción de `/me/webfleet/sync` es «puntual y
+enumerada, no una apertura general». `PATCH /me/password` sería el primer `PATCH` del blueprint
+(`mobile_api/routes.py:61-383` solo tiene `GET` y tres `POST`). El argumento para la enmienda: es
+una escritura de **cuenta**, no de dominio — no toca nota, intento, inscripción ni convocatoria, y
+el usuario ya puede hacerla hoy por la web con el mismo JWT. La enmienda se redacta en el memo del
+repo `training` como una excepción **puntual y enumerada**, igual que la del sync: un único
+endpoint, `PATCH /api/v1/me/password`, y nada más.
 
 Necesarias para que la app no obligue a abrir la web:
 
@@ -385,22 +382,19 @@ Necesarias para que la app no obligue a abrir la web:
   `plaza` en singular sí, ver la nota añadida a esa restricción. Rate limit como el resto de
   credenciales: `5 per minute; 20 per hour`.
 - `PATCH /api/v1/me/password` — equivale a `/auth/change-password` (`auth/routes.py:289`).
-- `PATCH /api/v1/me/email` — equivale a `/auth/change-email` (`auth/routes.py:396`).
 
-Estado actual, para no pedir lo que ya existe: `/auth/change-password` y `/auth/change-email`
-**ya son JSON + JWT** (`auth/routes.py:289-291` y `:396-398`: `@jwt_required()`,
-`@limiter.limit("5 per minute; 20 per hour")`, respuestas `jsonify` con 400/401/404/409/422; ningún
-`flash()` ni `redirect()` entre las líneas 289 y 470). Lo que impide llamarlos desde el móvil es
-que viven bajo el CSRF global (`app/__init__.py:216`) y solo `mobile_api_bp` está exento (`:349`);
-además `change-email` devuelve solo `{"message"}` sin clave `error` (`:421-466`) y
-`change-password` usa claves propias (`user_not_found`, `missing_fields`, `wrong_current_password`,
-`passwords_do_not_match`, `password_too_short`, `password_unchanged`, `:314-346`). Se pide
-montarlos bajo `/api/v1/me/...` con el **mismo** cuerpo (`currentPassword/newPassword/confirmPassword`;
-`currentPassword/newEmail`), los mismos códigos HTTP, el mismo rate limit y el mismo audit, con las
-claves de error en formato `error_response(code, error_key, message, details=None, retry_after=None)`
-(`mobile_api/errors.py:7`; cuerpo `{"error": <error_key>, "message": ...}`). Para email,
-propuestas: `invalid_email` 422, `email_unchanged` 422, `email_in_use` 409. Sin ese montaje, el
-cliente nativo no puede consumir ninguno de los dos.
+Estado actual, para no pedir lo que ya existe: `/auth/change-password` **ya es JSON + JWT**
+(`auth/routes.py:289-291`: `@jwt_required()`, `@limiter.limit("5 per minute; 20 per hour")`,
+respuestas `jsonify` con 400/401/404/422; ningún `flash()` ni `redirect()`). Lo que impide llamarlo
+desde el móvil es que vive bajo el CSRF global (`app/__init__.py:216`) y solo `mobile_api_bp` está
+exento (`:349`); además usa claves de error propias (`user_not_found`, `missing_fields`,
+`wrong_current_password`, `passwords_do_not_match`, `password_too_short`, `password_unchanged`,
+`:314-346`) que no siguen el formato del blueprint. Se pide montarlo bajo `/api/v1/me/password` con
+el **mismo** cuerpo (`currentPassword/newPassword/confirmPassword`), los mismos códigos HTTP, el
+mismo rate limit y el mismo audit, con las claves de error en formato
+`error_response(code, error_key, message, details=None, retry_after=None)` (`mobile_api/errors.py:7`;
+cuerpo `{"error": <error_key>, "message": ...}`). Sin ese montaje, el cliente nativo no puede
+consumirlo.
 
 ---
 
@@ -411,8 +405,8 @@ cliente nativo no puede consumir ninguno de los dos.
 | 1 | A — `/me/progress` | la pantalla que falta entera | medio (dos servicios, un schema, dos enums nuevos) |
 | 2 | C — enriquecer `/attempts/<id>` | los cuatro bloques de conducción de la ficha | bajo-medio (cuatro campos, servicios ya existen; hay que remapear a camelCase y actualizar el docstring REQ-7) |
 | 3 | B — `/attempts/<id>/gps` | mapa nativo | medio (el payload existe, pero es snake_case y hay que remapearlo, filtrar por `type` y no derivar `affectsScore` de `aplica_a_nota`) |
-| 4 | E — `/me/card` | comprobar la tarjeta en campo | trivial — pero contestar la pregunta abierta antes |
-| 5 | F — cuenta | que el aspirante no abra la web | bajo, tras la enmienda de D-API-001 |
+| 4 | E — `/me/card` | comprobar la tarjeta en campo | trivial (UID completo, decisión cerrada) |
+| 5 | F — PIN + contraseña | que el aspirante no abra la web | bajo (un solo `PATCH`, enmienda de D-API-001 autorizada en este documento) |
 | 6 | D — `/me/routes/<code>` | detalle por recorrido | bajo (añadir `conv_id` al servicio) |
 
 ---
