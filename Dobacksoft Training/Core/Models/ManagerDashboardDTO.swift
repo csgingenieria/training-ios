@@ -13,8 +13,11 @@ import Foundation
 /// - `totalParticipants`: inscritos no invalidados en convocatorias OPEN.
 ///   Distinto de `totalCandidates`, que cuenta solo inscripciones ACTIVE.
 ///
-/// El backend todavía devuelve `totalPlazas` como espejo de `totalParticipants`
-/// por compatibilidad; se descarta al decodificar. El sistema no gestiona cupos.
+/// `totalPlazas` ya no viene. El espejo de compatibilidad se retiró en el
+/// backend y se verificó campo por campo contra staging el 2026-09-07: la
+/// respuesta trae exactamente activeConvocatorias, totalCandidates,
+/// totalParticipants, attemptsToday, attemptsThisWeek, lastWebfleetSyncAt y
+/// convocatoriasWithLowQuality. El sistema no gestiona cupos.
 struct ManagerDashboardDTO: Sendable {
     let activeConvocatorias: Int
     let totalCandidates: Int

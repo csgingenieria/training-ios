@@ -56,25 +56,25 @@ final class StagingWalkthroughUITests: XCTestCase {
         try signIn(app)
         dismissSystemSavePasswordSheet()
 
-        let tabs = app.tabBars.firstMatch.buttons.allElementsBoundByIndex.map(\.label)
-        XCTAssertGreaterThanOrEqual(tabs.count, 2, "A signed-in session should expose more than one tab.")
+        let places = destinations(in: app)
+        if places.count < 2 {
+            capture(app, named: "00-sin-destinos")
+            attachHierarchy(app)
+            return XCTFail("Found \(places.count) destinations: \(places). See the attached hierarchy.")
+        }
 
-        for (index, tab) in tabs.enumerated() {
-            let button = app.tabBars.buttons[tab]
-            XCTAssertTrue(button.waitForExistence(timeout: 5), "The «\(tab)» tab vanished mid-walkthrough.")
-            button.tap()
-
-            // A tap that lands on a system alert leaves the tab unselected, and
-            // the walkthrough would then screenshot the same screen N times and
-            // still pass. Selection is the proof that navigation happened.
+        for (index, destination) in places.enumerated() {
+            // A tap that lands on a system alert changes nothing, and the
+            // walkthrough would then screenshot the same screen N times and
+            // still pass. Arrival is the proof that navigation happened.
             XCTAssertTrue(
-                waitUntilSelected(button),
-                "Tapping «\(tab)» did not select it — something is covering the screen."
+                navigate(to: destination, in: app),
+                "«\(destination)» never opened — something is covering the screen."
             )
 
-            capture(app, named: String(format: "%02d-%@", index + 1, slug(tab)))
-            assertNoDecodingFailureVisible(app, screen: tab)
-            assertNoVerdictVisible(app, screen: tab)
+            capture(app, named: String(format: "%02d-%@", index + 1, slug(destination)))
+            assertNoDecodingFailureVisible(app, screen: destination)
+            assertNoVerdictVisible(app, screen: destination)
         }
     }
 
@@ -97,16 +97,12 @@ final class StagingWalkthroughUITests: XCTestCase {
         // Addressed by label, not by index: the tab set differs by role, and
         // `boundBy: 1` landed on Convocatorias for a STUDENT session — the test
         // then screenshotted the wrong screen and skipped without saying so.
-        let standing = app.tabBars.buttons["Mi posición"]
-        guard standing.waitForExistence(timeout: 10) else {
-            throw XCTSkip("This role has no standing tab; attempts are reached elsewhere.")
+        guard destinations(in: app).contains("Mi posición") else {
+            throw XCTSkip("This role has no standing screen; attempts are reached elsewhere.")
         }
-        // The floating tab bar swallows the first tap when the app opens
-        // straight into a restored session, so one tap is not enough to prove
-        // anything either way. Retry, then fail with the screen attached.
-        guard select(standing, attempts: 3) else {
-            capture(app, named: "09-pestana-no-seleccionada")
-            return XCTFail("«Mi posición» would not select after 3 taps. See the attached screenshot.")
+        guard navigate(to: "Mi posición", in: app) else {
+            capture(app, named: "09-sin-navegar")
+            return XCTFail("«Mi posición» would not open. See the attached screenshot.")
         }
 
         // The attempt rows sit below the fold on every device this ships to.
@@ -118,7 +114,7 @@ final class StagingWalkthroughUITests: XCTestCase {
         // about copy, and "everything tappable that is not a tab" picked the
         // sort menu — also a button — and reported the failure as the detail
         // screen not opening.
-        let attempt = app.buttons.matching(identifier: "standing.attempt").firstMatch
+        let attempt = element("standing.attempt", in: app)
         guard attempt.waitForExistence(timeout: 5) else {
             throw XCTSkip("This account has no recorded attempt to open.")
         }
@@ -177,12 +173,11 @@ final class StagingWalkthroughUITests: XCTestCase {
         try signIn(app)
         dismissSystemSavePasswordSheet()
 
-        let tab = app.tabBars.buttons["Convocatorias"]
-        guard tab.waitForExistence(timeout: 10), select(tab, attempts: 3) else {
-            throw XCTSkip("No convocatorias tab in this session.")
+        guard navigate(to: "Convocatorias", in: app) else {
+            throw XCTSkip("No convocatorias destination in this session.")
         }
 
-        let row = app.buttons.matching(identifier: "convocatorias.row").firstMatch
+        let row = element("convocatorias.row", in: app)
         guard row.waitForExistence(timeout: 10) else {
             throw XCTSkip("This account sees no convocatoria.")
         }
@@ -231,12 +226,81 @@ final class StagingWalkthroughUITests: XCTestCase {
 
         app.buttons["login.submit"].tap()
 
-        // The tab bar only exists once a session is open, so its arrival is the
-        // signal that the round trip succeeded.
-        guard app.tabBars.firstMatch.waitForExistence(timeout: 30) else {
+        // The signal is the login field going away, not a tab bar arriving.
+        //
+        // On iPad the app lays itself out as a sidebar and there IS no tab bar,
+        // so waiting for one failed 30 s after a sign-in that had actually
+        // worked — the dashboard was on screen behind the system sheet. Only
+        // running on iPad showed it.
+        let gone = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"),
+            object: email
+        )
+        guard XCTWaiter.wait(for: [gone], timeout: 30) == .completed else {
             capture(app, named: "00-login-fallido")
             return XCTFail("No session after 30 s. See the attached screenshot for what the screen said.")
         }
+    }
+
+    /// Navigates to a top-level destination on either layout.
+    ///
+    /// iPhone gets a `TabView`; iPad regular width gets a `NavigationSplitView`
+    /// whose sidebar is a `List(selection:)` of `Label`s — and those surface as
+    /// **cells**, not buttons, so a button-only lookup found nothing and the
+    /// walkthrough reported zero destinations on a session that had four.
+    /// The label is the same on both, so it is the only part worth naming.
+    private func navigate(to destination: String, in app: XCUIApplication) -> Bool {
+        let tab = app.tabBars.buttons[destination]
+        if tab.waitForExistence(timeout: 3) {
+            return select(tab, attempts: 3)
+        }
+
+        guard let row = sidebarRow(destination, in: app) else { return false }
+        row.tap()
+
+        // A sidebar row does not report selection the way a tab does, so
+        // arrival is proven by the destination's own title showing up.
+        return app.navigationBars[destination].waitForExistence(timeout: 10)
+            || app.staticTexts[destination].waitForExistence(timeout: 5)
+    }
+
+    /// The sidebar row for a destination.
+    ///
+    /// The row is a `Cell` with **no label of its own** — the text lives in a
+    /// nested `StaticText`, so `cells[label]` matches nothing. Two runs went on
+    /// guessing the element kind before dumping the tree; the tree answered it
+    /// in one. Scoped to the sidebar's collection view so it cannot collide
+    /// with a navigation title of the same name on the detail side.
+    private func sidebarRow(_ destination: String, in app: XCUIApplication) -> XCUIElement? {
+        let row = sidebar(app).staticTexts[destination]
+        guard row.waitForExistence(timeout: 5) else { return nil }
+        return row
+    }
+
+    private func sidebar(_ app: XCUIApplication) -> XCUIElement {
+        app.collectionViews["Sidebar"]
+    }
+
+    /// An element by identifier, whatever kind SwiftUI made of it.
+    ///
+    /// The same `NavigationLink` surfaces as a button on iPhone and as
+    /// something else inside the split view's detail pane on iPad, so querying
+    /// `app.buttons` skipped the whole test on iPad with a message that read
+    /// like an empty account. Identifiers are stable; element kinds are not.
+    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// The top-level destinations this session exposes, on either layout.
+    private func destinations(in app: XCUIApplication) -> [String] {
+        let tabs = app.tabBars.firstMatch.buttons.allElementsBoundByIndex.map(\.label)
+        if !tabs.isEmpty { return tabs }
+
+        // The sidebar's own rows, in the order the app declares them. «Inicio»
+        // and «Cuenta» are section headers, not destinations, so they are not
+        // in this list.
+        return ["Panel", "Convocatorias", "Mi posición", "Perfil"]
+            .filter { sidebar(app).staticTexts[$0].exists }
     }
 
     /// Taps a field, waits until it actually has the keyboard, and types.
@@ -332,6 +396,17 @@ final class StagingWalkthroughUITests: XCTestCase {
         label.folding(options: .diacriticInsensitive, locale: .init(identifier: "es_ES"))
             .lowercased()
             .replacingOccurrences(of: " ", with: "-")
+    }
+
+    /// Attaches the app's element tree.
+    ///
+    /// Guessing which element kind SwiftUI made of a row cost two runs. The
+    /// tree is the only thing that answers it.
+    private func attachHierarchy(_ app: XCUIApplication) {
+        let attachment = XCTAttachment(string: app.debugDescription)
+        attachment.name = "jerarquia"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func capture(_ app: XCUIApplication, named name: String) {

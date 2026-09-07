@@ -333,14 +333,24 @@ struct ManagerPanelView: View {
                 icon: "list.bullet.rectangle",
                 color: .brand
             )
+            // «Candidatos» y «Participantes», uno al lado del otro, con el
+            // mismo número: dos rótulos casi iguales que no distinguían nada.
+            // Coinciden mientras haya una sola convocatoria abierta y nadie de
+            // baja, y divergen en cuanto eso cambia — momento en el que el
+            // instructor no tendría forma de saber cuál es cuál.
+            //
+            // Lo que cuenta cada uno, según el backend:
+            //   totalCandidates   = inscripciones ACTIVE en TODA la organización
+            //   totalParticipants = inscritos en convocatorias OPEN, todo menos
+            //                       INVALIDATED (así que incluye las bajas)
             KPICell(
-                title: "Candidatos",
+                title: "Inscritos activos",
                 value: "\(dashboard.totalCandidates)",
                 icon: "person.3.fill",
                 color: .success
             )
             KPICell(
-                title: "Participantes",
+                title: "En convocatorias abiertas",
                 value: "\(dashboard.totalParticipants)",
                 icon: "figure.walk",
                 color: .warning
