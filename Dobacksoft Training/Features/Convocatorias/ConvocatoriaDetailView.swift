@@ -121,8 +121,17 @@ struct ConvocatoriaDetailView: View {
                 if auth.user?.isAdminLike == true {
                     Divider().padding(.leading, 52)
                 }
+                // La MISMA pantalla que la pestaña «Mi posición», no una
+                // versión recortada.
+                //
+                // Este camino abría `StandingView`, que solo componía la
+                // tarjeta de puesto y nota: el aspirante que llegaba por la
+                // convocatoria NO veía sus intentos, y por la pestaña sí. El
+                // mismo rótulo llevaba a dos pantallas distintas según el
+                // camino, y en iPad éste es el único que existe, porque la
+                // selección del sidebar no es automatizable.
                 actionRow(icon: "trophy.fill", label: "Mi posición") {
-                    StandingView(
+                    MyConvocatoriaContentView(
                         convocatoriaId: convocatoria.id,
                         convocatoriaStatus: convocatoria.status,
                         convocatoriaName: convocatoria.name

@@ -246,17 +246,46 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// the same identifier, so the row is reachable without it. Both are paths
     /// a person actually takes; neither is a workaround.
     private func openConvocatoria(in app: XCUIApplication) throws -> XCUIElement {
-        let direct = element("convocatorias.row", in: app)
-        if direct.waitForExistence(timeout: 5) { return direct }
-
-        if navigate(to: "Convocatorias", in: app) {
-            let row = element("convocatorias.row", in: app)
-            if row.waitForExistence(timeout: 10) { return row }
+        // La ruta canónica de cada layout primero.
+        //
+        // Con tab bar, la lista de Convocatorias. Probar antes la fila que
+        // tenga a mano encontraba en iPhone la del PANEL —que lleva el mismo
+        // identificador a propósito— fuera de la parte visible, y XCUITest
+        // fallaba con «not hittable» sobre un botón que existía. Existir no es
+        // poder tocarse, otra vez.
+        if app.tabBars.firstMatch.exists {
+            if navigate(to: "Convocatorias", in: app),
+               let row = hittableRow("convocatorias.row", in: app) {
+                return row
+            }
+        } else {
+            // Sidebar: el instructor aterriza en Panel y el aspirante en
+            // Convocatorias, y la selección del sidebar no es automatizable.
+            // Cada uno tiene su propia fila, con su propio identificador.
+            // El del panel primero: el instructor aterriza ahí. Probar antes
+            // el de la lista gastaba los tres intentos —con swipeUp entre
+            // ellos— y dejaba el panel scrolleado antes de mirar el correcto.
+            for identifier in ["panel.convocatoria", "convocatorias.row"] {
+                if let row = hittableRow(identifier, in: app) { return row }
+            }
         }
 
         capture(app, named: "19-sin-convocatoria")
         attachHierarchy(app)
-        throw XCTSkip("No hay ninguna «convocatorias.row» alcanzable. Ver la jerarquía adjunta.")
+        throw XCTSkip("No hay ninguna «convocatorias.row» que se pueda tocar. Ver la jerarquía adjunta.")
+    }
+
+    /// La primera fila de convocatoria que de verdad se puede tocar, subiendo
+    /// el scroll si hace falta.
+    private func hittableRow(_ identifier: String, in app: XCUIApplication) -> XCUIElement? {
+        for attempt in 0..<3 {
+            let row = element(identifier, in: app)
+            if row.waitForExistence(timeout: attempt == 0 ? 8 : 2), row.isHittable {
+                return row
+            }
+            app.swipeUp()
+        }
+        return nil
     }
 
     // MARK: - Steps
@@ -394,17 +423,54 @@ final class StagingWalkthroughUITests: XCTestCase {
     private func type(_ text: String, into field: XCUIElement, in app: XCUIApplication) throws {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "No apareció el campo \(field.identifier).")
 
-        for attempt in 1...3 {
+        for attempt in 1...4 {
             field.tap()
-            if app.keyboards.element.waitForExistence(timeout: 5) {
-                field.typeText(text)
-                return
-            }
-            if attempt == 3 {
-                capture(app, named: "00-sin-teclado")
-                throw XCTSkip("El teclado no apareció tras 3 toques en \(field.identifier).")
+            guard app.keyboards.element.waitForExistence(timeout: 5) else { continue }
+
+            // `field.typeText`, NO `app.typeText`.
+            //
+            // Cambié a `app.typeText` para esquivar su aserto de foco y fue al
+            // revés: ese aserto es la protección. `app.typeText` escribe donde
+            // esté el cursor, así que en iPad la contraseña se fue dentro del
+            // campo de email —el foco no había saltado todavía— y el login
+            // falló con «No session» en los tres tests. El mismo error que
+            // cometí a mano al principio del día.
+            //
+            // La intermitencia se resuelve dándole tiempo al foco y
+            // reintentando, no saltándose la comprobación.
+            guard fieldHasFocus(field) else { continue }
+            field.typeText(text)
+
+            if fieldAcceptedText(field) { return }
+            if attempt == 4 {
+                capture(app, named: "00-sin-foco")
+                attachHierarchy(app)
+                throw XCTSkip("El campo \(field.identifier) no aceptó texto tras 4 intentos.")
             }
         }
+    }
+
+    /// Espera a que el campo tenga de verdad el foco del teclado.
+    ///
+    /// Que el teclado esté en pantalla no significa que ESTE campo lo tenga:
+    /// entre tocar y recibir el foco hay una ventana, y escribir dentro de esa
+    /// ventana manda el texto al campo anterior.
+    private func fieldHasFocus(_ field: XCUIElement, timeout: TimeInterval = 4) -> Bool {
+        let focused = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "hasKeyboardFocus == true"),
+            object: field
+        )
+        return XCTWaiter.wait(for: [focused], timeout: timeout) == .completed
+    }
+
+    /// `true` cuando el campo tiene algo escrito.
+    ///
+    /// Un campo seguro no devuelve su contenido —enseña puntos— así que ahí lo
+    /// comprobable es que dejó de mostrar su marcador de posición.
+    private func fieldAcceptedText(_ field: XCUIElement) -> Bool {
+        guard let value = field.value as? String else { return false }
+        if let placeholder = field.placeholderValue, value == placeholder { return false }
+        return !value.isEmpty
     }
 
     /// iOS offers to save the password into the keychain right after a

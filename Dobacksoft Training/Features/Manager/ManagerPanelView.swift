@@ -655,11 +655,14 @@ struct ManagerPanelView: View {
                             ConvocatoriaRow(conv: conv)
                         }
                         .buttonStyle(.plain)
-                        // Mismo identificador que la fila de la lista: es la
-                        // misma cosa alcanzada por otro camino, y en iPad éste
-                        // es el que existe —el instructor aterriza en el panel
-                        // y la selección del sidebar no se puede automatizar.
-                        .accessibilityIdentifier("convocatorias.row")
+                        // Identificador PROPIO, distinto del de la lista de
+                        // convocatorias. Compartirlo parecía elegante —es la
+                        // misma convocatoria por otro camino— y volvía la
+                        // consulta ambigua: un TabView mantiene las dos
+                        // pantallas en la jerarquía, así que `firstMatch`
+                        // devolvía la fila del panel estando en la lista, y no
+                        // era tocable. Dos pantallas, dos nombres.
+                        .accessibilityIdentifier("panel.convocatoria")
                     }
                 }
             }

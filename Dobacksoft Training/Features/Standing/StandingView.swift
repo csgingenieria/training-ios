@@ -49,69 +49,11 @@ final class StandingViewModel {
     }
 }
 
-struct StandingView: View {
-    let convocatoriaId: String
-
-    /// Estado de la convocatoria (`OPEN`, `CLOSED`…). Decide si la nota se
-    /// rotula como provisional. Lo conoce quien navega hasta aquí.
-    var convocatoriaStatus: String?
-
-    /// Nombre de la convocatoria, para la vista rápida del widget.
-    var convocatoriaName: String?
-
-    @Environment(AuthSession.self) private var auth
-    @State private var viewModel = StandingViewModel()
-
-    var body: some View {
-        Group {
-            switch viewModel.state {
-            case .loading:
-                centeredLoading("Cargando posición…")
-            case .notFound(let reason):
-                // El contrato ya distingue los tres 404, así que cada uno dice
-                // lo suyo en vez de un texto que valiera para todos.
-                ContentUnavailableView(
-                    reason.title,
-                    systemImage: reason.symbol,
-                    description: Text(reason.detail)
-                )
-            case .loaded(let standing):
-                ScrollView {
-                    StandingCard(
-                        standing: standing,
-                        finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
-                    )
-                        .padding(.horizontal, Theme.spacing.base.value)
-                        .padding(.vertical, Theme.spacing.base.value)
-                }
-                .pageBackground()
-            case .error(let msg):
-                ContentUnavailableView {
-                    Label("Error", systemImage: "exclamationmark.triangle.fill")
-                } description: {
-                    Text(msg)
-                } actions: {
-                    Button("Reintentar") { Task { await load() } }
-                        .buttonStyle(.brandPrimary(fullWidth: false))
-                }
-            }
-        }
-        .navigationTitle("Mi posición")
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await load() }
-        .refreshable { await load() }
-    }
-
-    private func load() async {
-        await viewModel.load(
-            convocatoriaId: convocatoriaId,
-            auth: auth,
-            convocatoriaName: convocatoriaName,
-            finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
-        )
-    }
-}
-
+/// Cargando, centrado y con su propio fondo.
+///
+/// Función a nivel de fichero, no método de una vista: la usan varias pantallas
+/// de este módulo. Vivía entre `StandingView` y `StandingCard` y se fue por
+/// delante al borrar la primera.
 @ViewBuilder
 private func centeredLoading(_ text: String) -> some View {
     VStack(spacing: Theme.spacing.md.value) {
@@ -182,7 +124,12 @@ struct StandingCard: View {
                         .foregroundStyle(Color.muted)
                     StatusBadge(text: enrolment.label, kind: enrolment.kind)
                 }
-                Text("La asignación de plaza la decide CMadrid al cierre de la convocatoria.")
+                // Una sola frase, en un solo sitio. La que había aquí usaba el
+                // sentido de CUPO de una palabra que el documento de entrega
+                // v1.1 le niega al cliente por escrito, y estaba justo debajo
+                // de la posición del aspirante. La escribí yo; la cazó la
+                // auditoría de la otra sesión.
+                Text(LegalNotice.outcomeDecidedByCMadrid)
                     .font(.metaCaption)
                     .foregroundStyle(Color.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -497,6 +444,12 @@ struct MyConvocatoriaContentView: View {
                         .padding(.vertical, Theme.spacing.base.value)
                 }
                 .pageBackground()
+                // Cuando esta vista es la pantalla —no un bloque dentro de
+                // otra—, el título es suyo. Empotrada lo pone el padre
+                // (`MyStandingTabView`); abierta desde el detalle de la
+                // convocatoria no lo ponía nadie, y el aspirante veía un botón
+                // de volver a secas sobre una pantalla sin nombre.
+                .navigationTitle("Mi posición")
                 .navigationDestination(for: StudentAttemptRoute.self) { route in
                     AttemptDetailView(attemptId: route.attemptId, convocatoriaName: convocatoriaName)
                 }
