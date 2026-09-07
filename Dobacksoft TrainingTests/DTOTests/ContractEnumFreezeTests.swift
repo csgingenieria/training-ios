@@ -131,4 +131,36 @@ import Foundation
             )
         }
     }
+
+    // MARK: - Estado del intento
+
+    /// `_estado_intento` in `student_service.py`, reached through
+    /// `mobile_api/services.py`, verified 2026-09-07 on the block-A branch.
+    ///
+    /// Frozen because the three answer different questions and the client
+    /// branches on them: a grade that is coming, a grade that never will, and
+    /// one already there. A fourth value read as «unknown» would silently put
+    /// an attempt back in the «waiting» drawer.
+    private static let attemptStates = ["CON_NOTA", "ESPERANDO", "NO_EVALUABLE"]
+
+    @Test func everyAttemptStateSaysWhetherTheGradeIsStillComing() {
+        for raw in Self.attemptStates {
+            let state = AttemptState(apiValue: raw)
+            #expect(state != nil, "«\(raw)» no se reconoce")
+            #expect(state?.detail.isEmpty == false)
+        }
+
+        // La distinción que justifica el campo entero.
+        #expect(AttemptState(apiValue: "ESPERANDO")?.gradeMayStillArrive == true)
+        #expect(AttemptState(apiValue: "NO_EVALUABLE")?.gradeMayStillArrive == false)
+        #expect(AttemptState(apiValue: "CON_NOTA")?.gradeMayStillArrive == false)
+    }
+
+    /// The three explanations must differ. Two states wording the same sentence
+    /// is the defect this enum exists to prevent, only harder to notice.
+    @Test func theThreeStatesDoNotSayTheSameThing() {
+        let detalles = Set(Self.attemptStates.compactMap { AttemptState(apiValue: $0)?.detail })
+
+        #expect(detalles.count == Self.attemptStates.count)
+    }
 }

@@ -25,6 +25,43 @@ struct AttemptRouteDTO: Hashable, Sendable {
     /// `EXAMEN` o `PRACTICA`. **Nulable** por el mismo motivo que `name`.
     let categoria: String?
 
+    /// Si el recorrido sigue en el catálogo. **Tres estados, no dos.**
+    ///
+    /// `nil` cuando no hay fila `Route` —intentos sin recorrido, que existen
+    /// en producción con nota, y códigos huérfanos de un catálogo borrado—.
+    /// No se colapsa a `false`: eso afirmaría que se retiró, y `true` que
+    /// sigue ofreciéndose, cuando lo que pasa es que no se sabe.
+    ///
+    /// Es la señal con la que la web decide si ofrecer el enlace a la ficha
+    /// del recorrido, y **no se puede deducir de los metadatos**: `distanceKm`
+    /// y `durationMin` llegan igual para un recorrido retirado, porque el
+    /// intento ya se condujo y que el recorrido no se ofrezca más no borra de
+    /// cuál era.
+    let active: Bool?
+
+    /// Si procede ofrecer el enlace a la ficha del recorrido.
+    ///
+    /// Solo con un `true` explícito. Sin saberlo no se ofrece: llevar a alguien
+    /// a una ficha que no existe es peor que no ofrecerla.
+    var offersDetail: Bool { active == true }
+
+    /// Con valores por defecto, por la misma razón que en `AttemptSummaryDTO`:
+    /// el contrato va a seguir creciendo y el inicializador sintetizado obliga
+    /// a tocar cada construcción a mano por cada campo nuevo.
+    init(
+        id: String? = nil,
+        label: String? = nil,
+        name: String? = nil,
+        categoria: String? = nil,
+        active: Bool? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.name = name
+        self.categoria = categoria
+        self.active = active
+    }
+
     /// Lo que se muestra: el nombre si lo hay, y si no el código, que al menos
     /// identifica algo.
     var displayName: String? {
@@ -63,12 +100,13 @@ nonisolated extension AttemptRouteDTO: Decodable {
             id: APISentinel.text(try container.decodeIfPresent(String.self, forKey: .id)),
             label: APISentinel.text(try container.decodeIfPresent(String.self, forKey: .label)),
             name: APISentinel.text(try container.decodeIfPresent(String.self, forKey: .name)),
-            categoria: try container.decodeIfPresent(String.self, forKey: .categoria)
+            categoria: try container.decodeIfPresent(String.self, forKey: .categoria),
+            active: try container.decodeIfPresent(Bool.self, forKey: .active)
         )
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, label, name, categoria
+        case id, label, name, categoria, active
     }
 }
 
