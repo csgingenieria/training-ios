@@ -241,7 +241,7 @@ struct StandingWidgetEntryView: View {
     private func scoreBlock(_ standing: StandingSnapshot.Standing) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if let score = standing.score {
-                Text(String(format: "%.2f", score))
+                Text(ScoreFormat.aggregate(score))
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color.widgetInk)
                     .privacySensitive()
@@ -259,7 +259,7 @@ struct StandingWidgetEntryView: View {
     @ViewBuilder
     private func scoreLine(_ standing: StandingSnapshot.Standing) -> some View {
         if let score = standing.score {
-            Text("\(scoreLabel(standing)) \(String(format: "%.2f", score))")
+            Text("\(scoreLabel(standing)) \(ScoreFormat.aggregate(score))")
                 .font(.caption2)
                 .foregroundStyle(Color.widgetMuted)
                 .privacySensitive()
@@ -296,7 +296,7 @@ struct StandingWidgetEntryView: View {
         if let standing {
             var parts = ["\(SnapshotCopy.widgetName). Puesto \(standing.position) de \(standing.totalCandidates)"]
             if let score = standing.score {
-                parts.append("\(scoreLabel(standing)) \(String(format: "%.2f", score))")
+                parts.append("\(scoreLabel(standing)) \(ScoreFormat.aggregate(score))")
             } else {
                 parts.append(SnapshotCopy.notaNoDisponible)
             }

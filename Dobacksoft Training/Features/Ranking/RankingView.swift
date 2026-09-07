@@ -262,6 +262,22 @@ struct RankingEntryRow: View {
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
                 }
+                // De dónde sale la nota de esta fila.
+                //
+                // Sin esto el instructor lee «4,75» junto a alguien que ha
+                // conducido cinco recorridos entre 8,5 y 10: el número es la
+                // media sobre los diez exigidos, y los cinco no conducidos
+                // computan cero. Enseñarlo a secas invita a concluir que
+                // conduce mal, y esta es la pantalla desde la que se le llama.
+                //
+                // Descriptivo, nunca prescriptivo: «5 de 10 exigidos» es un
+                // hecho; «le faltan 5» insinúa un deber y un resultado.
+                if let composition = entry.composition, composition.hasPendingRoutes,
+                   !composition.isGlobalBest {
+                    Text(compositionLine(composition))
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
@@ -301,7 +317,7 @@ struct RankingEntryRow: View {
     @ViewBuilder
     private var scoreText: some View {
         if let s = entry.displayScore {
-            Text(String(format: "%.2f", s))
+            Text(ScoreFormat.aggregate(s))
                 .font(.body(size: 16, weight: .semibold, relativeTo: .headline))
                 .foregroundStyle(Color.ink)
         } else {
@@ -311,15 +327,31 @@ struct RankingEntryRow: View {
         }
     }
 
+    /// «5 de 10 exigidos · media de lo conducido 9,50».
+    ///
+    /// La media va detrás y rotulada, no suelta: un 9,50 al lado de un 4,75 sin
+    /// decir qué es cada uno se lee como una contradicción.
+    private func compositionLine(_ composition: GradeComposition) -> String {
+        var parts = ["\(composition.completedRequired) de \(composition.totalRequired) exigidos"]
+        if let average = composition.scoreOfCompleted {
+            parts.append("media de lo conducido \(ScoreFormat.aggregate(average))")
+        }
+        return parts.joined(separator: " · ")
+    }
+
     private var accessibilityText: String {
         var parts: [String] = [entry.position.map { "Puesto \($0)" } ?? "Sin puesto"]
         if let name = entry.candidate.name { parts.append(name) }
         if entry.hasNotDriven {
             parts.append("Sin recorridos conducidos")
         } else if let s = entry.displayScore {
-            parts.append("Nota \(String(format: "%.2f", s))")
+            parts.append("Nota \(ScoreFormat.aggregate(s))")
         }
         parts.append("\(entry.attemptsTotal) intentos")
+        if let composition = entry.composition, composition.hasPendingRoutes,
+           !composition.isGlobalBest {
+            parts.append(compositionLine(composition))
+        }
         if entry.attemptId != nil { parts.append("Tocar para ver intento") }
         return parts.joined(separator: ", ")
     }

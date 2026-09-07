@@ -150,7 +150,7 @@ struct StandingCard: View {
             HStack(spacing: Theme.spacing.md.value) {
                 StandingMetric(
                     title: finality.scoreLabel,
-                    value: String(format: "%.2f", standing.score)
+                    value: ScoreFormat.aggregate(standing.score)
                 )
                 // Sin fracción: `attemptsCompleted` cuenta recorridos de examen
                 // distintos y `attemptsTotal` cuenta intentos. Son dos unidades
@@ -246,7 +246,7 @@ struct StandingCard: View {
                             .font(.metaCaption)
                             .foregroundStyle(Color.muted)
                         Spacer()
-                        Text(String(format: "%.2f", conducted))
+                        Text(ScoreFormat.aggregate(conducted))
                             .font(.bodyEmphasis)
                             .foregroundStyle(Color.ink)
                     }
@@ -764,7 +764,7 @@ struct AttemptSummaryRow: View {
     @ViewBuilder
     private var scoreView: some View {
         if let s = attempt.score {
-            Text(String(format: "%.2f", s))
+            Text(ScoreFormat.attempt(s))
                 .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
                 .foregroundStyle(Color.ink)
         } else {

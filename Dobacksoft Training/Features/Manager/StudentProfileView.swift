@@ -217,7 +217,7 @@ private struct ProfileStandingRow: View {
             HStack(spacing: Theme.spacing.lg.value) {
                 metric(label: "Puesto", value: "\(standing.position)/\(standing.totalCandidates)")
                 Divider().frame(height: 28)
-                metric(label: "Nota", value: String(format: "%.2f", standing.score))
+                metric(label: "Nota", value: ScoreFormat.aggregate(standing.score))
                 Divider().frame(height: 28)
                 metric(label: "Intentos", value: "\(standing.attemptsTotal)")
                 Spacer()
@@ -227,7 +227,7 @@ private struct ProfileStandingRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(standing.name), puesto \(standing.position) de \(standing.totalCandidates), " +
-            "nota \(String(format: "%.2f", standing.score)), " +
+            "nota \(ScoreFormat.aggregate(standing.score)), " +
             "\(standing.attemptsTotal) intentos"
         )
     }

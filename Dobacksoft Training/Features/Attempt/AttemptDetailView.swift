@@ -94,7 +94,7 @@ struct AttemptDetailView: View {
             lines.append("Ruta: \(routeLabel)")
         }
         if let s = attempt.score {
-            lines.append("Nota: \(String(format: "%.2f", s))/10")
+            lines.append("Nota: \(ScoreFormat.attempt(s))/10")
         }
         if let dq = attempt.dataQuality {
             lines.append("Calidad: \(dq)")
@@ -146,7 +146,7 @@ private struct AttemptDetailContent: View {
             // Hero score
             if let s = attempt.score {
                 HStack(alignment: .firstTextBaseline, spacing: Theme.spacing.sm.value) {
-                    Text(String(format: "%.2f", s))
+                    Text(ScoreFormat.attempt(s))
                         .font(.display(size: 56, weight: .bold, italic: false, relativeTo: .largeTitle))
                         .foregroundStyle(Color.ink)
                     Text("/10")
@@ -372,7 +372,7 @@ private struct AttemptDetailContent: View {
     /// Dos decimales: el peso efectivo que el backend fija por recorrido los
     /// usa, y redondear a uno mostraba un máximo que no era el configurado.
     private func formatScore(_ value: Double) -> String {
-        String(format: "%.2f", value)
+        ScoreFormat.component(value)
     }
 
 }

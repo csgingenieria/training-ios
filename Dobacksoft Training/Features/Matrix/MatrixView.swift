@@ -240,7 +240,7 @@ struct MatrixView: View {
         HStack {
             Spacer(minLength: 0)
             if let s = score {
-                Text(String(format: "%.1f", s))
+                Text(ScoreFormat.attempt(s))
                     .font(.body(size: 15, weight: .semibold, relativeTo: .body))
                     .foregroundStyle(Color.ink)
             } else {
@@ -258,7 +258,7 @@ struct MatrixView: View {
 
     private func accessibilityCellLabel(_ candidate: String, _ circuit: String, _ score: Double?) -> String {
         if let s = score {
-            return "\(candidate), \(circuit), nota \(String(format: "%.1f", s))"
+            return "\(candidate), \(circuit), nota \(ScoreFormat.attempt(s))"
         }
         return "\(candidate), \(circuit), sin nota"
     }

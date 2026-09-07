@@ -52,6 +52,35 @@ struct RankingEntryDTO: Identifiable, Hashable, Sendable {
         return position == nil
     }
 
+    // De qué está hecha la nota de esta fila. El ranking los envía por entrada
+    // igual que el standing, y hasta ahora el DTO los descartaba: el instructor
+    // leía «4,75» sin nada que explicase el número. Y ese número puede ser la
+    // media de cinco recorridos entre 8,5 y 10 más cinco ceros por recorridos
+    // que el tribunal todavía no ha hecho conducibles.
+    //
+    // Opcionales por lo mismo que en `StandingDTO`: el contrato los añadió
+    // después y una respuesta anterior no debe romper la decodificación.
+
+    let requiredRoutes: [String]?
+    let completedRequired: Int?
+    let pendingRequired: Int?
+    let scoreOfCompleted: Double?
+
+    /// De qué está hecha la nota, o `nil` si el backend no lo envía.
+    ///
+    /// También `nil` para quien no ha conducido: ahí no hay nota que componer y
+    /// enseñar «0 de 10 exigidos» junto a una casilla vacía sugiere un cero
+    /// medido donde no se midió nada.
+    var composition: GradeComposition? {
+        guard !hasNotDriven, let completedRequired, let pendingRequired else { return nil }
+        return GradeComposition(
+            requiredRoutes: requiredRoutes,
+            completedRequired: completedRequired,
+            pendingRequired: pendingRequired,
+            scoreOfCompleted: scoreOfCompleted
+        )
+    }
+
     /// Nota que puede mostrarse, o `nil` si no hay ninguna que mostrar.
     ///
     /// El `0.0` que acompaña a un ausente no es una nota baja: nadie la midió.

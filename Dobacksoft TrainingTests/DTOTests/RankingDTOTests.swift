@@ -154,3 +154,89 @@ struct AttemptRouteTests {
         #expect(dto.items.contains { $0.route?.name != nil })
     }
 }
+
+/// The ranking sends each entry's grade composition, and the DTO used to throw
+/// it away. The instructor read «4,75» with nothing to explain the number.
+struct RankingCompositionTests {
+    /// The exact shape the staging server returns for the leading candidate of
+    /// a real convocatoria: five required routes driven between 8,5 and 10, an
+    /// average of 9,5 — and an official grade of 4,75, because the five the
+    /// panel has not made driveable count zero.
+    private func leader() throws -> RankingEntryDTO {
+        let json = Data("""
+        {
+          "attemptId": "a1",
+          "attemptsCompleted": 5,
+          "attemptsTotal": 5,
+          "candidate": {"id": "c1", "name": "Nombre Aspirante", "plaza": "011"},
+          "completedRequired": 5,
+          "pendingRequired": 5,
+          "position": 1,
+          "presented": true,
+          "requiredRoutes": ["1A","1B","2A1","2A2","2A3","2B1","2B2","2B3","3A","3B"],
+          "score": 4.75,
+          "scoreOfCompleted": 9.5,
+          "tied": false
+        }
+        """.utf8)
+        return try JSONDecoder().decode(RankingEntryDTO.self, from: json)
+    }
+
+    @Test func compositionSurvivesDecoding() throws {
+        let composition = try #require(try leader().composition)
+
+        #expect(composition.totalRequired == 10)
+        #expect(composition.completedRequired == 5)
+        #expect(composition.pendingRequired == 5)
+        #expect(composition.scoreOfCompleted == 9.5)
+        #expect(composition.hasPendingRoutes)
+    }
+
+    /// The arithmetic that makes the row confusing without an explanation.
+    @Test func theGradeIsTheAverageOverEveryRequiredRoute() throws {
+        let entry = try leader()
+        let composition = try #require(entry.composition)
+        let average = try #require(composition.scoreOfCompleted)
+
+        let official = average * Double(composition.completedRequired) / Double(composition.totalRequired)
+        #expect(abs(official - (entry.score ?? 0)) < 0.01)
+    }
+
+    /// Someone enrolled who has not driven has no grade to compose. «0 de 10»
+    /// beside an empty score reads as a measured zero.
+    @Test func notDrivenComposesNothing() throws {
+        let json = Data("""
+        {
+          "attemptId": null, "attemptsCompleted": 0, "attemptsTotal": 0,
+          "candidate": {"id": "c2", "name": "Otro Aspirante", "plaza": "012"},
+          "completedRequired": 0, "pendingRequired": 10, "position": null,
+          "presented": false,
+          "requiredRoutes": ["1A","1B","2A1","2A2","2A3","2B1","2B2","2B3","3A","3B"],
+          "score": 0.0, "scoreOfCompleted": null, "tied": false
+        }
+        """.utf8)
+
+        let entry = try JSONDecoder().decode(RankingEntryDTO.self, from: json)
+
+        #expect(entry.hasNotDriven)
+        #expect(entry.displayScore == nil)
+        #expect(entry.composition == nil)
+    }
+
+    /// A payload from before the contract carried these fields must still
+    /// decode — the app ships to devices that outlive a backend release.
+    @Test func olderPayloadsStillDecode() throws {
+        let json = Data("""
+        {
+          "attemptId": "a2", "attemptsCompleted": 1, "attemptsTotal": 1,
+          "candidate": {"id": "c3", "name": "Tercero", "plaza": null},
+          "position": 1, "score": 8.5
+        }
+        """.utf8)
+
+        let entry = try JSONDecoder().decode(RankingEntryDTO.self, from: json)
+
+        #expect(entry.composition == nil)
+        #expect(entry.displayScore == 8.5)
+    }
+}
