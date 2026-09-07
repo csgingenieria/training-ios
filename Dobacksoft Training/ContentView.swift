@@ -24,9 +24,9 @@ private struct LaunchView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .controlSize(.large)
-            Text("Restaurando sesión…")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            Text(SessionCopy.restoring)
+                .font(.metaCaption)
+                .foregroundStyle(Color.muted)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

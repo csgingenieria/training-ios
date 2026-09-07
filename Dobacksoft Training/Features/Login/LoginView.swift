@@ -25,6 +25,8 @@ struct LoginView: View {
                     .multilineTextAlignment(.center)
             }
 
+            sessionNotice
+
             VStack(spacing: Theme.spacing.md.value) {
                 TextField("Email", text: $email)
                     .textFieldStyle(.roundedBorder)
@@ -83,6 +85,77 @@ struct LoginView: View {
         }
         .padding()
         .pageBackground()
+    }
+
+    /// Por qué está viendo este formulario, cuando hay algo que explicar.
+    ///
+    /// Antes no había nada: quien perdía la cobertura al arrancar y quien tenía
+    /// el refresh token caducado aterrizaban los dos aquí, en silencio. Los dos
+    /// casos piden lo contrario — uno que espere, el otro que vuelva a entrar—
+    /// y sin decirlo el formulario vacío se lee como «mi cuenta está rota».
+    ///
+    /// No es rojo. El rojo de `errorMessage` es para el intento que la persona
+    /// acaba de hacer y ha fallado; esto es contexto de antes de tocar nada, y
+    /// pintarlo como error propio sería culparla de una red caída.
+    @ViewBuilder
+    private var sessionNotice: some View {
+        if auth.canRetryRestore {
+            noticeCard(
+                icon: "wifi.slash",
+                text: SessionCopy.sessionSurvivesOffline,
+                identifier: "login.notice.offline"
+            ) {
+                // La sesión está entera en el Keychain: lo que falta es poder
+                // preguntar. Reintentar aquí evita teclear una contraseña que
+                // ahora mismo tampoco puede funcionar.
+                Button("Reintentar") {
+                    Task { await auth.retryRestore() }
+                }
+                .buttonStyle(.brandPrimary)
+                .accessibilityIdentifier("login.notice.retry")
+            }
+        } else if let notice = auth.logoutReason?.notice {
+            noticeCard(
+                icon: "clock.badge.exclamationmark",
+                text: notice,
+                identifier: "login.notice.expired"
+            ) { EmptyView() }
+        }
+    }
+
+    @ViewBuilder
+    private func noticeCard<Action: View>(
+        icon: String,
+        text: String,
+        identifier: String,
+        @ViewBuilder action: () -> Action
+    ) -> some View {
+        VStack(spacing: Theme.spacing.sm.value) {
+            HStack(alignment: .top, spacing: Theme.spacing.sm.value) {
+                Image(systemName: icon)
+                    .foregroundStyle(Color.brand)
+                    .accessibilityHidden(true)
+                Text(text)
+                    .font(.bodyText)
+                    .foregroundStyle(Color.ink)
+                    // Las dos frases pasan de una línea en cualquier iPhone, y
+                    // truncadas pierden justo la mitad que informa.
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            action()
+        }
+        .padding(Theme.spacing.base.value)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                .fill(Color.brandTint)
+        )
+        .padding(.horizontal, Theme.spacing.xl.value)
+        // Una sola parada de VoiceOver: el icono es decorativo y leer el texto
+        // partido en trozos no ayuda a nadie.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(text)
+        .accessibilityIdentifier(identifier)
     }
 
     private func login() async {

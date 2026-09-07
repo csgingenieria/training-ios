@@ -18,6 +18,29 @@ final class AuthSession {
     var isRestoring: Bool = false
     var hasRestoredSession: Bool = false
 
+    /// Por qué se cerró la última sesión, o `nil` si no se ha cerrado ninguna.
+    ///
+    /// Las transiciones de estado ya eran correctas; lo que no hacían era decir
+    /// nada. Un refresh token rechazado y un «Cerrar sesión» dejaban a la
+    /// persona en el mismo formulario vacío, y necesitan mensajes opuestos: uno
+    /// explica que hubo que pedir la contraseña otra vez, el otro no tiene nada
+    /// que explicar.
+    var logoutReason: LogoutReason?
+
+    /// El fallo de red que impidió restaurar la sesión, con los tokens intactos.
+    ///
+    /// Distinto de `logoutReason`: aquí **no** se ha cerrado nada. Las
+    /// credenciales siguen en el Keychain y el problema es que no se ha podido
+    /// preguntar. Sin este dato, `RootView` no puede distinguir «sin conexión,
+    /// su sesión sigue activa» de «no ha iniciado sesión», y enseña el
+    /// formulario de acceso a alguien cuya sesión está perfectamente viva —
+    /// donde teclear la contraseña también falla, que es lo que se lee como
+    /// «mi cuenta está rota».
+    var restoreFailure: APIError?
+
+    /// Hay credenciales guardadas y un fallo que reintentar.
+    var canRetryRestore: Bool { restoreFailure != nil && refreshToken != nil }
+
     /// Refresco en curso, compartido por las llamadas que caducan a la vez.
     @ObservationIgnored private var refreshTask: Task<RefreshOutcome, Never>?
 
@@ -54,11 +77,29 @@ final class AuthSession {
 
         do {
             try await restorePersistedSession(accessToken: access, refreshToken: refresh)
+            restoreFailure = nil
         } catch APIError.unauthenticated {
-            await logout()
+            await logout(reason: .sessionExpired)
         } catch {
-            // No invalidamos sesión por errores de transporte transitorios.
+            // No invalidamos sesión por errores de transporte transitorios,
+            // pero tampoco los enterramos: este catch era silencioso y dejaba
+            // al aspirante en el formulario de acceso, sin mensaje, con su
+            // sesión entera guardada.
+            restoreFailure = error as? APIError ?? .transport(error)
         }
+    }
+
+    /// Vuelve a intentar la restauración tras un fallo de red.
+    ///
+    /// `restoreFromKeychain()` se autolimita a una ejecución para que una
+    /// jerarquía de vistas que aparece dos veces no dispare dos `GET /me`. Ese
+    /// mismo candado dejaba sin salida a quien arrancó la app sin cobertura: no
+    /// había nada a lo que pudiera llamar un botón «Reintentar».
+    func retryRestore() async {
+        guard canRetryRestore else { return }
+        hasRestoredSession = false
+        restoreFailure = nil
+        await restoreFromKeychain()
     }
 
     func login(email: String, password: String) async throws {
@@ -66,6 +107,9 @@ final class AuthSession {
         persistTokens(accessToken: response.access_token, refreshToken: response.refresh_token)
         user = response.user
         hasRestoredSession = true
+        // La sesión funciona: cualquier aviso del intento anterior ya es falso.
+        logoutReason = nil
+        restoreFailure = nil
 
         // Purgar antes de nada: dos aspirantes pueden compartir dispositivo, y
         // el segundo no puede heredar la posición del primero.
@@ -75,7 +119,13 @@ final class AuthSession {
         )
     }
 
-    func logout() async {
+    /// Cierra la sesión declarando por qué.
+    ///
+    /// El motivo no tiene valor por defecto a propósito: cada sitio que cierra
+    /// una sesión sabe si fue una decisión de la persona o un rechazo del
+    /// backend, y el compilador es el único sitio donde esa distinción no se
+    /// puede olvidar al añadir una salida nueva.
+    func logout(reason: LogoutReason) async {
         // Un fallo de Keychain no puede impedir cerrar sesión: el estado en
         // memoria se limpia igual y el token que quede en el almacén ya no se
         // usa. Se registra para que no pase inadvertido.
@@ -92,6 +142,10 @@ final class AuthSession {
         accessToken = nil
         refreshToken = nil
         hasRestoredSession = true
+        logoutReason = reason
+        // Ya no hay tokens: no queda nada que reintentar, y un aviso de «sin
+        // conexión» encima del de «sesión caducada» solo confunde.
+        restoreFailure = nil
     }
 
     // MARK: - Llamadas autenticadas
@@ -129,7 +183,7 @@ final class AuthSession {
                 return try await operation(renewed)
             } catch APIError.unauthenticated {
                 AppLog.auth.error("401 tras refrescar; se cierra la sesión")
-                await logout()
+                await logout(reason: .sessionExpired)
                 throw APIError.unauthenticated
             }
 
@@ -137,7 +191,7 @@ final class AuthSession {
             // El backend ha dicho que el refresh token ya no vale. Aquí sí no
             // hay sesión que salvar.
             AppLog.auth.error("El refresh token fue rechazado; se cierra la sesión")
-            await logout()
+            await logout(reason: .sessionExpired)
             throw APIError.unauthenticated
 
         case let .unavailable(error):

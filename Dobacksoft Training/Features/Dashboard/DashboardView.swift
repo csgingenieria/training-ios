@@ -243,7 +243,7 @@ struct ProfileView: View {
             titleVisibility: .visible
         ) {
             Button("Cerrar sesión", role: .destructive) {
-                Task { await auth.logout() }
+                Task { await auth.logout(reason: .userInitiated) }
             }
             Button("Cancelar", role: .cancel) {}
         } message: {

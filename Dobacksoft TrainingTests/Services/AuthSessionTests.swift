@@ -69,7 +69,7 @@ extension KeychainBacked {
             let session = AuthSession(api: api)
             try await session.login(email: "a@b.example", password: "x")
 
-            await session.logout()
+            await session.logout(reason: .userInitiated)
 
             #expect(session.isAuthenticated == false)
             #expect(session.user == nil)
@@ -320,6 +320,126 @@ extension KeychainBacked {
             await #expect(throws: APIError.self) {
                 try await session.authorized { $0 }
             }
+        }
+
+        // MARK: - Lo que la sesión le cuenta a la persona
+
+        // The state transitions above were already right; what they never did
+        // was say anything. Both endings — «no hay red» and «tus credenciales
+        // caducaron» — dropped the candidate on an empty login form, and the
+        // two need opposite messages: one says the session is intact, the other
+        // asks for the password again.
+
+        /// A transport failure during restore records the reason.
+        ///
+        /// `restoreKeepsTokensOnTransportFailure` above proves the tokens
+        /// survive. This proves the app can now say so: without the recorded
+        /// failure, `RootView` cannot tell «sin conexión, su sesión sigue
+        /// activa» apart from «no ha iniciado sesión».
+        @Test func restoreTransportFailureIsRecordedWithTheTokensIntact() async throws {
+            try TokenStore.save("acc", for: .accessToken)
+            try TokenStore.save("ref", for: .refreshToken)
+            let api = FakeTrainingAPI()
+            await api.setMeResults([.failure(APIError.transport(URLError(.notConnectedToInternet)))])
+            let session = AuthSession(api: api)
+
+            await session.restoreFromKeychain()
+
+            #expect(session.restoreFailure != nil)
+            #expect(session.user == nil)
+            #expect(session.refreshToken == "ref")
+            #expect(session.logoutReason == nil, "no se ha cerrado la sesión: no hay motivo de cierre")
+            #expect(session.canRetryRestore, "hay refresh token guardado, así que se puede reintentar")
+        }
+
+        /// A rejected refresh token is the one case that really ends the
+        /// session, and the candidate has to read why.
+        @Test func rejectedRefreshRecordsSessionExpired() async throws {
+            try TokenStore.save("caducado", for: .accessToken)
+            try TokenStore.save("tambien-caducado", for: .refreshToken)
+            let api = FakeTrainingAPI()
+            await api.setMeResults([.failure(APIError.unauthenticated)])
+            await api.setRefreshResult(.failure(APIError.unauthenticated))
+            let session = AuthSession(api: api)
+
+            await session.restoreFromKeychain()
+
+            #expect(session.logoutReason == .sessionExpired)
+            #expect(session.restoreFailure == nil, "no es un fallo de red: es una credencial rechazada")
+            #expect(session.isAuthenticated == false)
+            #expect(session.canRetryRestore == false, "sin tokens no hay nada que reintentar")
+        }
+
+        /// A 401 mid-session ends it the same way, and must say so too: the
+        /// candidate was reading their position, not sitting on a login form.
+        @Test func aRejectedRefreshMidSessionAlsoRecordsSessionExpired() async throws {
+            let api = FakeTrainingAPI()
+            await api.setLoginResult(.success(.stub(access: "viejo", refresh: "ref")))
+            await api.setRefreshResult(.failure(APIError.unauthenticated))
+            await api.setStandingResults([.failure(APIError.unauthenticated)])
+            let session = AuthSession(api: api)
+            try await session.login(email: "a@b.example", password: "x")
+
+            await #expect(throws: APIError.self) {
+                try await session.authorized { token in
+                    try await api.standing(convocatoriaId: "conv-1", accessToken: token)
+                }
+            }
+
+            #expect(session.logoutReason == .sessionExpired)
+        }
+
+        /// Pressing «Cerrar sesión» is not a failure and must not be dressed as
+        /// one: nothing to explain, nothing to retry.
+        @Test func explicitLogoutIsNotReportedAsAnExpiry() async throws {
+            let api = FakeTrainingAPI()
+            await api.setLoginResult(.success(.stub(access: "acc", refresh: "ref")))
+            let session = AuthSession(api: api)
+            try await session.login(email: "a@b.example", password: "x")
+
+            await session.logout(reason: .userInitiated)
+
+            #expect(session.logoutReason == .userInitiated)
+            #expect(session.isAuthenticated == false)
+        }
+
+        /// Signing in clears both signals: a banner about the previous attempt
+        /// on top of a session that already works is a lie.
+        @Test func signingInClearsEveryPreviousSignal() async throws {
+            try TokenStore.save("acc", for: .accessToken)
+            try TokenStore.save("ref", for: .refreshToken)
+            let api = FakeTrainingAPI()
+            await api.setMeResults([.failure(APIError.transport(URLError(.timedOut)))])
+            await api.setLoginResult(.success(.stub(access: "nuevo", refresh: "nuevo-ref")))
+            let session = AuthSession(api: api)
+
+            await session.restoreFromKeychain()
+            #expect(session.restoreFailure != nil)
+
+            try await session.login(email: "a@b.example", password: "x")
+
+            #expect(session.restoreFailure == nil)
+            #expect(session.logoutReason == nil)
+        }
+
+        /// A restore that succeeds after a failed one leaves no trace either.
+        @Test func aSuccessfulRetryClearsTheRecordedFailure() async throws {
+            try TokenStore.save("acc", for: .accessToken)
+            try TokenStore.save("ref", for: .refreshToken)
+            let api = FakeTrainingAPI()
+            await api.setMeResults([
+                .failure(APIError.transport(URLError(.timedOut))),
+                .success(.stub()),
+            ])
+            let session = AuthSession(api: api)
+
+            await session.restoreFromKeychain()
+            #expect(session.restoreFailure != nil)
+
+            await session.retryRestore()
+
+            #expect(session.restoreFailure == nil)
+            #expect(session.isAuthenticated == true)
         }
     }
 }
