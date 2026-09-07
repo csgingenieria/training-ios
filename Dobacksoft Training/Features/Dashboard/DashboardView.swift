@@ -104,6 +104,20 @@ private struct SidebarDashboard: View {
     private func sidebarItem(_ section: SidebarSection) -> some View {
         Label(section.title, systemImage: section.icon)
             .tag(section as SidebarSection?)
+            // Una fila de este sidebar cambia el panel de detalle, así que es
+            // un botón y conviene que se anuncie como tal: VoiceOver decía
+            // solo el texto, sin decir que se puede activar.
+            //
+            // Tiene además un efecto práctico: sin el rasgo, la fila llega a
+            // XCUITest como una celda sin etiqueta con un texto dentro, y
+            // ningún toque sintético —sobre el texto, sobre la celda o por
+            // coordenada— movía la selección. El recorrido automatizado no
+            // podía entrar en ninguna pantalla en iPad.
+            // `combine` primero: sin él el identificador caía en el ICONO del
+            // Label —25×20 pt y no accionable— en vez de en la fila entera.
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("sidebar.\(section.identifier)")
+            .accessibilityAddTraits(.isButton)
     }
 
     @ViewBuilder
@@ -119,6 +133,16 @@ private struct SidebarDashboard: View {
 
 private enum SidebarSection: Hashable {
     case panel, convocatorias, miPosicion, perfil
+
+    /// Identidad estable, independiente del rótulo traducible.
+    var identifier: String {
+        switch self {
+        case .panel:         return "panel"
+        case .convocatorias: return "convocatorias"
+        case .miPosicion:    return "miPosicion"
+        case .perfil:        return "perfil"
+        }
+    }
 
     var title: String {
         switch self {
