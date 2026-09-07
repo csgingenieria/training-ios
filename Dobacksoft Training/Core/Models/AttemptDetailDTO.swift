@@ -96,11 +96,21 @@ nonisolated struct AttemptScoreFamilyDTO: Hashable, Sendable {
             return "La configuración de este apartado no era válida."
         case "no_registrado":
             return "No se registró actividad en este apartado."
+        case "webfleet_poco_muestreo":
+            return "Los datos de flota no tuvieron muestreo suficiente para evaluarlo."
         default:
             break
         }
 
+        // `state` es un conjunto CERRADO y documentado en el blueprint; el de
+        // `motivo` es abierto —cada componente acuña el suyo— así que un switch
+        // exhaustivo de motivos siempre irá por detrás. De ahí el orden: motivo
+        // concreto si lo conocemos, y si no, el estado, que sí podemos cubrir
+        // entero. Faltaba `no_medido`, que es justo el que llega en producción:
+        // la fila de velocidad de un intento real se quedaba en «No evaluado»
+        // sin decir por qué, que es lo que este método existía para evitar.
         switch state {
+        case "no_medido":            return "Este apartado no se pudo medir en este intento."
         case "pendiente_enrichment": return "Pendiente de recibir los datos de flota."
         case "invalido":             return "El intento no superó las comprobaciones de validez."
         case "no_evaluable":         return "Este apartado no era evaluable en este recorrido."

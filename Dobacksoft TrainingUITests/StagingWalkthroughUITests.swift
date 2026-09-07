@@ -79,11 +79,102 @@ final class StagingWalkthroughUITests: XCTestCase {
         }
     }
 
+    /// Drills into the richest screen the app has: one attempt's detail, with
+    /// its event list and score breakdown.
+    ///
+    /// This is where a real payload differs most from a fixture. The live
+    /// server sends breakdown rows in states the fixtures never carried, and
+    /// event timestamps already formatted as wall-clock strings rather than
+    /// ISO instants. Neither is visible from a decode test.
+    ///
+    /// Skips rather than fails when the account has no attempt yet: an empty
+    /// convocatoria is a legitimate state, not a defect.
+    func testAttemptDetail() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        // Addressed by label, not by index: the tab set differs by role, and
+        // `boundBy: 1` landed on Convocatorias for a STUDENT session — the test
+        // then screenshotted the wrong screen and skipped without saying so.
+        let standing = app.tabBars.buttons["Mi posición"]
+        guard standing.waitForExistence(timeout: 10) else {
+            throw XCTSkip("This role has no standing tab; attempts are reached elsewhere.")
+        }
+        // The floating tab bar swallows the first tap when the app opens
+        // straight into a restored session, so one tap is not enough to prove
+        // anything either way. Retry, then fail with the screen attached.
+        guard select(standing, attempts: 3) else {
+            capture(app, named: "09-pestana-no-seleccionada")
+            return XCTFail("«Mi posición» would not select after 3 taps. See the attached screenshot.")
+        }
+
+        // The attempt rows sit below the fold on every device this ships to.
+        app.swipeUp()
+        app.swipeUp()
+        capture(app, named: "10-mis-intentos")
+
+        // Addressed by identifier. Matching on the row's own text was a guess
+        // about copy, and "everything tappable that is not a tab" picked the
+        // sort menu — also a button — and reported the failure as the detail
+        // screen not opening.
+        let attempt = app.buttons.matching(identifier: "standing.attempt").firstMatch
+        guard attempt.waitForExistence(timeout: 5) else {
+            throw XCTSkip("This account has no recorded attempt to open.")
+        }
+
+        attempt.tap()
+        // Navigation is proven by leaving the tab, not by the tap returning.
+        XCTAssertTrue(
+            app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 10),
+            "Tapping «\(attempt.label)» did not push a detail screen."
+        )
+        capture(app, named: "11-detalle-intento")
+
+        assertNoDecodingFailureVisible(app, screen: "Detalle del intento")
+        assertNoVerdictVisible(app, screen: "Detalle del intento")
+        assertNoUnexplainedBreakdownRow(app)
+    }
+
+    /// A breakdown row that could not be measured must say why.
+    ///
+    /// «No evaluado» on its own reads as a zero the candidate scored in a
+    /// component the panel actually set aside. The contract sends the reason;
+    /// the app failed to translate the one state the backend sends most —
+    /// `no_medido` — and the row went silent. Fixtures could not catch it,
+    /// because they were written from the same reading of the contract as the
+    /// code they were checking.
+    private func assertNoUnexplainedBreakdownRow(_ app: XCUIApplication) {
+        let labels = app.staticTexts.allElementsBoundByIndex
+            .prefix(300)
+            .compactMap { $0.exists ? $0.label : nil }
+
+        guard labels.contains(where: { $0 == "No evaluado" || $0 == "Sin dato" }) else { return }
+
+        // The explanation renders as its own text next to the label, so the
+        // screen must carry more than the bare two words.
+        let explanations = labels.filter { $0.count > 25 && $0.last == "." }
+        XCTAssertFalse(
+            explanations.isEmpty,
+            "Una fila del desglose dice «No evaluado» sin explicar por qué."
+        )
+    }
+
     // MARK: - Steps
 
     private func signIn(_ app: XCUIApplication) throws {
+        // The session lives in the Keychain, which survives between runs, so
+        // the app often opens already signed in. A test that only works on a
+        // clean Keychain fails on its own second run.
+        if app.tabBars.firstMatch.waitForExistence(timeout: 5) { return }
+
         let email = app.textFields["login.email"]
-        XCTAssertTrue(email.waitForExistence(timeout: 10), "The login screen never appeared.")
+        XCTAssertTrue(
+            email.waitForExistence(timeout: 10),
+            "Neither a session nor a login screen — the app opened on something else."
+        )
 
         email.tap()
         email.typeText(credentials.email)
@@ -147,13 +238,26 @@ final class StagingWalkthroughUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func waitUntilSelected(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if element.isSelected { return true }
-            _ = element.waitForExistence(timeout: 0.2)
+    /// Taps a tab until it reports selected, or gives up.
+    private func select(_ tab: XCUIElement, attempts: Int) -> Bool {
+        for _ in 0..<attempts {
+            tab.tap()
+            if waitUntilSelected(tab, timeout: 4) { return true }
         }
-        return element.isSelected
+        return false
+    }
+
+    /// Waits on an NSPredicate rather than polling `isSelected` in a loop.
+    ///
+    /// The loop version span without yielding, so XCUITest never refreshed its
+    /// snapshot of the app and the property stayed at whatever it read first.
+    /// `XCTNSPredicateExpectation` re-queries the app on each evaluation.
+    private func waitUntilSelected(_ element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
+        let selected = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "isSelected == true"),
+            object: element
+        )
+        return XCTWaiter.wait(for: [selected], timeout: timeout) == .completed
     }
 
     private func slug(_ label: String) -> String {

@@ -614,6 +614,10 @@ struct MyConvocatoriaContentView: View {
                                 AttemptSummaryRow(attempt: attempt)
                             }
                             .buttonStyle(.plain)
+                            // Identidad estable para el recorrido automatizado:
+                            // buscar la fila por su texto acabó tocando el menú
+                            // de filtros, que también es un botón.
+                            .accessibilityIdentifier("standing.attempt")
                             if attempt.id != filtered.last?.id {
                                 Divider().padding(.leading, Theme.spacing.base.value)
                             }

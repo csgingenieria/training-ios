@@ -108,4 +108,48 @@ struct BreakdownReasonTests {
         #expect(keys.count == 5)
         #expect(Set(keys).count == 5)
     }
+
+    /// The shape a live attempt actually returns for an unmeasured speed
+    /// component, taken off the staging server rather than invented here.
+    ///
+    /// `no_medido` was missing from the state switch — the one state the
+    /// blueprint lists first — so this row fell all the way through to `nil`
+    /// and the screen said «No evaluado» with no reason, which is the exact
+    /// thing `unavailabilityDetail` exists to prevent. The fixtures could not
+    /// catch it: every one of them was written from the same reading of the
+    /// contract as the code.
+    @Test func unmeasuredSpeedRowExplainsItself() throws {
+        let json = Data("""
+        {
+          "family": "Velocidad (excesos por vía)",
+          "key": "velocidad",
+          "max": 0.0,
+          "obtained": null,
+          "reason": "webfleet_poco_muestreo",
+          "state": "no_medido"
+        }
+        """.utf8)
+
+        let row = try JSONDecoder().decode(AttemptScoreFamilyDTO.self, from: json)
+
+        #expect(row.presentation == .notMeasured)
+        let detail = try #require(row.unavailabilityDetail, "una fila no medida sin motivo vuelve a «No evaluado» a secas")
+        #expect(detail.contains("muestreo"))
+    }
+
+    /// Every state the blueprint documents must produce a sentence. The reason
+    /// vocabulary is open — each component coins its own — so an unknown reason
+    /// has to fall back to the state instead of silencing the row.
+    @Test func everyDocumentedStateSaysSomething() throws {
+        for state in ["no_medido", "no_evaluable", "pendiente_enrichment", "invalido"] {
+            let json = Data("""
+            {"family": "X", "key": "x", "max": 1.0, "obtained": null,
+             "reason": "un_motivo_que_esta_app_no_conoce", "state": "\(state)"}
+            """.utf8)
+
+            let row = try JSONDecoder().decode(AttemptScoreFamilyDTO.self, from: json)
+
+            #expect(row.unavailabilityDetail != nil, "«\(state)» no explica nada")
+        }
+    }
 }
