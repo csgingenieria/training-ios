@@ -136,7 +136,11 @@ final class StagingWalkthroughUITests: XCTestCase {
             let convocatoria = try openConvocatoria(in: app)
             convocatoria.tap()
 
-            let miPosicion = app.buttons["Mi posición"]
+            // Acotado al panel de detalle: en iPad hay DOS elementos con esta
+            // etiqueta —la fila de acción y la del sidebar— y la consulta sin
+            // acotar es ambigua. El sidebar vive en un CollectionView; la fila
+            // de acción, en un ScrollView.
+            let miPosicion = app.scrollViews.buttons["Mi posición"].firstMatch
             guard miPosicion.waitForExistence(timeout: 10) else {
                 throw XCTSkip("Este rol no tiene «Mi posición»: los intentos se alcanzan por otro sitio.")
             }
