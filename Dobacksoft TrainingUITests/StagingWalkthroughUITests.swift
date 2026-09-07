@@ -21,7 +21,18 @@ import XCTest
 /// ```
 ///
 /// Without those variables every test here skips, so the suite stays green on
-/// a machine with no backend access.
+/// a machine with no backend access — and that is the trap. `xcodebuild`
+/// reports exit 0 and «TEST SUCCEEDED» for a run in which none of these tests
+/// executed. A verification pass must therefore add `STAGING_REQUIRED`:
+///
+/// ```
+/// TEST_RUNNER_STAGING_EMAIL=… TEST_RUNNER_STAGING_PASSWORD=… \
+///   TEST_RUNNER_STAGING_REQUIRED=1 xcodebuild test …
+/// ```
+///
+/// With it, missing credentials fail instead of skipping, so a green run cannot
+/// be mistaken for coverage that never ran. Without it, the skip stays correct
+/// for anyone who has no staging access at all.
 @MainActor
 final class StagingWalkthroughUITests: XCTestCase {
     private var credentials: (email: String, password: String)!
@@ -30,9 +41,37 @@ final class StagingWalkthroughUITests: XCTestCase {
         continueAfterFailure = false
 
         let env = ProcessInfo.processInfo.environment
-        guard let email = env["STAGING_EMAIL"], !email.isEmpty,
-              let password = env["STAGING_PASSWORD"], !password.isEmpty else {
-            throw XCTSkip("Set TEST_RUNNER_STAGING_EMAIL and TEST_RUNNER_STAGING_PASSWORD to run the live walkthrough.")
+        let email = env["STAGING_EMAIL"] ?? ""
+        let password = env["STAGING_PASSWORD"] ?? ""
+
+        guard !email.isEmpty, !password.isEmpty else {
+            // Sin credenciales esta suite no prueba NADA, y hasta ahora lo
+            // hacía en silencio: `xcodebuild` da exit 0 y «TEST SUCCEEDED»
+            // con los tres tests saltados, así que quien verificara así
+            // —una sesión nueva, un CI, el dueño del proyecto— se llevaba un
+            // verde y creía que había cobertura. Es el mismo patrón que esta
+            // suite existe para cazar, y más silencioso que los demás porque
+            // no deja ni un rojo que mirar.
+            //
+            // El salto sigue siendo correcto para quien no tiene acceso a
+            // staging. Lo que cambia es que ya no se puede confundir con una
+            // verificación: una corrida seria pasa STAGING_REQUIRED=1 y
+            // entonces la ausencia de credenciales es un FALLO, no un salto.
+            if (env["STAGING_REQUIRED"] ?? "").isEmpty == false {
+                XCTFail(
+                    "STAGING_REQUIRED está puesto y no hay credenciales: "
+                    + "esta corrida no habría probado nada del recorrido. "
+                    + "Pasá TEST_RUNNER_STAGING_EMAIL y TEST_RUNNER_STAGING_PASSWORD."
+                )
+                return
+            }
+            throw XCTSkip(
+                "SIN CREDENCIALES: este recorrido NO se ha ejecutado y esta corrida "
+                + "no prueba nada sobre él, aunque xcodebuild diga «TEST SUCCEEDED». "
+                + "Para una verificación de verdad: "
+                + "TEST_RUNNER_STAGING_EMAIL=… TEST_RUNNER_STAGING_PASSWORD=… "
+                + "TEST_RUNNER_STAGING_REQUIRED=1 xcodebuild test …"
+            )
         }
         credentials = (email, password)
     }
