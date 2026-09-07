@@ -134,7 +134,7 @@ struct StudentProfileView: View {
                     .foregroundStyle(Color.muted)
             }
             Spacer()
-            StatusBadge(text: user.role.uppercased(), kind: .brand)
+            StatusBadge(text: StatusVocabulary.role(user.role), kind: .brand)
         }
         .cardStyle()
         .accessibilityElement(children: .combine)

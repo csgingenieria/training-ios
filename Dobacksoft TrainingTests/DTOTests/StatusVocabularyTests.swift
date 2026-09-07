@@ -70,19 +70,49 @@ struct StatusVocabularyTests {
         #expect(StatusVocabulary.convocatoria("   ").label == "Sin estado")
     }
 
+    // MARK: - Rol
+
+    /// The profile badge and the «Rol» row rendered the raw backend enum, so a
+    /// firefighter read «Student» and «STUDENT» in an interface that addresses
+    /// them formally in Castilian everywhere else. The portal says «Aspirante».
+    @Test func rolesReadAsSpanish() {
+        #expect(StatusVocabulary.role("STUDENT") == "Aspirante")
+        #expect(StatusVocabulary.role("MANAGER") == "Instructor")
+        #expect(StatusVocabulary.role("ADMIN") == "Administración")
+        #expect(StatusVocabulary.role("SUPER_ADMIN") == "Administración")
+    }
+
+    @Test func roleToleratesCasingAndWhitespace() {
+        #expect(StatusVocabulary.role("student") == "Aspirante")
+        #expect(StatusVocabulary.role("  Manager  ") == "Instructor")
+    }
+
+    /// Same rule as the status badges: a role this version does not know is shown
+    /// literally rather than swallowed or renamed. Seeing a code is
+    /// recoverable; seeing nothing is not.
+    @Test func anUnknownRoleIsShownAsItArrives() {
+        #expect(StatusVocabulary.role("OBSERVER") == "OBSERVER")
+        #expect(StatusVocabulary.role("") == "Sin rol")
+        #expect(StatusVocabulary.role(nil) == "Sin rol")
+    }
+
     /// GDPR art. 22: a status badge reports where the process stands, never
     /// how the candidate did.
     @Test func noLabelStatesAnOutcome() {
         let states = ["ACTIVE", "WITHDRAWN", "INVALIDATED", "OPEN", "CLOSING",
                       "CLOSED", "LOCKED", "PREVIEW", "DRAFT", "ARCHIVED", nil]
+        let roles = ["STUDENT", "MANAGER", "ADMIN", "SUPER_ADMIN", "OBSERVER", nil]
         let banned = ["apto", "suspens", "aprob", "corte", "plaza", "cupo"]
 
+        var labels = roles.map { StatusVocabulary.role($0) }
         for state in states {
-            for label in [StatusVocabulary.enrolment(state).label,
-                          StatusVocabulary.convocatoria(state).label] {
-                for word in banned {
-                    #expect(!label.lowercased().contains(word), "«\(word)» en «\(label)»")
-                }
+            labels.append(StatusVocabulary.enrolment(state).label)
+            labels.append(StatusVocabulary.convocatoria(state).label)
+        }
+
+        for label in labels {
+            for word in banned {
+                #expect(!label.lowercased().contains(word), "«\(word)» en «\(label)»")
             }
         }
     }

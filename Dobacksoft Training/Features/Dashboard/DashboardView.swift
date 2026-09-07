@@ -183,10 +183,12 @@ struct ProfileView: View {
                 Section("Mi cuenta") {
                     row("Nombre", value: user.name)
                     row("Email", value: user.email)
-                    row("Rol", value: user.role.capitalized)
-                    if let orgId = user.organizationId {
-                        row("Organización", value: orgId)
-                    }
+                    row("Rol", value: StatusVocabulary.role(user.role))
+                    // La organización se enseñaba con su identificador de
+                    // base de datos —un UUID— a un bombero. El nombre no
+                    // viaja en `GET /me`, así que hasta que lo haga es mejor
+                    // no decir nada que decir un dato que no significa nada
+                    // para quien lo lee. Queda pedido al backend.
                 }
             }
 
@@ -273,7 +275,7 @@ struct ProfileView: View {
                     .foregroundStyle(Color.muted)
             }
             Spacer()
-            StatusBadge(text: user.role.uppercased(), kind: .brand)
+            StatusBadge(text: StatusVocabulary.role(user.role), kind: .brand)
         }
         .padding(.horizontal, Theme.spacing.base.value)
         .accessibilityElement(children: .combine)

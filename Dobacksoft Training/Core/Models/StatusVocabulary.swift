@@ -64,6 +64,29 @@ nonisolated enum StatusVocabulary {
         }
     }
 
+    /// El rol de quien ha iniciado sesión, en castellano.
+    ///
+    /// La insignia del perfil y la fila «Rol» pintaban el enum crudo del
+    /// backend: un bombero leía «Student» y «STUDENT» en una interfaz que por
+    /// lo demás le trata de usted en castellano. El portal web dice
+    /// «Aspirante», y es la palabra que él reconoce del proceso.
+    ///
+    /// Devuelve `String` y no `StatusPresentation` porque un rol no tiene
+    /// estado bueno ni malo: darle color sería sugerir que unos valen más que
+    /// otros. Las tres insignias que lo pintan usan `.brand` a propósito.
+    static func role(_ raw: String?) -> String {
+        switch normalise(raw) {
+        case "STUDENT":                 "Aspirante"
+        case "MANAGER":                 "Instructor"
+        case "ADMIN", "SUPER_ADMIN":    "Administración"
+        default:
+            // Mismo criterio que los estados: un rol que esta versión no
+            // conoce se enseña literal. Que el usuario vea un código es
+            // recuperable; que la app se lo trague, no.
+            normalise(raw).isEmpty ? "Sin rol" : normalise(raw)
+        }
+    }
+
     // MARK: -
 
     private static func normalise(_ raw: String?) -> String {
