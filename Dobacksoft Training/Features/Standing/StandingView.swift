@@ -14,27 +14,70 @@ final class StandingViewModel {
 
     var state: State = .loading
 
+    /// Hay un refresco en curso SOBRE datos ya visibles.
+    ///
+    /// Distinto de `.loading`: ahí no hay nada que enseñar y toca la pantalla
+    /// de carga; aquí la posición sigue en pantalla y lo único que procede es
+    /// un indicador discreto.
+    var isRefreshing = false
+
+    /// El fallo del último refresco, cuando había datos que conservar.
+    ///
+    /// Aparte de `.error` a propósito: `.error` significa «no hay nada que
+    /// enseñar», y esto significa «lo que hay es de antes». Meterlos en el
+    /// mismo sitio es lo que hacía que un fallo de red pasajero borrase la nota
+    /// que el aspirante estaba mirando.
+    var refreshError: String?
+
+    /// Cuándo se obtuvieron los datos que se están enseñando.
+    ///
+    /// La hora del DATO, no la del último intento de refrescarlo: si el
+    /// refresco falla no se mueve, porque lo que hay en pantalla sigue siendo
+    /// lo de antes.
+    var lastUpdated: Date?
+
+    private let api: TrainingAPI
+    private let now: @Sendable () -> Date
+
+    init(api: TrainingAPI = APIClient.shared, now: @escaping @Sendable () -> Date = Date.init) {
+        self.api = api
+        self.now = now
+    }
+
     func load(
         convocatoriaId: String,
         auth: AuthSession,
         convocatoriaName: String? = nil,
         finality: GradeFinality = .unknown
     ) async {
-        state = .loading
+        // Solo `.loaded` cuenta como «hay algo que proteger». `.notFound` es
+        // una respuesta legítima, no un dato: conservarla ante un fallo
+        // posterior enseñaría como vigente una ausencia que ya no consta.
+        let teniaDatos: Bool
+        if case .loaded = state { teniaDatos = true } else { teniaDatos = false }
+
+        if teniaDatos { isRefreshing = true } else { state = .loading }
+        defer { isRefreshing = false }
+
         do {
-            let standing = try await auth.authorized { token in
-                try await APIClient.shared.standing(
+            let standing = try await auth.authorized { [api] token in
+                try await api.standing(
                     convocatoriaId: convocatoriaId,
                     accessToken: token
                 )
             }
             state = .loaded(standing)
+            refreshError = nil
+            lastUpdated = now()
         } catch let err as APIError where err.notFoundReason != nil {
             state = .notFound(err.notFoundReason ?? .resourceMissing)
-        } catch let err as APIError {
-            state = .error(err.userMessage)
         } catch {
-            state = .error(error.localizedDescription)
+            let mensaje = (error as? APIError)?.userMessage ?? error.localizedDescription
+            if teniaDatos {
+                refreshError = "\(mensaje) Se muestra el último dato consultado."
+            } else {
+                state = .error(mensaje)
+            }
         }
 
         // La vista rápida se alimenta desde aquí. Un estado de error no
@@ -480,10 +523,13 @@ struct MyConvocatoriaContentView: View {
             .frame(maxWidth: .infinity, minHeight: 120)
             .cardStyle()
         case .loaded(let standing):
-            StandingCard(
-                standing: standing,
-                finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
-            )
+            VStack(spacing: Theme.spacing.sm.value) {
+                StandingCard(
+                    standing: standing,
+                    finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
+                )
+                refreshFooter
+            }
         case .notFound(let reason):
             ContentUnavailableView(
                 reason.title,
@@ -502,6 +548,51 @@ struct MyConvocatoriaContentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .cardStyle()
+        }
+    }
+
+    /// Lo que hay debajo de la posición cuando ya hay posición: si el último
+    /// refresco falló, y de cuándo es el número que se está leyendo.
+    ///
+    /// Va aquí y no encima de la tarjeta a propósito. Un aviso sobre la
+    /// tarjeta se lee como «esto de abajo está mal»; el dato no está mal,
+    /// está fechado. Lo que se le debe al aspirante es la fecha, no una alarma.
+    @ViewBuilder
+    private var refreshFooter: some View {
+        if let refreshError = standingVM.refreshError {
+            HStack(alignment: .top, spacing: Theme.spacing.sm.value) {
+                Image(systemName: "wifi.exclamationmark")
+                    .foregroundStyle(Color.warning)
+                    .accessibilityHidden(true)
+                Text(refreshError)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button("Reintentar") { Task { await load() } }
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.brand)
+                    // 44 pt de alto real: el rótulo son 12 pt y sin esto el
+                    // objetivo táctil es la mitad del mínimo.
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("standing.retryRefresh")
+            }
+            .padding(.horizontal, Theme.spacing.base.value)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(refreshError)
+        } else if let lastUpdated = standingVM.lastUpdated {
+            HStack(spacing: Theme.spacing.xs.value) {
+                if standingVM.isRefreshing {
+                    ProgressView().controlSize(.mini).tint(Color.muted)
+                }
+                Text("Actualizado a las \(APIDate.time(lastUpdated))")
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.horizontal, Theme.spacing.base.value)
+            .accessibilityIdentifier("standing.lastUpdated")
         }
     }
 

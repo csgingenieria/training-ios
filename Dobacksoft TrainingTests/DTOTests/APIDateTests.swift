@@ -134,3 +134,27 @@ struct DisplayInstantTests {
         #expect(APIDate.displayInstant(nil) == nil)
     }
 }
+
+/// `HH:mm` alone, for «Actualizado a las …».
+///
+/// The date is redundant there — the data was read in this session, minutes
+/// ago — and printing `03/09/2026 16:22` under a grade reads like the date OF
+/// the grade, which is a different and more important fact.
+@Suite struct APIDateTimeOfDayTests {
+    /// Fixed instant, and asserted in the exam's time zone: a formatter using
+    /// the device zone would show an instructor on a trip an hour that does not
+    /// match the portal or the record.
+    @Test func theTimeIsPrintedInMadridWithoutTheDate() {
+        // 2026-09-07T18:22:00Z → 20:22 en Madrid (CEST, UTC+2).
+        let instante = try! #require(APIDate.parse("2026-09-07T18:22:00Z"))
+
+        #expect(APIDate.time(instante) == "20:22")
+    }
+
+    @Test func midnightIsZeroPadded() {
+        let instante = try! #require(APIDate.parse("2026-01-15T23:05:00Z"))
+
+        // 23:05Z en enero → 00:05 del día siguiente en Madrid (CET, UTC+1).
+        #expect(APIDate.time(instante) == "00:05")
+    }
+}

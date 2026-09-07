@@ -37,6 +37,7 @@ enum APIDate {
     private static let shortDateTimeFormatter = formatter("dd/MM/yyyy HH:mm")
     private static let shortDateFormatter = formatter("dd/MM/yyyy")
     private static let longDateTimeFormatter = formatter("d 'de' MMMM 'a las' HH:mm")
+    private static let timeFormatter = formatter("HH:mm")
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
@@ -67,6 +68,16 @@ enum APIDate {
     /// `03/09/2026`
     static func shortDate(_ value: String?) -> String? {
         parse(value).map(shortDateFormatter.string(from:))
+    }
+
+    /// `16:22` — solo la hora.
+    ///
+    /// Para «Actualizado a las …», donde la fecha sobra: el dato se leyó en
+    /// esta misma sesión. Y estorba, porque un `03/09/2026 16:22` debajo de
+    /// una nota se lee como la fecha DEL intento, que es otro dato y más
+    /// importante.
+    static func time(_ date: Date) -> String {
+        timeFormatter.string(from: date)
     }
 
     /// `3 de septiembre a las 16:22`
