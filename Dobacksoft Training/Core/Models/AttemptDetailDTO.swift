@@ -282,7 +282,11 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
         case "informativo", "evento_informativo":
             "Registrado a título informativo: no ha restado puntuación."
         case "dentro_de_tolerancia", "franquicia":
-            "Dentro de la tolerancia admitida: no ha restado puntuación."
+            // «permitida», no «admitida»: el margen lo permite la configuración
+            // de puntuación, y «admitido» es la palabra con la que la
+            // resolución nombra a quien entra. No pinta nada en una frase sobre
+            // el umbral de un sensor.
+            "Dentro de la tolerancia permitida: no ha restado puntuación."
         default:
             "No ha restado puntuación."
         }

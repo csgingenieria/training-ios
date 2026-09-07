@@ -396,7 +396,7 @@ struct ResultadosView: View {
             if data.hasUndrivenRequiredColumn {
                 Text("Las columnas sin ninguna nota corresponden a recorridos que la convocatoria exige y de los que todavía no consta ningún intento calificado.")
             }
-            Text("La asignación de plaza la decide CMadrid al cierre de la convocatoria.")
+            Text(LegalNotice.outcomeDecidedByCMadrid)
         }
         .font(.metaCaption)
         .foregroundStyle(Color.muted)
