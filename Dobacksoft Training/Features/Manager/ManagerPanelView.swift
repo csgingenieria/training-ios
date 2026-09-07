@@ -655,6 +655,11 @@ struct ManagerPanelView: View {
                             ConvocatoriaRow(conv: conv)
                         }
                         .buttonStyle(.plain)
+                        // Mismo identificador que la fila de la lista: es la
+                        // misma cosa alcanzada por otro camino, y en iPad éste
+                        // es el que existe —el instructor aterriza en el panel
+                        // y la selección del sidebar no se puede automatizar.
+                        .accessibilityIdentifier("convocatorias.row")
                     }
                 }
             }

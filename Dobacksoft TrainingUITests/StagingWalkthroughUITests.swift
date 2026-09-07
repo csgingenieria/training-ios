@@ -126,12 +126,25 @@ final class StagingWalkthroughUITests: XCTestCase {
         // Addressed by label, not by index: the tab set differs by role, and
         // `boundBy: 1` landed on Convocatorias for a STUDENT session — the test
         // then screenshotted the wrong screen and skipped without saying so.
-        guard destinations(in: app).contains("Mi posición") else {
-            throw XCTSkip("This role has no standing screen; attempts are reached elsewhere.")
-        }
-        guard navigate(to: "Mi posición", in: app) else {
-            capture(app, named: "09-sin-navegar")
-            return XCTFail("«Mi posición» would not open. See the attached screenshot.")
+        // «Mi posición» es una pestaña en iPhone y una fila del sidebar en
+        // iPad, y la del sidebar no se puede accionar desde XCUITest. Pero
+        // también se llega desde el detalle de la convocatoria, que es un
+        // camino que un aspirante usa y que existe en los dos layouts.
+        if destinations(in: app).contains("Mi posición"), navigate(to: "Mi posición", in: app) {
+            // Llegado por la pestaña.
+        } else {
+            let convocatoria = try openConvocatoria(in: app)
+            convocatoria.tap()
+
+            let miPosicion = app.buttons["Mi posición"]
+            guard miPosicion.waitForExistence(timeout: 10) else {
+                throw XCTSkip("Este rol no tiene «Mi posición»: los intentos se alcanzan por otro sitio.")
+            }
+            miPosicion.tap()
+            XCTAssertTrue(
+                app.navigationBars["Mi posición"].waitForExistence(timeout: 15),
+                "«Mi posición» no abrió desde el detalle de la convocatoria."
+            )
         }
 
         // The attempt rows sit below the fold on every device this ships to.
@@ -202,18 +215,7 @@ final class StagingWalkthroughUITests: XCTestCase {
         try signIn(app)
         dismissSystemSavePasswordSheet()
 
-        guard navigate(to: "Convocatorias", in: app) else {
-            throw XCTSkip("No se pudo abrir «Convocatorias». En iPad es el límite de XCUITest con el sidebar, no la app.")
-        }
-
-        let row = element("convocatorias.row", in: app)
-        guard row.waitForExistence(timeout: 10) else {
-            // El árbol, no una conjetura: dos ejecuciones se perdieron
-            // adivinando el tipo de elemento de una fila de lista.
-            capture(app, named: "19-sin-fila")
-            attachHierarchy(app)
-            throw XCTSkip("No «convocatorias.row» on screen. See the attached hierarchy.")
-        }
+        let row = try openConvocatoria(in: app)
         row.tap()
 
         let resultados = app.buttons["Resultados"]
@@ -230,6 +232,27 @@ final class StagingWalkthroughUITests: XCTestCase {
 
         assertNoDecodingFailureVisible(app, screen: "Resultados")
         assertNoVerdictVisible(app, screen: "Resultados")
+    }
+
+    /// The convocatoria row, by whichever route this layout offers.
+    ///
+    /// iPhone reaches it from the Convocatorias tab. iPad regular width lands a
+    /// manager on Panel and a candidate on Convocatorias, and the sidebar
+    /// cannot be driven — but the dashboard lists the active convocatorias with
+    /// the same identifier, so the row is reachable without it. Both are paths
+    /// a person actually takes; neither is a workaround.
+    private func openConvocatoria(in app: XCUIApplication) throws -> XCUIElement {
+        let direct = element("convocatorias.row", in: app)
+        if direct.waitForExistence(timeout: 5) { return direct }
+
+        if navigate(to: "Convocatorias", in: app) {
+            let row = element("convocatorias.row", in: app)
+            if row.waitForExistence(timeout: 10) { return row }
+        }
+
+        capture(app, named: "19-sin-convocatoria")
+        attachHierarchy(app)
+        throw XCTSkip("No hay ninguna «convocatorias.row» alcanzable. Ver la jerarquía adjunta.")
     }
 
     // MARK: - Steps
