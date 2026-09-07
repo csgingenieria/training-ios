@@ -304,7 +304,7 @@ struct ManagerPanelView: View {
             }
             Spacer()
             if let role = auth.user?.role {
-                StatusBadge(text: role.uppercased(), kind: .brand)
+                StatusBadge(text: StatusVocabulary.role(role), kind: .brand)
             }
         }
         .cardStyle()
@@ -420,7 +420,7 @@ struct ManagerPanelView: View {
             } label: {
                 if viewModel.isSyncing {
                     HStack(spacing: Theme.spacing.sm.value) {
-                        ProgressView().tint(.white)
+                        ProgressView().tint(Color.onBrand)
                         Text("Sincronizando…")
                     }
                 } else {
