@@ -101,4 +101,34 @@ import Foundation
 
         #expect(row.unavailabilityDetail != nil)
     }
+
+    // MARK: - Gravedad del evento
+
+    /// `CATEGORIA_LABELS` in `app/services/attempt_detail.py:499-503`, verified
+    /// 2026-09-07.
+    ///
+    /// Frozen because it is graded weight, not a display string: a fourth value
+    /// arriving unhandled would leave the badge blank on an event that did
+    /// deduct, and a blank where a gravity belongs reads as «none».
+    private static let eventGravities = ["LEVE", "MODERADA", "GRAVE"]
+
+    @Test func everyEventGravityHasACastilianLabel() {
+        for raw in Self.eventGravities {
+            let gravity = AttemptEventDTO.Gravity(apiValue: raw)
+            #expect(gravity != nil, "«\(raw)» no se reconoce y la insignia no se pintaría")
+            #expect(gravity?.label.isEmpty == false)
+        }
+    }
+
+    /// The fixture carried `ESTABILIDAD` and `FIRME` here for months. Those are
+    /// FAMILY values — where the event deducted — and they say nothing about
+    /// gravity. Nothing failed, because nothing read the field.
+    @Test func familyValuesAreNotGravities() {
+        for familia in ["ESTABILIDAD", "FIRME", "VELOCIDAD", "CONDUCCION", "FRENO_MOTOR"] {
+            #expect(
+                AttemptEventDTO.Gravity(apiValue: familia) == nil,
+                "«\(familia)» es una familia, no una gravedad"
+            )
+        }
+    }
 }

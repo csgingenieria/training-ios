@@ -297,6 +297,60 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     /// que el contrato lo diga es justo el error que este campo vino a cerrar.
     var didPenalise: Bool { affectsScore == true }
 
+    /// Con qué gravedad se CALIFICÓ el evento.
+    ///
+    /// Es el dato con el que un aspirante entiende una deducción y, si no está
+    /// de acuerdo, la nombra al pedir revisión. Estaba decodificado desde que
+    /// existe el DTO y ninguna vista lo pintaba: la ficha enseñaba la
+    /// intensidad del sensor, que el backend nombra por lo que es —«intensidad
+    /// del canal, no la gravedad con la que se puntuó»—, así que contestaba una
+    /// pregunta que nadie hacía y callaba la que sí.
+    ///
+    /// Los tres valores son los de `CATEGORIA_LABELS` del backend. Uno que esta
+    /// versión no reconozca da `nil`: no se afirma una gravedad inventada.
+    var gravity: Gravity? {
+        Gravity(apiValue: categoria)
+    }
+
+    /// El color de la insignia de gravedad.
+    ///
+    /// **Neutro si el evento no descontó**, sea cual sea su gravedad. La ficha
+    /// ya razona esto para la intensidad: hay eventos informativos por diseño
+    /// —el badén— que llegan calificados y no restan nada, y pintarlos en rojo
+    /// le atribuye al aspirante algo que no ocurrió. Sin `affectsScore` en el
+    /// contrato tampoco se colorea: afirmar daño sin que nadie lo diga es el
+    /// mismo error en su versión silenciosa.
+    var gravityBadgeKind: BadgeKind {
+        guard didPenalise else { return .neutral }
+        return switch gravity {
+        case .grave:    .danger
+        case .moderada: .warning
+        default:        .neutral
+        }
+    }
+
+    /// Gravedad con la que el sistema calificó un evento.
+    nonisolated enum Gravity: Sendable, Equatable {
+        case leve, moderada, grave
+
+        init?(apiValue: String?) {
+            switch (apiValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+            case "LEVE":     self = .leve
+            case "MODERADA": self = .moderada
+            case "GRAVE":    self = .grave
+            default:         return nil
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .leve:     "Leve"
+            case .moderada: "Moderada"
+            case .grave:    "Grave"
+            }
+        }
+    }
+
     /// Qué decirle al aspirante cuando el evento no descontó.
     ///
     /// Descriptivo, no tranquilizador: el hecho es que no restó, y explicar por

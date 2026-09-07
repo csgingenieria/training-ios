@@ -63,7 +63,7 @@
       "timestamp": "09:32:11",
       "source": "DOBACK_ELITE",
       "penaltyPoints": 0.4,
-      "categoria": "ESTABILIDAD",
+      "categoria": "GRAVE",
       "affectsScore": true,
       "noPenaltyReason": null,
       "sensorSeverity": "MODERADO"
@@ -76,7 +76,7 @@
       "timestamp": "09:35:02",
       "source": "DOBACK_ELITE",
       "penaltyPoints": 0.0,
-      "categoria": "FIRME",
+      "categoria": "LEVE",
       "affectsScore": false,
       "noPenaltyReason": "informativo",
       "sensorSeverity": "CRITICO"

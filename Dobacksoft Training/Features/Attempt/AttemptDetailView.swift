@@ -335,6 +335,13 @@ private struct AttemptDetailContent: View {
                             Text(ev.type ?? "—")
                                 .font(.bodyEmphasis)
                                 .foregroundStyle(Color.ink)
+                            // Con qué gravedad se calificó. El contrato la
+                            // mandaba desde el principio y la ficha no la
+                            // enseñaba: es lo que permite entender una
+                            // deducción y nombrarla al pedir revisión.
+                            if let gravity = ev.gravity {
+                                StatusBadge(text: gravity.label, kind: ev.gravityBadgeKind)
+                            }
                             Spacer()
                             if let ts = APIDate.displayInstant(ev.timestamp) {
                                 Text(ts)
