@@ -58,11 +58,15 @@ struct RankingDTOTests {
     }
 
     /// Absentees sort last, never as position zero.
-    @Test func absenteesSortAfterRankedEntries() throws {
+    ///
+    /// The ordering moved to `ResultadosSortMode` when «Ranking completo» and
+    /// «Matriz de puntuaciones» became one screen, so the rule is asserted
+    /// there, on the merged rows, in `ResultadosMergeTests`.
+    @Test func absenteesHaveNoPosition() throws {
         let dto: RankingResponseDTO = try JSONFixture.decode("ranking")
-        let sorted = RankingSortMode.position.apply(dto.entries)
-        #expect(sorted.first?.position == 1)
-        #expect(sorted.last?.position == nil)
+        let absentee = dto.entries.first { $0.hasNotDriven }
+        #expect(absentee?.position == nil)
+        #expect(absentee?.displayScore == nil)
     }
 }
 

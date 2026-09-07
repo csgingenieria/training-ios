@@ -162,6 +162,51 @@ final class StagingWalkthroughUITests: XCTestCase {
         )
     }
 
+    /// Opens «Resultados» for the first convocatoria and captures the table.
+    ///
+    /// This is the screen that replaced «Ranking completo» and «Matriz de
+    /// puntuaciones», and the one where the two sources are crossed: the
+    /// columns are the union of the matrix's circuits and the convocatoria's
+    /// required routes, because the matrix only returns circuits somebody has
+    /// driven. On the real convocatoria that is five columns out of ten, and
+    /// the five it omits are the ones that explain every grade.
+    ///
+    /// Only a MANAGER reaches it; a STUDENT gets 403 on both endpoints, so the
+    /// test skips instead of failing on the wrong account.
+    func testResultados() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        let tab = app.tabBars.buttons["Convocatorias"]
+        guard tab.waitForExistence(timeout: 10), select(tab, attempts: 3) else {
+            throw XCTSkip("No convocatorias tab in this session.")
+        }
+
+        let row = app.buttons.matching(identifier: "convocatorias.row").firstMatch
+        guard row.waitForExistence(timeout: 10) else {
+            throw XCTSkip("This account sees no convocatoria.")
+        }
+        row.tap()
+
+        let resultados = app.buttons["Resultados"]
+        guard resultados.waitForExistence(timeout: 10) else {
+            throw XCTSkip("This role has no «Resultados» — it is instructor-only.")
+        }
+        resultados.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["Aspirante"].waitForExistence(timeout: 20),
+            "«Resultados» never rendered its table header."
+        )
+        capture(app, named: "20-resultados")
+
+        assertNoDecodingFailureVisible(app, screen: "Resultados")
+        assertNoVerdictVisible(app, screen: "Resultados")
+    }
+
     // MARK: - Steps
 
     private func signIn(_ app: XCUIApplication) throws {

@@ -107,12 +107,14 @@ struct ConvocatoriaDetailView: View {
     private var actionsList: some View {
         VStack(spacing: 0) {
             if auth.user?.isAdminLike == true {
-                actionRow(icon: "list.number", label: "Ranking completo") {
-                    RankingView(convocatoriaId: convocatoria.id, convocatoriaName: convocatoria.name)
-                }
-                Divider().padding(.leading, 52)
-                actionRow(icon: "tablecells", label: "Matriz de puntuaciones") {
-                    MatrixView(convocatoriaId: convocatoria.id, convocatoriaName: convocatoria.name)
+                // Un solo destino, como en el portal (`/manager/resultados`).
+                // Antes eran dos —«Ranking completo» y «Matriz de
+                // puntuaciones»— para la misma pregunta, y separadas ninguna la
+                // contestaba: el ranking decía quién iba delante sin decir de
+                // qué está hecha la nota, y la matriz decía qué había conducido
+                // cada uno sin decir en qué orden quedaban.
+                actionRow(icon: "tablecells", label: "Resultados") {
+                    ResultadosView(convocatoriaId: convocatoria.id, convocatoriaName: convocatoria.name)
                 }
             }
             if auth.user?.isStudent == true {

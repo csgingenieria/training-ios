@@ -135,6 +135,9 @@ struct ConvocatoriasListView: View {
                         ConvocatoriaRow(conv: conv)
                     }
                     .buttonStyle(.plain)
+                    // Identidad estable para el recorrido automatizado: el
+                    // nombre de la convocatoria depende de los datos.
+                    .accessibilityIdentifier("convocatorias.row")
                 }
             }
             .padding(.horizontal, Theme.spacing.base.value)
