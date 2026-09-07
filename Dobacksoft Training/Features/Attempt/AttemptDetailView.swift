@@ -143,22 +143,40 @@ private struct AttemptDetailContent: View {
     @ViewBuilder
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: Theme.spacing.md.value) {
-            // Hero score
-            if let s = attempt.score {
-                HStack(alignment: .firstTextBaseline, spacing: Theme.spacing.sm.value) {
-                    Text(ScoreFormat.attempt(s))
-                        .font(.display(size: 56, weight: .bold, italic: false, relativeTo: .largeTitle))
-                        .foregroundStyle(Color.ink)
+            // La nota, y cuando no la hay, que no la hay.
+            //
+            // Antes el `if let` envolvía el bloque entero, así que un intento
+            // sin nota abría en una tarjeta que empezaba en otro sitio: sin
+            // cifra, sin explicación y sin insignia de calidad, porque la
+            // insignia vivía dentro del mismo `if` y se iba con él.
+            let presentation = AttemptScorePresentation(score: attempt.score)
+            HStack(alignment: .firstTextBaseline, spacing: Theme.spacing.sm.value) {
+                Text(presentation.heroText)
+                    .font(presentation.showsScale
+                          ? .display(size: 56, weight: .bold, italic: false, relativeTo: .largeTitle)
+                          : .cardTitle)
+                    .foregroundStyle(presentation.showsScale ? Color.ink : Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                if presentation.showsScale {
                     Text("/10")
                         .font(.cardTitle)
                         .foregroundStyle(Color.muted)
-                    Spacer()
-                    if let quality = attempt.quality {
-                        StatusBadge(text: quality.label, kind: quality.badgeKind)
-                    }
                 }
-                Divider()
+                Spacer()
+                // Fuera del condicional: la calidad del dato es un hecho del
+                // intento, no de su nota, y sin nota es cuando más informa.
+                if let quality = attempt.quality {
+                    StatusBadge(text: quality.label, kind: quality.badgeKind)
+                }
             }
+            if let detail = presentation.heroDetail {
+                Text(detail)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Divider()
 
             // Un intento de prácticas se puntúa y se ve, pero no ordena la
             // oposición. Decirlo aquí evita que alguien no entienda por qué su

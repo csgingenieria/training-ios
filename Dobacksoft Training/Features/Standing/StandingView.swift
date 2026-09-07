@@ -824,15 +824,15 @@ struct AttemptSummaryRow: View {
 
     @ViewBuilder
     private var scoreView: some View {
-        if let s = attempt.score {
-            Text(ScoreFormat.attempt(s))
-                .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
-                .foregroundStyle(Color.ink)
-        } else {
-            Text("—")
-                .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
-                .foregroundStyle(Color.muted)
-        }
+        // «Sin nota», no un guion. Es la regla que el widget lleva escrita
+        // —«nunca un guion en lugar de una cifra»— y las palabras son las que
+        // ya usa el filtro de intentos para este mismo caso.
+        //
+        // El guion además borraba una distinción que importa: «—» y «0,0»
+        // significan lo contrario para quien se presenta a una oposición.
+        Text(attempt.rowScoreText)
+            .font(.body(size: attempt.hasScore ? 20 : 14, weight: .semibold, relativeTo: .title3))
+            .foregroundStyle(attempt.hasScore ? Color.ink : Color.muted)
     }
 
 }
