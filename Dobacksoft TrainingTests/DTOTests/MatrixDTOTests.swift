@@ -44,12 +44,34 @@ struct SyntheticCircuitTests {
         let synthetic = try #require(dto.circuits.first { $0.isSynthetic })
         #expect(synthetic.displayLabel == "Sin recorrido")
         #expect(synthetic.displayLabel != synthetic.id)
+        #expect(synthetic.fullName == "Sin recorrido asignado")
+        #expect(!synthetic.fullName.contains(synthetic.id))
     }
 
-    @Test func realColumnsKeepTheirLabel() throws {
+    /// The column header carries the short identifier, and the full route name
+    /// stays reachable for VoiceOver.
+    ///
+    /// `label` used to be the identifier, so header and label were the same
+    /// string. Since `get_matrix_data` was fixed it carries the route's real
+    /// name — «2A2 Subida y bajada Cruz Verde» — which does not fit a table
+    /// column at all.
+    @Test func realColumnsShowTheShortIdAndKeepTheirName() throws {
         let dto: MatrixResponseDTO = try JSONFixture.decode("matrix")
         let real = try #require(dto.circuits.first(where: { !$0.isSynthetic }))
-        #expect(real.displayLabel == real.label)
+        #expect(real.displayLabel == real.id)
+        #expect(real.fullName == real.label)
+    }
+
+    /// `required` tells a column exacted by the convocatoria from one that
+    /// merely happens to have attempts. Absent, nothing is claimed.
+    @Test func requiredIsReadFromTheColumn() throws {
+        let exacted = Data(#"{"id": "1A", "label": "1A", "required": true, "synthetic": false}"#.utf8)
+        let loose = Data(#"{"id": "9Z", "label": "9Z", "required": false, "synthetic": false}"#.utf8)
+        let older = Data(#"{"id": "1A", "label": "1A"}"#.utf8)
+
+        #expect(try JSONDecoder().decode(MatrixCircuitDTO.self, from: exacted).isRequired)
+        #expect(try !JSONDecoder().decode(MatrixCircuitDTO.self, from: loose).isRequired)
+        #expect(try !JSONDecoder().decode(MatrixCircuitDTO.self, from: older).isRequired)
     }
 
     /// Older responses without the flag are treated as real, which is what they
@@ -58,7 +80,8 @@ struct SyntheticCircuitTests {
         let json = Data(#"{"id": "2A1", "label": "Parque → Hoyo"}"#.utf8)
         let circuit = try JSONDecoder().decode(MatrixCircuitDTO.self, from: json)
         #expect(!circuit.isSynthetic)
-        #expect(circuit.displayLabel == "Parque → Hoyo")
+        #expect(circuit.displayLabel == "2A1")
+        #expect(circuit.fullName == "Parque → Hoyo")
     }
 
     /// The synthetic column carries real grades and must not be dropped.

@@ -260,10 +260,33 @@ private struct AttemptDetailContent: View {
                         }
                     }
                 }
+                // La suma de las filas NO reproduce la nota, y no va a hacerlo:
+                // la publicada lleva un decimal y las filas están redondeadas a
+                // dos. Sin decirlo, un aspirante suma 8,45, lee 8,5 y concluye
+                // que hay un error en su calificación.
+                Text(breakdownRoundingNote)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .cardStyle()
         }
+    }
+
+    /// Por qué las filas no suman la nota de arriba.
+    ///
+    /// Cuando el contrato envía `scoreRaw` se nombra, porque es el número al
+    /// que sí se acercan las filas (±0,01 por fila) y es el que cierra la
+    /// cuenta a quien la hace. Sin él, se dice la regla sin inventarse cifras.
+    private var breakdownRoundingNote: String {
+        let base = "Las filas están redondeadas a dos decimales, así que su suma no coincide exactamente con la nota."
+        guard let raw = attempt.scoreRaw, let published = attempt.score,
+              ScoreFormat.aggregate(raw) != ScoreFormat.attempt(published) else {
+            return base
+        }
+        return base + " Sin redondear la nota es \(ScoreFormat.aggregate(raw)); publicada lleva un decimal."
     }
 
     @ViewBuilder

@@ -51,8 +51,7 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// screenshots, because staging's data changes and a test that pinned it
     /// would fail for the wrong reason.
     func testSignedInWalkthrough() throws {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchClean()
 
         try signIn(app)
         dismissSystemSavePasswordSheet()
@@ -90,8 +89,7 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// Skips rather than fails when the account has no attempt yet: an empty
     /// convocatoria is a legitimate state, not a defect.
     func testAttemptDetail() throws {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchClean()
 
         try signIn(app)
         dismissSystemSavePasswordSheet()
@@ -174,8 +172,7 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// Only a MANAGER reaches it; a STUDENT gets 403 on both endpoints, so the
     /// test skips instead of failing on the wrong account.
     func testResultados() throws {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchClean()
 
         try signIn(app)
         dismissSystemSavePasswordSheet()
@@ -209,24 +206,28 @@ final class StagingWalkthroughUITests: XCTestCase {
 
     // MARK: - Steps
 
-    private func signIn(_ app: XCUIApplication) throws {
-        // The session lives in the Keychain, which survives between runs, so
-        // the app often opens already signed in. A test that only works on a
-        // clean Keychain fails on its own second run.
-        if app.tabBars.firstMatch.waitForExistence(timeout: 5) { return }
+    /// Launches with no session at all.
+    ///
+    /// Reusing whatever session the Keychain held was worse than useless: a run
+    /// asking for the candidate's account opened inside the instructor's, found
+    /// none of its screens and skipped green. Existing is not the same as being
+    /// the right account, and the test cannot tell them apart from the outside.
+    private func launchClean() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest-reset-session"]
+        app.launch()
+        return app
+    }
 
+    private func signIn(_ app: XCUIApplication) throws {
         let email = app.textFields["login.email"]
         XCTAssertTrue(
             email.waitForExistence(timeout: 10),
             "Neither a session nor a login screen — the app opened on something else."
         )
 
-        email.tap()
-        email.typeText(credentials.email)
-
-        let password = app.secureTextFields["login.password"]
-        password.tap()
-        password.typeText(credentials.password)
+        try type(credentials.email, into: email, in: app)
+        try type(credentials.password, into: app.secureTextFields["login.password"], in: app)
 
         app.buttons["login.submit"].tap()
 
@@ -235,6 +236,28 @@ final class StagingWalkthroughUITests: XCTestCase {
         guard app.tabBars.firstMatch.waitForExistence(timeout: 30) else {
             capture(app, named: "00-login-fallido")
             return XCTFail("No session after 30 s. See the attached screenshot for what the screen said.")
+        }
+    }
+
+    /// Taps a field, waits until it actually has the keyboard, and types.
+    ///
+    /// `tap()` followed straight by `typeText` failed intermittently with
+    /// «Neither element nor any descendant has keyboard focus»: the tap lands
+    /// before the field is ready to receive it. Passing alone and failing in a
+    /// full run is the worst kind of test, so the wait is explicit.
+    private func type(_ text: String, into field: XCUIElement, in app: XCUIApplication) throws {
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "No apareció el campo \(field.identifier).")
+
+        for attempt in 1...3 {
+            field.tap()
+            if app.keyboards.element.waitForExistence(timeout: 5) {
+                field.typeText(text)
+                return
+            }
+            if attempt == 3 {
+                capture(app, named: "00-sin-teclado")
+                throw XCTSkip("El teclado no apareció tras 3 toques en \(field.identifier).")
+            }
         }
     }
 

@@ -31,6 +31,19 @@ final class AuthSession {
             hasRestoredSession = true
         }
 
+        #if DEBUG
+        // La sesión vive en el Keychain y sobrevive entre ejecuciones, así que
+        // un recorrido automatizado arrancaba con la sesión de la ejecución
+        // ANTERIOR: pedía entrar como aspirante, se encontraba dentro como
+        // instructor, no hallaba su pantalla y se saltaba en verde sin haber
+        // comprobado nada. Este argumento existe para que el test pueda exigir
+        // una sesión limpia; solo en DEBUG, y nunca lo pasa la app.
+        if CommandLine.arguments.contains("-uitest-reset-session") {
+            try? TokenStore.clearAll()
+            return
+        }
+        #endif
+
         let access = loadToken(.accessToken)
         let refresh = loadToken(.refreshToken)
 

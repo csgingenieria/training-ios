@@ -59,11 +59,20 @@ struct ResultadosData: Sendable {
     /// Recorridos reales de la tabla, sin la columna sintética.
     var realCircuitCount: Int { circuits.filter { !$0.isSynthetic }.count }
 
-    /// `true` cuando alguna columna existe solo porque la convocatoria la exige
-    /// y nadie la ha conducido todavía.
+    /// `true` cuando alguna columna EXIGIDA no tiene ninguna nota.
+    ///
+    /// Se apoya en `required` de la propia columna en vez de deducirlo: hay un
+    /// caso conocido en el backend en el que una ruta de PRÁCTICAS puede
+    /// acabar en el conjunto exigido (`_rutas_exigidas_validas` no comprueba
+    /// `Route.categoria`) y su columna sale vacía incluso para quien la
+    /// condujo. Con `required` la app dice «no consta conducida», que es
+    /// verdad sobre el dato, en vez de «nadie la ha conducido», que sería una
+    /// afirmación sobre la realidad que no puede sostener.
     var hasUndrivenRequiredColumn: Bool {
         circuits.contains { circuit in
-            !ranked.contains { $0.byCircuit[circuit.id]?.score != nil }
+            circuit.isRequired
+                && !circuit.isSynthetic
+                && !ranked.contains { $0.byCircuit[circuit.id]?.score != nil }
         }
     }
 }
@@ -73,15 +82,16 @@ struct ResultadosData: Sendable {
 extension ResultadosData {
     /// Cruza ranking y matriz en una sola tabla.
     ///
-    /// **Las columnas son la unión de las dos fuentes.** La matriz solo
-    /// devuelve circuitos con al menos un intento, así que en la convocatoria
-    /// real de staging traía cinco cuando la convocatoria exige diez: el
-    /// instructor veía a alguien con cinco notas entre 8,5 y 10 y no podía ver
-    /// las cinco columnas vacías que explican por qué su nota oficial es 4,75.
-    /// La tabla sugería lo contrario de lo que pasaba.
+    /// **Las columnas son las que manda la matriz, y punto.** Durante un rato
+    /// este cliente las derivaba cruzando `requiredRoutes` del ranking, porque
+    /// la matriz solo devolvía circuitos con algún intento —cinco de los diez
+    /// exigidos— y ocultaba justo las columnas que explican cada nota. El
+    /// defecto estaba en `get_matrix_data` y se arregló allí: ahora devuelve
+    /// los diez, con `required` en cada columna y el nombre real del recorrido.
     ///
-    /// Tomar la unión es compatible hacia delante: si el backend empieza a
-    /// devolver los diez, la unión sigue siendo los diez.
+    /// Derivarlo aquí ya sería duplicar una lógica que el backend resuelve con
+    /// el mismo saneador canónico que usa el ranking, que es lo que garantiza
+    /// que las dos mitades de esta pantalla no puedan divergir.
     static func merge(
         ranking: RankingResponseDTO,
         matrix: MatrixResponseDTO?
@@ -142,36 +152,12 @@ extension ResultadosData {
         return ResultadosData(
             convocatoriaName: ranking.convocatoria.name,
             convocatoriaStatus: ranking.convocatoria.status,
-            circuits: columns(ranking: ranking, matrix: matrix),
+            circuits: matrix?.circuits ?? [],
             ranked: ranked,
             notPresented: notPresented
         )
     }
 
-    /// Columnas en orden: primero los recorridos exigidos, en el orden en que
-    /// los declara la convocatoria; después lo que la matriz traiga y no esté
-    /// exigido; la columna sintética al final, si existe.
-    private static func columns(
-        ranking: RankingResponseDTO,
-        matrix: MatrixResponseDTO?
-    ) -> [MatrixCircuitDTO] {
-        let fromMatrix = matrix?.circuits ?? []
-        let byId = Dictionary(fromMatrix.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-
-        // Cualquier entrada sirve: el conjunto exigido es de la convocatoria,
-        // no del aspirante.
-        let required = ranking.entries.compactMap(\.requiredRoutes).first ?? []
-
-        var ordered: [MatrixCircuitDTO] = required.map { routeId in
-            byId[routeId] ?? MatrixCircuitDTO(id: routeId, label: routeId, synthetic: false)
-        }
-
-        let placed = Set(ordered.map(\.id))
-        ordered += fromMatrix.filter { !placed.contains($0.id) && !$0.isSynthetic }
-        ordered += fromMatrix.filter { $0.isSynthetic }
-
-        return ordered
-    }
 }
 
 // MARK: - Orden

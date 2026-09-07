@@ -66,6 +66,17 @@ nonisolated struct AttemptScoreFamilyDTO: Hashable, Sendable {
 
     /// Peso efectivo del componente por 10. **No es un máximo fijo**: varía por
     /// recorrido desde que existen los pesos por recorrido.
+    ///
+    /// **La suma de los `max` no da 10,00 y no va a darlo.** Está documentado
+    /// en el backend: con dos decimales no se puede tener a la vez el total
+    /// cuadrado y la coherencia por fila. Cuadrar el total rompía
+    /// `obtained <= max` —un apartado perfecto salía «1,87 / 1,88» y el informe
+    /// imprimía el 99 %—, así que se eligió la coherencia por fila.
+    ///
+    /// Lo que sí es invariante: `obtained <= max` siempre, y un apartado
+    /// perfecto cumple `obtained == max`. No derivar porcentajes de la suma de
+    /// los pesos: el 100 % del criterio lo garantizan los pesos de la
+    /// configuración, no esta aritmética redondeada.
     let max: Double?
 
     /// Por qué el componente no se midió con normalidad.
@@ -284,7 +295,22 @@ struct AttemptDetailDTO: Sendable {
     let id: String?
     let candidate: AttemptCandidateDTO?
     let route: AttemptRouteDTO?
+    /// Nota publicada. **Un decimal significativo**, confirmado por el equipo
+    /// de Training: es 8,5, no 8,50.
     let score: Double?
+
+    /// La misma nota con dos decimales.
+    ///
+    /// Existía en la base y no salía del backend; ahora viaja. Es la que se
+    /// acerca a la suma de las filas del desglose (±0,01 por fila), porque
+    /// `score` ya perdió un decimal. La exacta —8,464375 en el intento con el
+    /// que se verificó esto— no se publica.
+    ///
+    /// La suma de las filas NUNCA reproducirá `score`. Enseñar el desglose sin
+    /// decirlo deja a un aspirante sumando 8,45 contra un 8,5 y concluyendo que
+    /// hay un error.
+    let scoreRaw: Double?
+
     let dataQuality: String?
 
     /// Calidad clasificada. `nil` cuando el backend no la envió o el valor es

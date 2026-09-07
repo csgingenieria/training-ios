@@ -42,8 +42,8 @@ import Foundation
         return try JSONDecoder().decode(RankingResponseDTO.self, from: json)
     }
 
-    /// The matrix returns only circuits with at least one attempt — five, in
-    /// the real convocatoria, against the ten the process requires.
+    /// The ten circuits the matrix returns since `get_matrix_data` was fixed,
+    /// with `required` per column and the route's real name as its label.
     private func matrix() throws -> MatrixResponseDTO {
         let json = Data("""
         {
@@ -53,11 +53,16 @@ import Foundation
             "updatedAt": "2026-09-04T14:34:37.964306Z"
           },
           "circuits": [
-            {"id": "1A", "label": "1A", "synthetic": false},
-            {"id": "1B", "label": "1B", "synthetic": false},
-            {"id": "2A1", "label": "2A1", "synthetic": false},
-            {"id": "2A2", "label": "2A2", "synthetic": false},
-            {"id": "2A3", "label": "2A3", "synthetic": false}
+            {"id": "1A", "label": "1A", "required": true, "synthetic": false},
+            {"id": "1B", "label": "1B", "required": true, "synthetic": false},
+            {"id": "2A1", "label": "2A1 Llegada puerto Cruz Verde", "required": true, "synthetic": false},
+            {"id": "2A2", "label": "2A2 Subida y bajada Cruz Verde", "required": true, "synthetic": false},
+            {"id": "2A3", "label": "2A3 Bajada puerto Cruz Verde a Rozas", "required": true, "synthetic": false},
+            {"id": "2B1", "label": "2B1 por definir", "required": true, "synthetic": false},
+            {"id": "2B2", "label": "2B2 por definir", "required": true, "synthetic": false},
+            {"id": "2B3", "label": "2B3 por definir", "required": true, "synthetic": false},
+            {"id": "3A", "label": "3A por definir", "required": true, "synthetic": false},
+            {"id": "3B", "label": "3B por definir", "required": true, "synthetic": false}
           ],
           "rows": [
             {"candidate": {"id": "c-jaime", "name": "Primero Aspirante"},
@@ -83,35 +88,65 @@ import Foundation
 
     // MARK: - Las columnas
 
-    /// **The rule that matters.** The matrix hides the required circuits nobody
-    /// has driven, which are exactly the ones dragging every grade down. A
-    /// table showing five nines and tens beside an official 4,75 argues the
-    /// opposite of what is happening.
-    @Test func columnsAreTheUnionOfBothSources() throws {
+    /// The columns are the matrix's, straight through.
+    ///
+    /// This client briefly derived them by crossing the ranking's
+    /// `requiredRoutes`, because the matrix only returned circuits somebody had
+    /// driven — five of the ten required — and hid exactly the columns that
+    /// explain each grade. The defect was in `get_matrix_data` and was fixed
+    /// there; deriving it here now would duplicate logic the backend resolves
+    /// with the same canonical sanitiser the ranking uses, which is what keeps
+    /// the two halves of this screen from diverging.
+    @Test func columnsComeStraightFromTheMatrix() throws {
         let data = ResultadosData.merge(ranking: try ranking(), matrix: try matrix())
 
         #expect(data.circuits.map(\.id) == requiredRoutes)
         #expect(data.realCircuitCount == 10)
+        #expect(data.circuits.allSatisfy { $0.isRequired })
         #expect(data.hasUndrivenRequiredColumn)
     }
 
-    /// Required routes keep the order the convocatoria declares them in, not
-    /// the order the matrix happens to return.
-    @Test func requiredRoutesKeepTheirDeclaredOrder() throws {
-        let data = ResultadosData.merge(ranking: try ranking(), matrix: try matrix())
-
-        #expect(data.circuits.prefix(5).map(\.id) == ["1A", "1B", "2A1", "2A2", "2A3"])
-        #expect(data.circuits.suffix(5).map(\.id) == ["2B1", "2B2", "2B3", "3A", "3B"])
-    }
-
-    /// A synthetic column groups attempts with no route. It is real data and
-    /// must survive the merge, but it is not a required route, so it goes last.
-    @Test func theSyntheticColumnGoesLast() throws {
+    /// A required column with no grade must be reported as such — but from the
+    /// column's own `required`, not deduced from the absence of grades. A
+    /// PRACTICE route can end up in the required set
+    /// (`_rutas_exigidas_validas` does not check `Route.categoria`) and come
+    /// out empty even for whoever drove it.
+    @Test func onlyRequiredColumnsCountAsUndriven() throws {
         let json = Data("""
         {"convocatoria": {"id": "conv-1", "name": "X", "status": "OPEN", "description": null,
           "totalCandidates": 1, "closedAt": null, "updatedAt": null},
-         "circuits": [{"id": "U00", "label": "U00", "synthetic": true},
-                      {"id": "1A", "label": "1A", "synthetic": false}],
+         "circuits": [{"id": "1A", "label": "1A", "required": true, "synthetic": false},
+                      {"id": "9Z", "label": "9Z Suelta", "required": false, "synthetic": false}],
+         "rows": [{"candidate": {"id": "c-jaime", "name": "Primero Aspirante"},
+                   "scores": [{"circuitId": "1A", "score": 7.0, "attemptId": "x1"}]}]}
+        """.utf8)
+        let matrix = try JSONDecoder().decode(MatrixResponseDTO.self, from: json)
+
+        let data = ResultadosData.merge(ranking: try ranking(), matrix: matrix)
+
+        // 9Z está vacía pero no es exigida: no cuenta.
+        #expect(!data.hasUndrivenRequiredColumn)
+    }
+
+    /// The header shows the short id because the label is now the route's real
+    /// name, which does not fit a table column. The full name stays reachable.
+    @Test func theHeaderShowsTheShortIdAndKeepsTheFullName() throws {
+        let data = ResultadosData.merge(ranking: try ranking(), matrix: try matrix())
+        let column = try #require(data.circuits.first { $0.id == "2A2" })
+
+        #expect(column.displayLabel == "2A2")
+        #expect(column.fullName == "2A2 Subida y bajada Cruz Verde")
+    }
+
+    /// A synthetic column groups attempts with no route. It is real data and
+    /// must reach the screen, but its invented id («U00») may never pass for a
+    /// route name, and it is not a required route either.
+    @Test func theSyntheticColumnNamesItselfHonestly() throws {
+        let json = Data("""
+        {"convocatoria": {"id": "conv-1", "name": "X", "status": "OPEN", "description": null,
+          "totalCandidates": 1, "closedAt": null, "updatedAt": null},
+         "circuits": [{"id": "U00", "label": "U00", "required": false, "synthetic": true},
+                      {"id": "1A", "label": "1A", "required": true, "synthetic": false}],
          "rows": [{"candidate": {"id": "c-jaime", "name": "Primero Aspirante"},
                    "scores": [{"circuitId": "U00", "score": 7.0, "attemptId": "u1"}]}]}
         """.utf8)
@@ -119,11 +154,12 @@ import Foundation
 
         let data = ResultadosData.merge(ranking: try ranking(), matrix: withSynthetic)
 
-        #expect(data.circuits.last?.isSynthetic == true)
-        #expect(data.circuits.last?.displayLabel == "Sin recorrido")
-        // 10 exigidos + la sintética; no cuenta como recorrido real.
-        #expect(data.circuits.count == 11)
-        #expect(data.realCircuitCount == 10)
+        #expect(data.circuits.contains { $0.isSynthetic })
+        let synthetic = try #require(data.circuits.first { $0.isSynthetic })
+        #expect(synthetic.displayLabel == "Sin recorrido")
+        #expect(synthetic.fullName == "Sin recorrido asignado")
+        // No cuenta como recorrido real ni como columna exigida vacía.
+        #expect(data.realCircuitCount == 1)
     }
 
     // MARK: - Las filas
@@ -167,8 +203,11 @@ import Foundation
 
         #expect(data.ranked.count == 2)
         #expect(data.ranked.first?.score == 4.75)
-        // Sin matriz, las columnas siguen siendo las que exige la convocatoria.
-        #expect(data.circuits.map(\.id) == requiredRoutes)
+        // Sin matriz no hay columnas —eran de ella—, pero el orden de méritos
+        // y la composición de cada nota siguen en pie, que es lo que hace útil
+        // la pantalla cuando ese endpoint falla.
+        #expect(data.circuits.isEmpty)
+        #expect(data.ranked.first?.composition?.completedRequired == 5)
         #expect(data.ranked.first?.byCircuit.isEmpty == true)
     }
 
@@ -179,7 +218,7 @@ import Foundation
         let json = Data("""
         {"convocatoria": {"id": "conv-1", "name": "X", "status": "OPEN", "description": null,
           "totalCandidates": 1, "closedAt": null, "updatedAt": null},
-         "circuits": [{"id": "1A", "label": "1A", "synthetic": false}],
+         "circuits": [{"id": "1A", "label": "1A", "required": true, "synthetic": false}],
          "rows": [{"candidate": {"id": "c-fantasma", "name": "Cuarto Aspirante"},
                    "scores": [{"circuitId": "1A", "score": 6.0, "attemptId": "f1"}]}]}
         """.utf8)

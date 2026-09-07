@@ -250,6 +250,10 @@ struct ResultadosView: View {
                     .lineLimit(1)
                     .frame(minWidth: cellMinWidth, alignment: .center)
                     .padding(.horizontal, Theme.spacing.xs.value)
+                    // La cabecera lleva el identificador corto porque el
+                    // nombre del recorrido —«2A2 Subida y bajada Cruz Verde»—
+                    // no cabe en una columna. Entero, en el nombre accesible.
+                    .accessibilityLabel(circuit.fullName)
             }
         }
         .padding(.vertical, Theme.spacing.md.value)
@@ -276,7 +280,7 @@ struct ResultadosView: View {
                 circuitCell(
                     row.byCircuit[circuit.id],
                     candidateName: row.name,
-                    circuitLabel: circuit.displayLabel
+                    circuitLabel: circuit.fullName
                 )
             }
         }
@@ -390,7 +394,7 @@ struct ResultadosView: View {
         VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
             Text("La nota es la media del mejor intento de cada recorrido exigido. Los recorridos exigidos y no conducidos computan como cero.")
             if data.hasUndrivenRequiredColumn {
-                Text("Las columnas sin ninguna nota corresponden a recorridos que la convocatoria exige y que todavía no ha conducido nadie.")
+                Text("Las columnas sin ninguna nota corresponden a recorridos que la convocatoria exige y de los que todavía no consta ningún intento calificado.")
             }
             Text("La asignación de plaza la decide CMadrid al cierre de la convocatoria.")
         }

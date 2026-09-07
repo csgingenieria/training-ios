@@ -59,3 +59,77 @@ struct ScoreFormatTests {
         #expect(ScoreFormat.aggregate(4.75) == "4,75")
     }
 }
+
+/// `score` and `scoreRaw` are two different numbers, not one rounded twice.
+///
+/// Confirmed by the Training team and verified against staging for attempt
+/// 94815dce…: the exact grade is 8,464375 and is not published; `score` is 8,5
+/// with one significant decimal; `scoreRaw` is 8,46; and the breakdown rows add
+/// up to 8,45. The rows will never reproduce `score` — it already lost a
+/// decimal — but they land within ±0,01 per row of `scoreRaw`.
+struct PublishedGradeTests {
+    private func attempt() throws -> AttemptDetailDTO {
+        let json = Data("""
+        {
+          "id": "at-1", "convocatoriaId": "conv-1", "dataQuality": "HIGH",
+          "scoreModel": "D10-W", "score": 8.5, "scoreRaw": 8.46,
+          "candidate": {"id": "c1", "name": "Nombre Aspirante"},
+          "route": {"id": "2A2", "label": "2A2", "name": "2A2 Un recorrido", "categoria": "EXAMEN"},
+          "events": [],
+          "scoreBreakdown": [
+            {"key": "estabilidad", "family": "Estabilidad (deducciones)", "max": 3.75, "obtained": 2.21, "state": null, "reason": null},
+            {"key": "velocidad", "family": "Velocidad (excesos por vía)", "max": 0.0, "obtained": null, "state": "no_medido", "reason": "webfleet_poco_muestreo"},
+            {"key": "freno_motor", "family": "Uso del freno motor", "max": 2.5, "obtained": 2.5, "state": null, "reason": null},
+            {"key": "allison", "family": "Uso de la caja Allison", "max": 1.87, "obtained": 1.87, "state": null, "reason": null},
+            {"key": "webfleet", "family": "Conducción (eventos de Webfleet)", "max": 1.87, "obtained": 1.87, "state": null, "reason": null}
+          ]
+        }
+        """.utf8)
+        return try JSONDecoder().decode(AttemptDetailDTO.self, from: json)
+    }
+
+    @Test func thePublishedGradeTakesOneDecimal() throws {
+        let dto = try attempt()
+        #expect(ScoreFormat.attempt(try #require(dto.score)) == "8,5")
+    }
+
+    @Test func scoreRawTravelsAndKeepsTwo() throws {
+        let dto = try attempt()
+        #expect(ScoreFormat.aggregate(try #require(dto.scoreRaw)) == "8,46")
+    }
+
+    /// The rows do not add up to the published grade, and the app must not
+    /// pretend otherwise. This pins the gap so nobody later "fixes" it by
+    /// deriving the grade from the rows.
+    @Test func theRowsDoNotAddUpToTheGrade() throws {
+        let dto = try attempt()
+        let sum = dto.scoreBreakdown.compactMap(\.obtained).reduce(0, +)
+
+        #expect(abs(sum - 8.45) < 0.001)
+        #expect(sum != dto.score)
+        // Lo que importa no es un épsilon inventado, sino de qué número se
+        // acercan: de `scoreRaw`, nunca de `score`, que ya perdió un decimal.
+        let toRaw = abs(sum - (dto.scoreRaw ?? 0))
+        let toPublished = abs(sum - (dto.score ?? 0))
+        #expect(toRaw < toPublished)
+    }
+
+    /// The weights do not add up to 10,00 and it is documented that they never
+    /// will: squaring the total broke `obtained <= max` on a perfect row.
+    @Test func theWeightsDoNotAddUpToTen() throws {
+        let dto = try attempt()
+        let weights = dto.scoreBreakdown.compactMap(\.max).reduce(0, +)
+
+        #expect(abs(weights - 9.99) < 0.001)
+        #expect(weights != 10.0)
+    }
+
+    /// The invariants the backend does guarantee, per row.
+    @Test func obtainedNeverExceedsItsWeight() throws {
+        for row in try attempt().scoreBreakdown {
+            #expect((row.obtained ?? 0) <= (row.max ?? 0), "\(row.key ?? "?") rompe obtained <= max")
+        }
+        let perfect = try #require(try attempt().scoreBreakdown.first { $0.key == "freno_motor" })
+        #expect(perfect.obtained == perfect.max)
+    }
+}
