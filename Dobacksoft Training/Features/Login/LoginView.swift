@@ -64,7 +64,9 @@ struct LoginView: View {
                 } label: {
                     if isLoading {
                         ProgressView()
-                            .tint(.white)
+                            // El indicador ocupa el sitio del rótulo del botón,
+                            // así que sigue el mismo color que él.
+                            .tint(Color.onBrand)
                     } else {
                         Text("Iniciar sesión")
                     }

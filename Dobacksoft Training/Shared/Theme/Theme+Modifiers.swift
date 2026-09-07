@@ -87,7 +87,12 @@ struct BrandPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body(size: 16, weight: .semibold, relativeTo: .body))
-            .foregroundStyle(.white)
+            // `.white` fijo, no: en modo oscuro `Brand` es #7C9CFF y el blanco
+            // encima da 2,61:1 — muy por debajo del 4,5:1 que exige AA, incluso
+            // del 3:1 de texto grande. Es el botón de «Iniciar sesión» y el de
+            // cada «Reintentar». `OnBrand` sigue la apariencia: blanco en claro
+            // (10,36:1), #0B1A4A en oscuro (6,39:1).
+            .foregroundStyle(Color.onBrand)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .padding(.vertical, 14)
             .padding(.horizontal, Theme.spacing.lg.value)
