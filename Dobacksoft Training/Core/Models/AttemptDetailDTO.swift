@@ -46,7 +46,31 @@ struct AttemptRouteDTO: Hashable, Sendable {
     }
 }
 
-nonisolated extension AttemptRouteDTO: Decodable {}
+nonisolated extension AttemptRouteDTO: Decodable {
+    /// Decodifica a mano por una sola razón: `id`, `label` y `name` llegan con
+    /// el centinela `"—"` cuando el intento no tiene recorrido, y aquí se
+    /// convierte en `nil` de una vez.
+    ///
+    /// Resolverlo en el decodificador y no en cada uso es lo que permite que
+    /// `displayName`, los filtros y cualquier agrupación por código traten
+    /// igual las dos formas de decir «nada». Ver `APISentinel`.
+    ///
+    /// Cuando el backend pase el campo a `null` —acordado, en su propio PR— no
+    /// hay que tocar nada aquí: las dos grafías ya son indistinguibles.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: APISentinel.text(try container.decodeIfPresent(String.self, forKey: .id)),
+            label: APISentinel.text(try container.decodeIfPresent(String.self, forKey: .label)),
+            name: APISentinel.text(try container.decodeIfPresent(String.self, forKey: .name)),
+            categoria: try container.decodeIfPresent(String.self, forKey: .categoria)
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, label, name, categoria
+    }
+}
 
 /// Una fila del desglose de la nota de un intento.
 ///
