@@ -222,14 +222,57 @@ private struct ProfileStandingRow: View {
                 metric(label: "Intentos", value: "\(standing.attemptsTotal)")
                 Spacer()
             }
+
+            // De qué está hecha esa nota.
+            //
+            // El DTO traía la composición desde que el contrato la envía y esta
+            // pantalla no la usaba: el instructor abría el perfil de alguien,
+            // leía «0,85» y no tenía nada que explicase el número. Es la misma
+            // laguna que tenía el ranking, y es peor aquí, porque esta es la
+            // pantalla desde la que se llama a un aspirante.
+            //
+            // Descriptivo, nunca prescriptivo: «1 de 10 exigidos» es un hecho.
+            if let composition = standing.composition,
+               composition.hasPendingRoutes, !composition.isGlobalBest {
+                Text(compositionLine(composition))
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .cardStyle()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(standing.name), puesto \(standing.position) de \(standing.totalCandidates), " +
-            "nota \(ScoreFormat.aggregate(standing.score)), " +
-            "\(standing.attemptsTotal) intentos"
-        )
+        .accessibilityLabel(accessibilityLabel(for: standing))
+    }
+
+    /// «1 de 10 exigidos · media de lo conducido 8,50».
+    ///
+    /// La media va rotulada y detrás: un 8,50 al lado de un 0,85 sin decir qué
+    /// es cada uno se lee como una contradicción.
+    private func compositionLine(_ composition: GradeComposition) -> String {
+        var parts = ["\(composition.completedRequired) de \(composition.totalRequired) exigidos"]
+        if let average = composition.scoreOfCompleted {
+            parts.append("media de lo conducido \(ScoreFormat.aggregate(average))")
+        }
+        if let explanation = composition.explanation {
+            parts.append(explanation)
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func accessibilityLabel(for standing: ProfileStandingDTO) -> String {
+        var parts = [
+            standing.name,
+            "puesto \(standing.position) de \(standing.totalCandidates)",
+            "nota \(ScoreFormat.aggregate(standing.score))",
+            "\(standing.attemptsTotal) intentos",
+        ]
+        if let composition = standing.composition,
+           composition.hasPendingRoutes, !composition.isGlobalBest {
+            parts.append(compositionLine(composition))
+        }
+        return parts.joined(separator: ", ")
     }
 
     private func metric(label: String, value: String) -> some View {
