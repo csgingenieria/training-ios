@@ -24,6 +24,15 @@ actor FakeTrainingAPI: TrainingAPI {
     var gpsResults: [Result<GpsPayloadDTO, Error>] = []
     var pinResults: [Result<PinDTO, Error>] = []
     var routeResults: [Result<RouteDetailDTO, Error>] = []
+
+    /// Las dos listas de convocatorias van por colas SEPARADAS a propósito:
+    /// `/me/convocatorias` y `/convocatorias` son endpoints distintos con
+    /// permisos distintos, y un test que confunda cuál se llamó no habría
+    /// probado el reparto por rol.
+    var myConvocatoriasResults: [Result<[ConvocatoriaSummaryDTO], Error>] = []
+    var convocatoriasResults: [Result<[ConvocatoriaSummaryDTO], Error>] = []
+    private(set) var myConvocatoriasCalls = 0
+    private(set) var convocatoriasCalls = 0
     private(set) var routeRequests: [(String, String?)] = []
     var passwordResult: Result<Void, Error> = .success(())
     private(set) var passwordBodies: [[String]] = []
@@ -47,6 +56,12 @@ actor FakeTrainingAPI: TrainingAPI {
     func setGpsResults(_ results: [Result<GpsPayloadDTO, Error>]) { gpsResults = results }
     func setPinResults(_ results: [Result<PinDTO, Error>]) { pinResults = results }
     func setRouteResults(_ results: [Result<RouteDetailDTO, Error>]) { routeResults = results }
+    func setMyConvocatoriasResults(_ results: [Result<[ConvocatoriaSummaryDTO], Error>]) {
+        myConvocatoriasResults = results
+    }
+    func setConvocatoriasResults(_ results: [Result<[ConvocatoriaSummaryDTO], Error>]) {
+        convocatoriasResults = results
+    }
     func setPasswordResult(_ result: Result<Void, Error>) { passwordResult = result }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
@@ -111,13 +126,15 @@ actor FakeTrainingAPI: TrainingAPI {
     }
 
     func myConvocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {
-        throw APIError.notFound(.resourceMissing)
+        myConvocatoriasCalls += 1
+        return try next(&myConvocatoriasResults)
     }
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO] {
         throw APIError.notFound(.resourceMissing)
     }
     func convocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {
-        throw APIError.notFound(.resourceMissing)
+        convocatoriasCalls += 1
+        return try next(&convocatoriasResults)
     }
     func convocatoriaDetail(id: String, accessToken: String) async throws -> ConvocatoriaSummaryDTO {
         throw APIError.notFound(.resourceMissing)

@@ -242,6 +242,11 @@ private struct StudentAttemptRoute: Hashable {
 /// + standing + lista de intentos. Si tiene una sola, va directo a ella.
 struct MyStandingTabView: View {
     @Environment(AuthSession.self) private var auth
+
+    /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
+    /// pantalla no puede caerse por faltarle el motivo para recargar.
+    @Environment(RefreshTicker.self) private var ticker: RefreshTicker?
+
     @State private var convocatorias: [ConvocatoriaSummaryDTO] = []
     @State private var selectedId: String?
     @State private var isLoading = true
@@ -264,7 +269,7 @@ struct MyStandingTabView: View {
             }
         }
         .navigationTitle("Mi posición")
-        .task { await load() }
+        .task(id: ticker?.generation ?? 0) { await load() }
         .refreshable { await load() }
     }
 
@@ -431,6 +436,11 @@ struct MyConvocatoriaContentView: View {
     /// Cuándo se cerró, para fechar la aclaración de la nota en el intento.
     var convocatoriaClosedAt: String?
 
+    /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
+    /// pantalla no puede caerse por faltarle el motivo para recargar.
+    @Environment(RefreshTicker.self) private var ticker: RefreshTicker?
+
+
     var embedded: Bool = false
 
     @Environment(AuthSession.self) private var auth
@@ -470,7 +480,11 @@ struct MyConvocatoriaContentView: View {
                 }
             }
         }
-        .task(id: convocatoriaId) { await load() }
+        // Las dos mitades de la llave: la convocatoria elegida y el volver a
+        // la app. Con solo una de ellas, la otra razón para recargar se pierde.
+        .task(id: RefreshKey(id: convocatoriaId, generation: ticker?.generation ?? 0)) {
+            await load()
+        }
         .refreshable { await load() }
     }
 

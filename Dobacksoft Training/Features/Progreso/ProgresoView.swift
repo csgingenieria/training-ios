@@ -11,6 +11,11 @@ struct ProgresoView: View {
     var convocatoriaId: String?
 
     @Environment(AuthSession.self) private var auth
+
+    /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
+    /// pantalla no puede caerse por faltarle el motivo para recargar.
+    @Environment(RefreshTicker.self) private var ticker: RefreshTicker?
+
     @State private var viewModel = ProgressViewModel()
 
     var body: some View {
@@ -38,7 +43,9 @@ struct ProgresoView: View {
                 convocatoriaName: ruta.convocatoriaName
             )
         }
-        .task(id: convocatoriaId) { await load() }
+        .task(id: RefreshKey(id: convocatoriaId, generation: ticker?.generation ?? 0)) {
+            await load()
+        }
         .refreshable { await load() }
     }
 

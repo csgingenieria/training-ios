@@ -1,9 +1,19 @@
 import SwiftUI
 
+/// El estado de la lista de convocatorias.
+///
+/// Era la última pantalla de datos que seguía vaciándose a un spinner en cada
+/// recarga y sustituyendo la lista cargada por un error — la disciplina que
+/// `StandingViewModel` y `ProgressViewModel` ya tienen.
+///
+/// Era tolerable mientras los datos se cargaban una vez por arranque. Dejó de
+/// serlo con `RefreshTicker`: volver a la app tras cinco minutos recarga solo,
+/// y una cobertura mala en el pasillo le borraría al aspirante la lista que
+/// estaba leyendo sin que él hubiera pedido nada.
 @MainActor
 @Observable
 final class ConvocatoriasListViewModel {
-    enum State {
+    enum State: Equatable {
         case loading
         case loaded([ConvocatoriaSummaryDTO])
         case empty
@@ -12,25 +22,66 @@ final class ConvocatoriasListViewModel {
 
     var state: State = .loading
 
+    /// Refresco en curso SOBRE datos ya visibles.
+    var isRefreshing = false
+
+    /// El fallo del último refresco, cuando había datos que conservar.
+    var refreshError: String?
+
+    /// Cuándo se obtuvieron los datos que se están enseñando.
+    var lastUpdated: Date?
+
+    private let api: TrainingAPI
+    private let now: @Sendable () -> Date
+
+    init(api: TrainingAPI = APIClient.shared, now: @escaping @Sendable () -> Date = Date.init) {
+        self.api = api
+        self.now = now
+    }
+
     func load(auth: AuthSession, isStudent: Bool) async {
-        state = .loading
+        let teniaDatos: Bool
+        if case .loaded = state { teniaDatos = true } else { teniaDatos = false }
+
+        if teniaDatos { isRefreshing = true } else { state = .loading }
+        defer { isRefreshing = false }
+
         do {
-            let items = try await auth.authorized { token in
+            let items = try await auth.authorized { [api] token in
+                // Dos endpoints distintos con permisos distintos, no dos
+                // formas de pedir lo mismo: el aspirante pide SUS
+                // inscripciones, el instructor el catálogo.
                 isStudent
-                    ? try await APIClient.shared.myConvocatorias(accessToken: token)
-                    : try await APIClient.shared.convocatorias(accessToken: token)
+                    ? try await api.myConvocatorias(accessToken: token)
+                    : try await api.convocatorias(accessToken: token)
             }
+            // Una respuesta vacía en un REFRESCO es real y se cree: a quien le
+            // retiran la inscripción tiene que vérselo, y tratarlo como
+            // «conserva la lista anterior» le enseñaría algo falso.
             state = items.isEmpty ? .empty : .loaded(items)
-        } catch let err as APIError {
-            state = .error(err.userMessage)
+            refreshError = nil
+            lastUpdated = now()
         } catch {
-            state = .error(error.localizedDescription)
+            let mensaje = (error as? APIError)?.userMessage ?? error.localizedDescription
+            if teniaDatos {
+                // La hora NO se mueve: es la del dato que se está viendo.
+                // Adelantarla fecharía cifras viejas como recientes, que es
+                // peor que no fecharlas.
+                refreshError = "\(mensaje) Se muestra el último dato consultado."
+            } else {
+                state = .error(mensaje)
+            }
         }
     }
 }
 
 struct ConvocatoriasListView: View {
     @Environment(AuthSession.self) private var auth
+
+    /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
+    /// pantalla no puede caerse por faltarle el motivo para recargar.
+    @Environment(RefreshTicker.self) private var ticker: RefreshTicker?
+
     @State private var viewModel = ConvocatoriasListViewModel()
     @State private var searchText = ""
     @State private var scope: ConvocatoriaScope = .activas
@@ -86,6 +137,16 @@ struct ConvocatoriasListView: View {
             }
         }
         .navigationTitle("Convocatorias")
+        // El destino vive en la RAÍZ de la sección, no dentro de la lista.
+        //
+        // Estaba dentro de `loadedList`, que solo se renderea con la lista
+        // cargada y no vacía: mientras el estado pasaba por `.loading` el
+        // destino desaparecía y con él la convocatoria abierta. Ahora que la
+        // pila tiene `path` enlazado y sobrevive a los cambios de size class,
+        // un destino que va y viene expulsaría la pantalla en cada recarga.
+        .navigationDestination(for: ConvocatoriaSummaryDTO.self) { conv in
+            ConvocatoriaDetailView(convocatoria: conv)
+        }
         .searchable(text: $searchText, prompt: "Buscar convocatoria")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -107,7 +168,7 @@ struct ConvocatoriasListView: View {
                 .accessibilityLabel("Filtrar convocatorias. Actual: \(scope.title)")
             }
         }
-        .task { await load() }
+        .task(id: ticker?.generation ?? 0) { await load() }
         .refreshable { await load() }
     }
 
@@ -134,6 +195,47 @@ struct ConvocatoriasListView: View {
         .pageBackground()
     }
 
+    /// Cuándo se leyó esto, o por qué no se ha podido volver a leer.
+    ///
+    /// Existe porque ahora la pantalla se recarga sola al volver a la app: sin
+    /// fecha, el aspirante no puede distinguir la lista de hace un minuto de la
+    /// de ayer, y sin la nota del fallo no sabría que está viendo la de antes.
+    /// El widget ya envejecía sus cifras; la app no.
+    @ViewBuilder
+    private var refreshFooter: some View {
+        if let refreshError = viewModel.refreshError {
+            HStack(alignment: .top, spacing: Theme.spacing.sm.value) {
+                Image(systemName: "wifi.exclamationmark")
+                    .foregroundStyle(Color.warning)
+                    .accessibilityHidden(true)
+                Text(refreshError)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button("Reintentar") { Task { await load() } }
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.brand)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("convocatorias.retryRefresh")
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(refreshError)
+        } else if let lastUpdated = viewModel.lastUpdated {
+            HStack(spacing: Theme.spacing.xs.value) {
+                if viewModel.isRefreshing {
+                    ProgressView().controlSize(.mini).tint(Color.muted)
+                }
+                Text("Actualizado a las \(APIDate.time(lastUpdated))")
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .accessibilityIdentifier("convocatorias.lastUpdated")
+        }
+    }
+
     @ViewBuilder
     private func loadedList(_ items: [ConvocatoriaSummaryDTO]) -> some View {
         ScrollView {
@@ -147,15 +249,14 @@ struct ConvocatoriasListView: View {
                     // nombre de la convocatoria depende de los datos.
                     .accessibilityIdentifier("convocatorias.row")
                 }
+
+                refreshFooter
             }
             .readableWidth()
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.base.value)
         }
         .pageBackground()
-        .navigationDestination(for: ConvocatoriaSummaryDTO.self) { conv in
-            ConvocatoriaDetailView(convocatoria: conv)
-        }
     }
 
     private func load() async {

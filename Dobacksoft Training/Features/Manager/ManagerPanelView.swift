@@ -209,6 +209,11 @@ final class ManagerPanelViewModel {
 
 struct ManagerPanelView: View {
     @Environment(AuthSession.self) private var auth
+
+    /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
+    /// pantalla no puede caerse por faltarle el motivo para recargar.
+    @Environment(RefreshTicker.self) private var ticker: RefreshTicker?
+
     @State private var viewModel = ManagerPanelViewModel()
     @State private var showSyncSheet = false
     @State private var studentQuery = ""
@@ -232,7 +237,7 @@ struct ManagerPanelView: View {
             }
         }
         .navigationTitle("Panel")
-        .task { await load() }
+        .task(id: ticker?.generation ?? 0) { await load() }
         .refreshable { await load() }
         .navigationDestination(for: PanelStudentRoute.self) { route in
             StudentProfileView(studentId: route.studentId)

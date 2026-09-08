@@ -5,9 +5,39 @@ import SwiftUI
 /// - Regular (iPad portrait/landscape): `NavigationSplitView` con sidebar.
 ///
 /// Regla D-IOS-001: iPhone + iPad mismo target, layout adaptativo.
+///
+/// Los dos layouts comparten un `DashboardRouter`. Antes eran dos árboles de
+/// vistas sin nada en común, así que arrastrar un Split View o girar un iPhone
+/// Pro Max tiraba todas las pantallas abiertas y sus view models.
 struct DashboardView: View {
     @Environment(AuthSession.self) private var auth
+
+    var body: some View {
+        // La identidad depende del rol: entrar con otra cuenta es otro
+        // dashboard, y sus pilas de navegación no se heredan.
+        DashboardContent(
+            isAdminLike: auth.user?.isAdminLike == true,
+            isStudent: auth.user?.isStudent == true
+        )
+        .id(auth.user?.role ?? "")
+    }
+}
+
+private struct DashboardContent: View {
+    let isAdminLike: Bool
+    let isStudent: Bool
+
     @Environment(\.horizontalSizeClass) private var sizeClass
+
+    @State private var router: DashboardRouter
+    @SceneStorage("dashboard.section") private var storedSection: String = ""
+    @State private var hasRestoredSection = false
+
+    init(isAdminLike: Bool, isStudent: Bool) {
+        self.isAdminLike = isAdminLike
+        self.isStudent = isStudent
+        _router = State(initialValue: DashboardRouter(isAdminLike: isAdminLike, isStudent: isStudent))
+    }
 
     var body: some View {
         Group {
@@ -18,76 +48,64 @@ struct DashboardView: View {
             }
         }
         .tint(Color.brand)
+        .task {
+            // Una sola vez: `.task` vuelve a correr al cambiar de size class,
+            // y restaurar otra vez devolvería la sección a la raíz en cada
+            // giro del dispositivo.
+            guard !hasRestoredSection else { return }
+            hasRestoredSection = true
+            // `select` ya acota lo que el rol no puede usar, así que una
+            // sección restaurada que no le corresponde se ignora sola.
+            if let restored = SidebarSection(rawValue: storedSection) {
+                router.select(restored)
+            }
+        }
+        .onChange(of: router.section) { _, section in
+            storedSection = section.rawValue
+        }
+    }
+
+    private var sections: [SidebarSection] {
+        SidebarSection.available(isAdminLike: isAdminLike, isStudent: isStudent)
     }
 
     // MARK: - iPhone / Compact
 
     @ViewBuilder
     private var tabLayout: some View {
-        TabView {
-            if auth.user?.isAdminLike == true {
-                Tab("Panel", systemImage: "chart.bar.doc.horizontal") {
-                    NavigationStack {
-                        ManagerPanelView()
+        TabView(selection: tabSelection) {
+            ForEach(sections) { section in
+                Tab(section.title, systemImage: section.icon, value: section) {
+                    NavigationStack(path: router.pathBinding(for: section)) {
+                        root(for: section)
                     }
-                }
-            }
-
-            Tab("Convocatorias", systemImage: "list.bullet.rectangle") {
-                NavigationStack {
-                    ConvocatoriasListView()
-                }
-            }
-
-            if auth.user?.isStudent == true {
-                Tab("Mi posición", systemImage: "trophy.fill") {
-                    NavigationStack {
-                        MyStandingTabView()
-                    }
-                }
-
-                Tab("Mi progreso", systemImage: "chart.line.uptrend.xyaxis") {
-                    NavigationStack {
-                        ProgresoView()
-                    }
-                }
-            }
-
-            Tab("Perfil", systemImage: "person.crop.circle") {
-                NavigationStack {
-                    ProfileView()
                 }
             }
         }
     }
 
+    /// El binding de las pestañas pasa por `select`, no por `section` directo:
+    /// así tocar la pestaña que ya se está viendo la devuelve a su raíz, que es
+    /// lo que hace la plataforma.
+    private var tabSelection: Binding<SidebarSection> {
+        Binding(
+            get: { router.section },
+            set: { router.select($0) }
+        )
+    }
+
     // MARK: - iPad / Regular
 
+    /// Layout iPad con sidebar permanente. Una pila de navegación **por
+    /// sección**, con su `path` enlazado: antes era una sola sin `path`, así
+    /// que cambiar de sección estando dentro de una convocatoria dejaba puesta
+    /// la pila de la sección anterior.
     @ViewBuilder
     private var splitLayout: some View {
-        SidebarDashboard()
-    }
-}
-
-/// Layout iPad con sidebar permanente. La sección seleccionada se renderea en el
-/// detail. Mantiene `NavigationStack` por sección para que cada drill-down
-/// (detalle de convocatoria, ranking, intento) navegue dentro del detail pane.
-private struct SidebarDashboard: View {
-    @Environment(AuthSession.self) private var auth
-    @State private var selection: SidebarSection? = .convocatorias
-
-    var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
+            List(selection: sidebarSelection) {
                 Section("Inicio") {
-                    if auth.user?.isAdminLike == true {
-                        sidebarItem(.panel)
-                    }
-                    sidebarItem(.convocatorias)
-                    if auth.user?.isStudent == true {
-                        sidebarItem(.miPosicion)
-                        sidebarItem(.miProgreso)
-                    }
+                    ForEach(sections.filter { $0 != .perfil }) { sidebarItem($0) }
                 }
                 Section("Cuenta") {
                     sidebarItem(.perfil)
@@ -95,16 +113,22 @@ private struct SidebarDashboard: View {
             }
             .navigationTitle("Training")
         } detail: {
-            NavigationStack {
-                detailView(for: selection ?? .convocatorias)
+            NavigationStack(path: router.pathBinding(for: router.section)) {
+                root(for: router.section)
             }
+            // Identidad por sección: cambiar de sección cambia a la vez la
+            // raíz y el `path`, y sin identidad propia SwiftUI intenta
+            // reconciliar una pila con la de otra pantalla. Reconstruirla no
+            // pierde nada — el camino vive en el router, no en la pila.
+            .id(router.section)
         }
-        .onAppear {
-            // Si el rol no coincide con la sección por default, autoseleccionar.
-            if selection == .convocatorias, auth.user?.isAdminLike == true {
-                selection = .panel
-            }
-        }
+    }
+
+    private var sidebarSelection: Binding<SidebarSection?> {
+        Binding(
+            get: { router.section },
+            set: { if let section = $0 { router.select(section) } }
+        )
     }
 
     @ViewBuilder
@@ -128,48 +152,13 @@ private struct SidebarDashboard: View {
     }
 
     @ViewBuilder
-    private func detailView(for section: SidebarSection) -> some View {
+    private func root(for section: SidebarSection) -> some View {
         switch section {
         case .panel:         ManagerPanelView()
         case .convocatorias: ConvocatoriasListView()
         case .miPosicion:    MyStandingTabView()
         case .miProgreso:    ProgresoView()
         case .perfil:        ProfileView()
-        }
-    }
-}
-
-private enum SidebarSection: Hashable {
-    case panel, convocatorias, miPosicion, miProgreso, perfil
-
-    /// Identidad estable, independiente del rótulo traducible.
-    var identifier: String {
-        switch self {
-        case .panel:         return "panel"
-        case .convocatorias: return "convocatorias"
-        case .miPosicion:    return "miPosicion"
-        case .miProgreso:    return "miProgreso"
-        case .perfil:        return "perfil"
-        }
-    }
-
-    var title: String {
-        switch self {
-        case .panel:         return "Panel"
-        case .convocatorias: return "Convocatorias"
-        case .miPosicion:    return "Mi posición"
-        case .miProgreso:    return "Mi progreso"
-        case .perfil:        return "Perfil"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .panel:         return "chart.bar.doc.horizontal"
-        case .convocatorias: return "list.bullet.rectangle"
-        case .miPosicion:    return "trophy.fill"
-        case .miProgreso:    return "chart.line.uptrend.xyaxis"
-        case .perfil:        return "person.crop.circle"
         }
     }
 }

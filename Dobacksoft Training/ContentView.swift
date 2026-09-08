@@ -2,6 +2,11 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AuthSession.self) private var auth
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// Vive aquí, y no en el dashboard, porque tiene que sobrevivir a un
+    /// cambio de size class: es lo único que sabe que la persona se fue.
+    @State private var ticker = RefreshTicker()
 
     var body: some View {
         Group {
@@ -13,8 +18,12 @@ struct RootView: View {
                 LoginView()
             }
         }
+        .environment(ticker)
         .task {
             await auth.restoreFromKeychain()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            ticker.scenePhaseChanged(to: phase)
         }
     }
 }
