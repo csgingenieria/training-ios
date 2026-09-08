@@ -792,6 +792,16 @@ struct AttemptSummaryRow: View {
                         // solo podía poner una advertencia genérica en la lista.
                         StatusBadge(text: "Prácticas", kind: .neutral)
                     }
+                    // La vuelta que HOY cuenta para la nota de este recorrido.
+                    //
+                    // El contrato lo manda en `isCurrentBest` desde el bloque
+                    // C y el cliente lo decodificaba, lo tenía probado y no lo
+                    // pintaba en ninguna parte. Sin él, quien tiene tres
+                    // vueltas al mismo recorrido no puede saber cuál es la que
+                    // le está puntuando.
+                    if attempt.isCurrentBest == true {
+                        StatusBadge(text: "Actual", kind: .brand)
+                    }
                     if let quality = attempt.quality {
                         StatusBadge(text: quality.label, kind: quality.badgeKind)
                     }

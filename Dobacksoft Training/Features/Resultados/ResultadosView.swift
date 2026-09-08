@@ -67,10 +67,37 @@ struct ResultadosView: View {
     @State private var viewModel = ResultadosViewModel()
     @State private var sortMode: ResultadosSortMode = .position
 
-    private let positionColumnWidth: CGFloat = 34
-    private let nameColumnWidth: CGFloat = 150
-    private let scoreColumnWidth: CGFloat = 62
-    private let cellMinWidth: CGFloat = 62
+    // Escalados con el tamaño de letra: eran tres constantes, así que una
+    // posición de tres cifras y cualquier nota de dos decimales se cortaban en
+    // cuanto el bombero subía el tamaño del texto.
+    @ScaledMetric(relativeTo: .subheadline) private var positionColumnWidth: CGFloat = 34
+    @ScaledMetric(relativeTo: .subheadline) private var scoreColumnWidth: CGFloat = 62
+    @ScaledMetric(relativeTo: .subheadline) private var cellMinWidth: CGFloat = 62
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// El ancho disponible del contenedor, leído una vez.
+    ///
+    /// Antes no se leía nunca, y por eso la tabla dejaba una franja en blanco a
+    /// la derecha del panel del iPad.
+    @State private var availableWidth: CGFloat = 0
+
+    private var columnWidths: ResultadosColumns.Widths {
+        ResultadosColumns.Widths(
+            position: positionColumnWidth,
+            score: scoreColumnWidth,
+            circuit: cellMinWidth,
+            namePadding: Theme.spacing.sm.value
+        )
+    }
+
+    private func nameColumnWidth(circuits: Int) -> CGFloat {
+        ResultadosColumns.nameWidth(
+            available: availableWidth,
+            circuits: circuits,
+            widths: columnWidths
+        )
+    }
 
     var body: some View {
         Group {
@@ -183,6 +210,13 @@ struct ResultadosView: View {
                     }
                     .frame(minHeight: proxy.size.height, alignment: .topLeading)
                 }
+                // El ancho del contenedor, que antes no leía nadie: de ahí la
+                // franja en blanco a la derecha del panel del iPad. Va por
+                // `onChange` con `initial` en vez de dentro del cuerpo porque
+                // escribir estado durante el layout es un ciclo.
+                .onChange(of: proxy.size.width, initial: true) { _, width in
+                    availableWidth = width
+                }
             }
 
             Divider()
@@ -230,7 +264,7 @@ struct ResultadosView: View {
             Text("Aspirante")
                 .font(.body(size: 12, weight: .semibold, relativeTo: .caption))
                 .foregroundStyle(Color.muted)
-                .frame(width: nameColumnWidth, alignment: .leading)
+                .frame(width: nameColumnWidth(circuits: circuits.count), alignment: .leading)
                 .padding(.horizontal, Theme.spacing.sm.value)
 
             Text("Nota")
@@ -272,7 +306,7 @@ struct ResultadosView: View {
                 .foregroundStyle(row.hasNotDriven ? Color.muted : Color.ink)
                 .frame(width: positionColumnWidth, alignment: .center)
 
-            nameCell(row)
+            nameCell(row, circuitCount: circuits.count)
 
             scoreCell(row)
 
@@ -288,13 +322,16 @@ struct ResultadosView: View {
     }
 
     @ViewBuilder
-    private func nameCell(_ row: ResultadoRow) -> some View {
+    private func nameCell(_ row: ResultadoRow, circuitCount: Int) -> some View {
         let label = VStack(alignment: .leading, spacing: 1) {
             HStack(spacing: 4) {
                 Text(row.name)
                     .font(.bodyText)
                     .foregroundStyle(Color.ink)
-                    .lineLimit(1)
+                    // Dos líneas con la letra de accesibilidad: un apellido
+                    // cortado en un ranking oficial es una persona que el
+                    // instructor no puede identificar.
+                    .lineLimit(ResultadosColumns.nameLineLimit(for: dynamicTypeSize))
                 if row.tied {
                     Text("empate")
                         .font(.metaCaption)
@@ -315,7 +352,7 @@ struct ResultadosView: View {
                     .foregroundStyle(Color.muted)
             }
         }
-        .frame(width: nameColumnWidth, alignment: .leading)
+        .frame(width: nameColumnWidth(circuits: circuitCount), alignment: .leading)
         .padding(.horizontal, Theme.spacing.sm.value)
 
         if !row.candidateId.hasPrefix("anon-") {

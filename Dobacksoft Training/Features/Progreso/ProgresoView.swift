@@ -64,6 +64,7 @@ struct ProgresoView: View {
         case .loaded(let progreso):
             VStack(spacing: Theme.spacing.lg.value) {
                 gradeCard(progreso)
+                pendingCard(progreso)
                 if progreso.extremesAreWorthShowing {
                     extremesCard(progreso)
                 }
@@ -132,6 +133,52 @@ struct ProgresoView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
+    }
+
+    // MARK: - Lo que le falta por conducir
+
+    /// Los recorridos exigidos que no constan conducidos.
+    ///
+    /// Es lo único de esta pantalla sobre lo que el aspirante puede ACTUAR: la
+    /// nota oficial cuenta 0 cada recorrido exigido que no ha conducido, así
+    /// que un recorrido pendiente pesa más que mejorar cualquier vuelta que ya
+    /// tenga.
+    ///
+    /// Solo cuando se puede afirmar. `RequiredRoutes.pending` devuelve `nil`
+    /// —y aquí no se pinta nada— si la derivación del cliente no coincide con
+    /// la cuenta del backend: mandar a alguien a conducir un recorrido que ya
+    /// condujo es peor que no decirle nada.
+    @ViewBuilder
+    private func pendingCard(_ progreso: ProgressDTO) -> some View {
+        if let pendientes = RequiredRoutes.pending(in: progreso),
+           let aviso = RequiredRoutes.notice(for: pendientes) {
+            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+                Label("Le falta conducir", systemImage: "steeringwheel")
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.muted)
+                    .labelStyle(.titleOnly)
+
+                // Los códigos como fichas: es lo que se lleva a la cabeza al
+                // parque, y en una frase larga se pierden.
+                HStack(spacing: Theme.spacing.xs.value) {
+                    ForEach(pendientes, id: \.self) { codigo in
+                        StatusBadge(text: codigo, kind: .warning)
+                    }
+                }
+
+                Text(aviso)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle()
+            // Una sola parada de VoiceOver: las fichas sueltas se leen como
+            // una ráfaga de códigos sin decir qué son.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(aviso)
+            .accessibilityIdentifier("progreso.pendientes")
+        }
     }
 
     // MARK: - Mejor y peor recorrido
