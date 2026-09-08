@@ -56,7 +56,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 12 | ✅ | important | S | Align the provisional-results legal notice with the portal and show it on the attempt detail *(provisional)* | visual |
 | 13 | ✅ | important | S | Missing score is stated, not implied: «Sin nota» in the row and «Nota no disponible» hero in the detail *(provisional)* | states |
 | 14 | ✅ | important | S | Attempt detail shows the attempt date (threaded from the list, no API change) *(provisional)* | visual |
-| 15 | — | important | S | Show the grading gravity of each event (Leve / Moderada / Grave) as a badge | visual |
+| 15 | ✅ | important | S | Show the grading gravity of each event (Leve / Moderada / Grave) as a badge | visual |
 | 16 | ✅ | important | M | Per-route progress grid («Sus recorridos») with best grade, «Pendiente» and an «Actual» badge on the counting attempt *(provisional)* | visual |
 | 17 | ✅ | important | S | One spoken and visible scale for grades: «8,5 sobre 10» for VoiceOver, «/10» caption on the standing score, one hero element *(provisional)* | accessibility, visual |
 | 18 | ✅ | important | S | Translate the role: «Aspirante» / «Instructor» / «Administración» instead of STUDENT/Student; hide the organisation UUID | accessibility, visual |
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 24 · parciales: 3 · abiertos: 30.**
+**Cerrados: 25 · parciales: 3 · abiertos: 29.**
 
 Los parciales, con lo que falta de cada uno:
 
@@ -122,10 +122,21 @@ Los parciales, con lo que falta de cada uno:
 - **#5** — hecho en convocatorias; falta el vacío de «Mi posición»
 - **#34** — rótulos sí (fdb368a); falta el SharePreview
 
-Abiertos de severidad *important*: **#15** (gravedad del evento como insignia,
-`sensorSeverity` decodificado y sin pintar), **#19** (objetivos de 44 pt en el
-menú de filtros) y **#26** (animaciones con los tokens de `Theme.motion`). El
-resto son los 27 menores.
+Abiertos de severidad *important*: **#19** (objetivos de 44 pt en el menú de
+filtros) y **#26** (animaciones con los tokens de `Theme.motion`). El resto son
+los 27 menores.
+
+**Corrección del 2026-09-08.** El #15 figuraba abierto por un error de este
+mismo repaso: se comprobó `sensorSeverity` —la etiqueta del sensor— cuando el
+punto habla de `categoria`, la gravedad de la CALIFICACIÓN. Son dos campos
+distintos, y verificar el equivocado dio por abierto algo que estaba hecho, con
+`AttemptEventDTO.Gravity`, `gravityBadgeKind`, su render en la ficha y
+`EventGravityTests`.
+
+Está mejor hecho de lo que este documento proponía: el color va a neutro cuando
+el evento **no descontó**, sea cual sea su gravedad, porque hay eventos
+informativos por diseño —el badén— que llegan calificados y no restan nada.
+Pintarlos en rojo atribuiría una penalización que no existió.
 
 ### Verificado contra staging (2026-09-08)
 
