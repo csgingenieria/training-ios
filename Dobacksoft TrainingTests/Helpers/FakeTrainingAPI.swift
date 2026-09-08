@@ -21,6 +21,7 @@ actor FakeTrainingAPI: TrainingAPI {
     var standingResults: [Result<StandingDTO, Error>] = []
     var progressResults: [Result<ProgressDTO, Error>] = []
     var cardResults: [Result<CardDTO, Error>] = []
+    var gpsResults: [Result<GpsPayloadDTO, Error>] = []
     private(set) var progressConvocatoriaIds: [String?] = []
 
     // MARK: Recorded calls
@@ -38,6 +39,7 @@ actor FakeTrainingAPI: TrainingAPI {
     func setStandingResults(_ results: [Result<StandingDTO, Error>]) { standingResults = results }
     func setProgressResults(_ results: [Result<ProgressDTO, Error>]) { progressResults = results }
     func setCardResults(_ results: [Result<CardDTO, Error>]) { cardResults = results }
+    func setGpsResults(_ results: [Result<GpsPayloadDTO, Error>]) { gpsResults = results }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
         guard !queue.isEmpty else { throw APIError.notFound(.resourceMissing) }
@@ -75,6 +77,10 @@ actor FakeTrainingAPI: TrainingAPI {
 
     func myCard(accessToken: String) async throws -> CardDTO {
         try next(&cardResults)
+    }
+
+    func attemptGps(id: String, accessToken: String) async throws -> GpsPayloadDTO {
+        try next(&gpsResults)
     }
 
     func myConvocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {

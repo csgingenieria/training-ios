@@ -111,6 +111,11 @@ private struct AttemptStudentRoute: Hashable {
     let studentId: String
 }
 
+/// Destino del mapa del intento.
+struct AttemptMapRoute: Hashable {
+    let attemptId: String
+}
+
 private struct AttemptDetailContent: View {
     @Environment(AuthSession.self) private var auth
 
@@ -127,6 +132,31 @@ private struct AttemptDetailContent: View {
                 if !attempt.scoreBreakdown.isEmpty {
                     breakdownCard
                 }
+                // El recorrido en el mapa. Va aquí, sobre la conducción:
+                // «dónde pasó» ordena la lectura de «qué pasó».
+                NavigationLink(value: AttemptMapRoute(attemptId: attempt.id ?? "")) {
+                    HStack(spacing: Theme.spacing.sm.value) {
+                        Image(systemName: "map.fill")
+                            .foregroundStyle(Color.brand)
+                        Text("Ver el recorrido en el mapa")
+                            .font(.bodyEmphasis)
+                            .foregroundStyle(Color.ink)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color.muted)
+                    }
+                    .padding(Theme.spacing.base.value)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                        .fill(Color.paperElevated)
+                )
+                .themedShadow(.small)
+                .accessibilityIdentifier("attempt.openMap")
+
                 // Los cuatro bloques de conducción: lo que contesta «en qué he
                 // fallado» cuando falta la mitad de estabilidad.
                 //
@@ -146,6 +176,9 @@ private struct AttemptDetailContent: View {
         .pageBackground()
         .navigationDestination(for: AttemptStudentRoute.self) { route in
             StudentProfileView(studentId: route.studentId)
+        }
+        .navigationDestination(for: AttemptMapRoute.self) { route in
+            AttemptMapView(attemptId: route.attemptId)
         }
     }
 

@@ -30,6 +30,9 @@ protocol TrainingAPI: Sendable {
 
     /// Con qué tarjeta va a conducir. Solo texto: el cliente no lee el chip.
     func myCard(accessToken: String) async throws -> CardDTO
+
+    /// La traza de la vuelta. `track` es la buena; `points` el respaldo.
+    func attemptGps(id: String, accessToken: String) async throws -> GpsPayloadDTO
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO]
 
     // Instructor / administración

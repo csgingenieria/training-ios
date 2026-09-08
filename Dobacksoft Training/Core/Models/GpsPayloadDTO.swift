@@ -1,0 +1,195 @@
+import Foundation
+import CoreLocation
+
+/// `GET /api/v1/attempts/<id>/gps` — la traza de la vuelta.
+///
+/// Lo que hace de esto un contrato delicado es que **se dibuja**: un mapa
+/// afirma cosas con la forma de una línea, y una línea de más es una vuelta
+/// que nadie condujo.
+struct GpsPayloadDTO: Sendable {
+    /// Los puntos crudos. **Respaldo**, no la traza: solo se dibujan cuando no
+    /// hay nada pegado a la calzada.
+    let points: [GpsPointDTO]
+
+    /// Los waypoints del recorrido previsto, para contrastar.
+    let route: [GpsCoordinateDTO]
+
+    let events: [GpsEventDTO]
+
+    /// La traza buena. Ver `GpsTrackDTO`.
+    let track: GpsTrackDTO?
+
+    /// Lo que hay que dibujar, en el orden correcto de preferencia.
+    ///
+    /// La traza pegada a la calzada gana. Dibujar los puntos crudos encima de
+    /// una traza ajustada enseñaría una línea peor que la disponible.
+    var drawableSegments: [[GpsCoordinateDTO]] {
+        if let segmentos = track?.segments, !segmentos.isEmpty { return segmentos }
+        let crudos = points.compactMap(\.coordinate)
+        return crudos.isEmpty ? [] : [crudos]
+    }
+
+    /// Si lo que se dibuja son los puntos crudos y no la traza ajustada.
+    ///
+    /// La pantalla lo rotula: leer una aproximación como una medida es el error
+    /// que un mapa sin etiqueta invita a cometer.
+    var isFallback: Bool {
+        (track?.segments.isEmpty ?? true) && !points.isEmpty
+    }
+
+    var hasSomethingToDraw: Bool { !drawableSegments.isEmpty }
+
+    /// Los eventos que se pueden clavar en el mapa.
+    ///
+    /// Uno sin coordenadas no se coloca en ningún sitio: inventarle un lugar
+    /// pondría una incidencia donde no ocurrió.
+    var pinnableEvents: [GpsEventDTO] { events.filter { $0.coordinate != nil } }
+
+    /// Las identidades para cruzar con la ficha.
+    ///
+    /// Es lo único que el mapa aporta sobre si un evento restó: **este endpoint
+    /// no lo dice**, porque no tiene la fuente correcta (`descuenta`).
+    /// Derivarlo aquí haría que el mismo evento se contradijera entre el mapa y
+    /// la ficha.
+    var crossReferenceIds: [String] { events.compactMap(\.id) }
+}
+
+nonisolated extension GpsPayloadDTO: Decodable {
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            points: try c.decodeIfPresent([GpsPointDTO].self, forKey: .points) ?? [],
+            route: try c.decodeIfPresent([GpsCoordinateDTO].self, forKey: .route) ?? [],
+            events: try c.decodeIfPresent([GpsEventDTO].self, forKey: .events) ?? [],
+            track: try c.decodeIfPresent(GpsTrackDTO.self, forKey: .track)
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey { case points, route, events, track }
+}
+
+// MARK: - La traza
+
+/// La traza de la vuelta, en segmentos.
+///
+/// **Es un diccionario con `segments`, no una lista de puntos**, y esa forma es
+/// el dato: más de un segmento significa que el GPS dio un salto imposible y la
+/// línea se cortó **a propósito**. Unirlos dibujaría al camión atravesando un
+/// terreno que nunca atravesó.
+struct GpsTrackDTO: Sendable {
+    /// Las polilíneas. Un corte entre dos es un salto que no se puede afirmar.
+    let segments: [[GpsCoordinateDTO]]
+
+    /// Si está pegada a la calzada.
+    let matched: Bool?
+
+    /// Qué fracción de los puntos se pudo ubicar. La pantalla lo rotula para
+    /// que se vea QUÉ se está mirando.
+    let confidence: Double?
+
+    let source: String?
+
+    /// Si hubo saltos imposibles y la línea va cortada.
+    var hasGaps: Bool { segments.count > 1 }
+
+    /// Si la traza se puede presentar como una medida y no como un dibujo
+    /// aproximado.
+    ///
+    /// Exige las dos cosas: pegada a la calzada **y** con más de la mitad de
+    /// los puntos ubicados. Sin pegar no hay nada que afirmar, y con la mitad
+    /// sin ubicar la línea es una interpolación con aspecto de medida.
+    var isReliable: Bool {
+        matched == true && (confidence ?? 0) > 0.5
+    }
+}
+
+nonisolated extension GpsTrackDTO: Decodable {
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        // Los segmentos llegan como pares `[lat, lng]`. Un par roto se descarta
+        // en vez de tumbar la traza: perder un punto es recuperable, perder la
+        // vuelta entera por un punto no.
+        let crudos = try c.decodeIfPresent([[[Double]]].self, forKey: .segments) ?? []
+        self.init(
+            segments: crudos.map { segmento in
+                segmento.compactMap { par in
+                    par.count == 2 ? GpsCoordinateDTO(lat: par[0], lng: par[1]) : nil
+                }
+            },
+            matched: try c.decodeIfPresent(Bool.self, forKey: .matched),
+            confidence: try c.decodeIfPresent(Double.self, forKey: .confidence),
+            source: try c.decodeIfPresent(String.self, forKey: .source)
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey { case segments, matched, confidence, source }
+}
+
+// MARK: - Coordenadas y puntos
+
+struct GpsCoordinateDTO: Sendable, Hashable {
+    let lat: Double
+    let lng: Double
+
+    var clLocation: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: lat, longitude: lng)
+    }
+}
+
+nonisolated extension GpsCoordinateDTO: Decodable {}
+
+/// Un punto crudo de la traza, con lo que el receptor supo de él.
+struct GpsPointDTO: Sendable, Hashable {
+    let lat: Double?
+    let lng: Double?
+    let speed: Double?
+    let confidence: String?
+    let source: String?
+
+    var coordinate: GpsCoordinateDTO? {
+        guard let lat, let lng else { return nil }
+        return GpsCoordinateDTO(lat: lat, lng: lng)
+    }
+}
+
+nonisolated extension GpsPointDTO: Decodable {}
+
+// MARK: - Eventos sobre el mapa
+
+/// Un evento con su sitio en el mapa.
+///
+/// **Sin `affectsScore`, y es deliberado.** Este endpoint no tiene la fuente
+/// correcta para decir si el evento restó, y emitirlo desde `aplica_a_nota`
+/// haría que el mismo evento se contradijera entre el mapa y la ficha. El
+/// cliente lo cruza por `id` con `/attempts/<id>`.
+struct GpsEventDTO: Sendable, Hashable, Identifiable {
+    let id: String?
+    let type: String?
+    let severity: Double?
+    let source: String?
+    let timestamp: String?
+
+    let lat: Double?
+    let lng: Double?
+
+    /// La gravedad que le puso el DETECTOR, no necesariamente lo que restó.
+    let penaltyPoints: Double?
+    let noPenaltyReason: String?
+    let stabilityLossPercent: Double?
+
+    /// La explicación y el consejo los escribe el backend; se pintan tal cual.
+    let narrative: String?
+    let advice: String?
+
+    let speedKmh: Double?
+    let limitKmh: Double?
+    let excessKmh: Double?
+
+    /// Dónde ocurrió, o `nil` si no consta.
+    var coordinate: GpsCoordinateDTO? {
+        guard let lat, let lng else { return nil }
+        return GpsCoordinateDTO(lat: lat, lng: lng)
+    }
+}
+
+nonisolated extension GpsEventDTO: Decodable {}
