@@ -201,6 +201,12 @@ struct ProfileView: View {
                     // no decir nada que decir un dato que no significa nada
                     // para quien lo lee. Queda pedido al backend.
                 }
+
+                // Solo el aspirante conduce, así que solo a él le sirve saber
+                // con qué tarjeta. El endpoint es STUDENT-only de todas formas.
+                if user.isStudent {
+                    MyCardSection()
+                }
             }
 
             Section {

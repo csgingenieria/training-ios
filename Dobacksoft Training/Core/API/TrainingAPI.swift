@@ -27,6 +27,9 @@ protocol TrainingAPI: Sendable {
     /// responde 400 porque una cadena vacía caería a su respaldo y
     /// contestaría por otra convocatoria con aspecto de respuesta correcta.
     func progress(convocatoriaId: String?, accessToken: String) async throws -> ProgressDTO
+
+    /// Con qué tarjeta va a conducir. Solo texto: el cliente no lee el chip.
+    func myCard(accessToken: String) async throws -> CardDTO
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO]
 
     // Instructor / administración
