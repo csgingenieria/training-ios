@@ -63,6 +63,29 @@ if [ -z "${EMAIL:-}" ] || [ -z "${PASSWORD:-}" ]; then
   exit 1
 fi
 
+# Una corrida a la vez, y esto no es una recomendación.
+#
+# Dos `xcodebuild test` sobre el mismo simulador se pelean por `testmanagerd`:
+# el desmontaje del primero termina la app del segundo y sale «Test crashed
+# with signal term». Y una corrida de iPad con la suite unitaria encima agota
+# la máquina y sale «No session after 30 s» más «Result bundle saving failed …
+# mkstemp: No such file or directory».
+#
+# Las dos cosas parecen defectos de la app y no lo son. Costaron cuatro
+# diagnósticos falsos en una tarde, uno de ellos a punto de reportarse como
+# hallazgo. Aislado, lo mismo pasa dos veces seguidas.
+if pgrep -f "xcodebuild test" >/dev/null 2>&1; then
+  echo "✗ Ya hay un «xcodebuild test» corriendo."
+  echo
+  echo "  Dos corridas sobre el mismo simulador producen fallos que parecen de"
+  echo "  la app: «signal term», «No session after 30 s», bundles a medio"
+  echo "  escribir. Espere a que termine, o:"
+  echo "    pkill -f 'xcodebuild test'; xcrun simctl shutdown all"
+  echo
+  echo "  Nunca matar CoreSimulatorService: apagar los dispositivos basta."
+  exit 3
+fi
+
 DESTINO="${STAGING_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 
 # El simulador primero, que es la cura del cuelgue de hoy. Nunca matar

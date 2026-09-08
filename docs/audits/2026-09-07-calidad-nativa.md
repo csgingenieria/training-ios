@@ -127,12 +127,38 @@ Abiertos de severidad *important*: **#15** (gravedad del evento como insignia,
 menú de filtros), **#26** (animaciones con los tokens de `Theme.motion`) y
 **#27** (almacén de último dato conocido). El resto son los 27 menores.
 
-**Lo que ninguna de estas casillas cubre: nada está verificado contra staging
-en un dispositivo.** Las pruebas de UI necesitan credenciales que esta sesión
-no tiene, y las tres corridas de iPad de la sesión anterior se saltaron sus
-tests por falta de credenciales devolviendo `TEST SUCCEEDED`. Un ✅ de esta
-tabla significa «el código hace lo que dice y hay un test que lo fija», no
-«visto funcionando con datos reales».
+### Verificado contra staging (2026-09-08)
+
+Un ✅ de la tabla significa «el código hace lo que dice y hay un test que lo
+fija». Lo de abajo es lo otro: **visto funcionando con datos reales de
+CMadrid**. Se corre con `scripts/staging-walkthrough.sh student|manager`, que
+lee las credenciales del Keychain y exige el rol.
+
+|            | iPhone 17 Pro | iPad Pro 11" (M5) |
+|------------|---------------|-------------------|
+| Aspirante  | ✅ 3 de 3 + 1 salto correcto | ✅ 4 de 4 + 1 salto correcto |
+| Instructor | ✅ 2 de 2 + 2 saltos correctos | ✅ 3 de 3 + 2 saltos correctos |
+
+Cubierto: acceso, el recorrido de todos los destinos del rol, «Mi posición» →
+detalle del intento, «Mi progreso» → ficha del recorrido → vuelta → mapa,
+«Resultados» → celda → detalle, y el sidebar del iPad. Con la aserción, en cada
+pantalla, de que no hay fallo de decodificación visible ni ningún veredicto.
+
+Los saltos son solo los de rol —un aspirante no tiene «Resultados», un
+instructor no tiene «Mi posición» ni «Mi progreso»— y con `STAGING_ROLE`
+declarado **la pantalla que ese rol posee no puede saltarse**: falla. Así que
+ningún verde de esta tabla tapa una pantalla sin visitar.
+
+**Esto encontró cuatro defectos que la auditoría no podía ver**, porque la
+auditoría leyó código: el mapa del intento no decodificaba (`severity` llega
+como texto y un evento hundía el payload entero), el router descartaba
+pantallas al reconciliar un binding, el destino de navegación de «Mi posición»
+vivía dentro de una rama condicional, y el sidebar del iPad no navegaba para
+nadie.
+
+**Sin cubrir todavía:** el widget, «Mi PIN de tablet», el cambio de contraseña,
+y el detalle del intento por el camino del instructor en iPhone (la matriz
+scrollea en dos ejes y ahí el direccionamiento de celdas sí es frágil).
 
 ### Detalle
 
