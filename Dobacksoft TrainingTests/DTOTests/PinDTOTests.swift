@@ -139,4 +139,25 @@ struct PinCopyTests {
     @Test func thePrivacyNoteSaysWhyItMatters() {
         #expect(PinCopy.keepItPrivate.contains("en su nombre"))
     }
+
+    /// **The phrase the staging walkthrough matches on.**
+    ///
+    /// `testMiPin` asserts that the warning is on screen, and it is the only
+    /// thing that test asserts about this screen's content: everything else
+    /// there is a credential, so it neither captures the screen nor reads the
+    /// digits.
+    ///
+    /// That test runs out of process and cannot see `PinCopy`, so the phrase is
+    /// written by hand over there. Duplicated copy drifts — and it would drift
+    /// silently in the worst direction: rewrite this sentence and the
+    /// walkthrough stops finding it and reports that the screen «no advierte»,
+    /// a defect that does not exist, while the real warning is fine.
+    ///
+    /// So it breaks HERE instead, next to the sentence being changed.
+    @Test func theWarningKeepsThePhraseTheWalkthroughLooksFor() {
+        #expect(
+            PinCopy.keepItPrivate.contains("conducir en su nombre"),
+            "Si esta frase cambia, hay que cambiarla también en testMiPin"
+        )
+    }
 }

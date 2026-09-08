@@ -27,6 +27,11 @@ struct MyPinView: View {
                 .padding(.vertical, Theme.spacing.base.value)
         }
         .pageBackground()
+        // En una corrida de test la credencial no se dibuja. Ver
+        // `SecretRedaction`: el test no la captura, pero XCTest saca capturas
+        // del sistema por su cuenta y las conserva cuando el test falla.
+        .redactedInUITests()
+        .accessibilityIdentifier("pin.pantalla")
         .navigationTitle("Mi PIN")
         // Sin `.refreshable` a propósito: cada consulta se audita, y tirar de
         // la pantalla sin querer no debe dejar una entrada en el registro.
@@ -82,6 +87,17 @@ struct MyPinView: View {
                     .font(.system(size: 44, weight: .bold, design: .monospaced))
                     .foregroundStyle(Color.ink)
                     .textSelection(.enabled)
+                    // Marcado como sensible. El widget ya marcaba así sus
+                    // cifras y el target de la app no lo usaba en ningún sitio,
+                    // teniendo aquí lo más sensible que muestra: con el PIN y el
+                    // número de inscripción se puede conducir en nombre de otro.
+                    //
+                    // **No redacta por sí solo en el conmutador de apps** —eso
+                    // pide aplicar `.redacted(reason: .privacy)` desde el
+                    // exterior, y es el punto #40 de la auditoría—. Es el
+                    // marcador correcto para que esa redacción, cuando llegue,
+                    // sepa qué tapar. Decir que ya tapa algo sería falso.
+                    .privacySensitive()
                     .accessibilityLabel("Su PIN es \(pin.map(String.init).joined(separator: " "))")
             } else {
                 // No poder mostrarlo NO impide conducir, y la frase lo dice: el
@@ -117,6 +133,8 @@ struct MyPinView: View {
                         .foregroundStyle(Color.muted)
                     Spacer()
                     Text(inscripcion.plaza ?? "—")
+                        // La otra mitad de la credencial.
+                        .privacySensitive()
                         .font(.system(.body, design: .monospaced))
                         .foregroundStyle(Color.ink)
                 }

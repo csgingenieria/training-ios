@@ -325,6 +325,117 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// `no_medido` — and the row went silent. Fixtures could not catch it,
     /// because they were written from the same reading of the contract as the
     /// code they were checking.
+    /// «Mi PIN de tablet»: que la pantalla resuelva contra el endpoint real.
+    ///
+    /// ⚠ **Este test NO captura la pantalla y NO lee el PIN.** Es la única
+    /// pantalla de la app cuyo contenido es una credencial: con el PIN y el
+    /// número de inscripción se puede conducir en nombre de otra persona. Una
+    /// captura acabaría en el bundle de resultados, que se comparte; el valor
+    /// en un mensaje de fallo acabaría en un log. Así que se comprueba que la
+    /// pantalla **resuelve**, nunca qué dice.
+    ///
+    /// ⚠ **Cada corrida deja una entrada en el registro de auditoría** de la
+    /// cuenta de staging: el backend audita toda consulta del PIN, también las
+    /// que fallan. Es lo correcto —es una credencial— y por eso este test es
+    /// uno y no un bucle.
+    func testMiPin() throws {
+        let app = launchClean()
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        guard destinations(in: app).contains("Perfil") else {
+            return XCTFail("Sin «Perfil» no hay camino al PIN: la sesión no llegó a abrirse.")
+        }
+        XCTAssertTrue(navigate(to: "Perfil", in: app), "«Perfil» no llegó a abrirse.")
+
+        // `hittableRow`, no `waitForExistence` + `tap()`.
+        //
+        // La fila vive en un `Form`, bajo el pliegue: existe en la jerarquía
+        // desde el primer momento y un toque sobre ella no hace nada hasta que
+        // se scrollea. Este test pasaba corriéndose solo y fallaba en la tanda
+        // —el `Form` queda scrolleado de otra manera— y el síntoma era «la fila
+        // del perfil no abrió Mi PIN», que suena a defecto de la app.
+        //
+        // «Existir no es poder tocarse» ya estaba aprendido en este archivo dos
+        // veces. Tercera.
+        guard let fila = hittableRow("profile.pin", in: app) else {
+            try skipUnlessTheRoleShouldHaveIt(
+                "Mi PIN de tablet",
+                expected: \.hasOwnStanding,
+                detail: "El PIN es del aspirante: el endpoint es STUDENT-only."
+            )
+            return
+        }
+
+        fila.tap()
+
+        XCTAssertTrue(
+            app.navigationBars["Mi PIN"].waitForExistence(timeout: 20),
+            "La fila del perfil no abrió «Mi PIN»."
+        )
+        assertNoDecodingFailureVisible(app, screen: "Mi PIN")
+
+        // Que el endpoint se haya consumido: si está «Reintentar», no se pudo.
+        XCTAssertFalse(
+            element("pin.retry", in: app).exists,
+            "«Mi PIN» abrió en error contra staging: su endpoint no se pudo consumir."
+        )
+
+        // Y que la advertencia esté. Es lo único que se afirma del contenido:
+        // una pantalla que entrega una credencial sin decir lo que vale sería
+        // peor que no entregarla.
+        //
+        // El fragmento va escrito a mano porque este target corre FUERA de
+        // proceso y no ve los tipos de la app: no hay `PinCopy` al que
+        // preguntar. Duplicar copia deriva, así que
+        // `PinCopyTests.theWarningKeepsThePhraseTheUITestLooksFor` fija que la
+        // frase real lo siga conteniendo — si alguien la reescribe, salta ahí y
+        // no aquí, con el recorrido en verde.
+        let advertencia = app.staticTexts
+            .containing(NSPredicate(format: "label CONTAINS %@", "conducir en su nombre"))
+            .firstMatch
+        XCTAssertTrue(
+            advertencia.waitForExistence(timeout: 5),
+            "«Mi PIN» no advierte de lo que valen esos datos."
+        )
+
+        // El caso de control de la redacción.
+        //
+        // Sin él, `-uitest-redact-secrets` y `.privacySensitive()` serían dos
+        // marcadores que se creen mutuamente sin tapar nada — y toda la
+        // garantía de que el PIN no puede filtrarse desde un test descansa en
+        // que de verdad no se dibuje.
+        //
+        // Se comprueba por AUSENCIA de patrón, no leyendo el valor: si la
+        // etiqueta «Su PIN es …» sobrevive con dígitos dentro, la cifra sigue
+        // expuesta a VoiceOver y a XCUITest aunque la pantalla se vea tapada,
+        // y eso sería un hallazgo, no un detalle.
+        let expuesto = app.staticTexts.allElementsBoundByIndex
+            .prefix(60)
+            .compactMap { $0.exists ? $0.label : nil }
+            .filter { etiqueta in
+                etiqueta.hasPrefix("Su PIN es")
+                    && etiqueta.rangeOfCharacter(from: .decimalDigits) != nil
+            }
+        XCTAssertTrue(
+            expuesto.isEmpty,
+            "La redacción no tapa el PIN: sigue accesible como etiqueta. "
+            + "\(expuesto.count) elemento(s) lo exponen. "
+            + "El valor NO se escribe aquí a propósito."
+        )
+
+        // ⚠ Lo que este control NO puede distinguir, dicho en voz alta: si esta
+        // cuenta de staging no tuviera PIN, la pantalla enseñaría su mensaje de
+        // «no se puede mostrar», no habría etiqueta que tapar, y la aserción de
+        // arriba pasaría sin haber probado la redacción.
+        //
+        // Resolverlo pediría una corrida SIN la bandera para ver la etiqueta
+        // aparecer — y eso es exactamente lo que no se va a hacer, porque
+        // dibujaría la credencial en una corrida que puede fallar y guardar la
+        // captura. Se prefiere un control con un límite escrito a una garantía
+        // comprada renderizando un PIN ajeno.
+    }
+
     /// El sidebar del iPad: ¿se puede navegar por él o no?
     ///
     /// El recorrido general se SALTA este layout citando un límite de XCUITest
@@ -703,7 +814,10 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// the right account, and the test cannot tell them apart from the outside.
     private func launchClean() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-uitest-reset-session"]
+        // La segunda bandera tapa las credenciales mientras corre el test: el
+        // PIN no llega a dibujarse, así que no hay nada sensible que capturar
+        // ni cuando el test pasa ni cuando falla. Ver `SecretRedaction`.
+        app.launchArguments += ["-uitest-reset-session", "-uitest-redact-secrets"]
         app.launch()
         return app
     }

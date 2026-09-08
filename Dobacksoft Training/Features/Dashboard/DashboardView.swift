@@ -239,10 +239,10 @@ struct ProfileView: View {
                     // audita CADA consulta, y una fila que se carga sola
                     // dejaría una entrada en el registro por abrir el perfil.
                     if user.isStudent {
-                        NavigationLink("Mi PIN de tablet") { MyPinView() }
+                        NavigationLink("Mi PIN de tablet", value: ProfileRoute.pin)
                             .accessibilityIdentifier("profile.pin")
                     }
-                    NavigationLink("Cambiar la contraseña") { ChangePasswordView() }
+                    NavigationLink("Cambiar la contraseña", value: ProfileRoute.password)
                         .accessibilityIdentifier("profile.password")
                 }
             }
@@ -293,6 +293,17 @@ struct ProfileView: View {
             }
         }
         .task { await checkHealth() }
+        // Por VALOR, como el resto. Estos dos eran los últimos enlaces de
+        // destino de la app y se le escaparon al barrido anterior: buscaba
+        // `NavigationLink {` y esta forma pone el rótulo como primer argumento.
+        // Un patrón de búsqueda que no cubre todas las formas del defecto deja
+        // el defecto y la sensación de haberlo barrido.
+        .navigationDestination(for: ProfileRoute.self) { route in
+            switch route {
+            case .pin:      MyPinView()
+            case .password: ChangePasswordView()
+            }
+        }
         .navigationTitle("Perfil")
         .confirmationDialog(
             "¿Cerrar sesión?",
@@ -378,4 +389,10 @@ struct ProfileView: View {
 #Preview {
     DashboardView()
         .environment(AuthSession.previewAuthenticated)
+}
+
+/// Lo que se puede abrir desde el perfil.
+nonisolated enum ProfileRoute: Hashable {
+    case pin
+    case password
 }
