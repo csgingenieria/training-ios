@@ -90,6 +90,16 @@ final class SnapshotPublisher {
                 : .sinPosicion(convocatoriaName: convocatoriaName ?? "")
         case .loading, .error:
             return nil
+        case .cached:
+            // **Tampoco publica**, y esta es la que más importa de las tres.
+            //
+            // El estado cacheado significa que no se pudo llegar a la red. El
+            // widget ya tiene su propia última instantánea con SU fecha, y
+            // republicar desde nuestra caché reescribiría ese `capturedAt` a
+            // ahora: una cifra de anteayer pasaría a verse recién consultada en
+            // la pantalla de inicio. Es exactamente la mentira que el diseño
+            // del widget existe para evitar.
+            return nil
         }
     }
 }

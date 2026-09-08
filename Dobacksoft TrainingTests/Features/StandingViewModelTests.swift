@@ -28,8 +28,26 @@ extension KeychainBacked {
             return session
         }
 
+        /// El almacén se inyecta AISLADO, como el reloj y el API.
+        ///
+        /// Por defecto `StandingViewModel` usa el contenedor real de la app, y
+        /// sin esto estos tests dependían de lo que otro test hubiera dejado en
+        /// disco: dos de ellos empezaron a fallar en cuanto la caché se
+        /// conectó, no por su expectativa —que es correcta, una primera carga
+        /// fallida SIN caché es un error— sino porque encontraban una.
+        ///
+        /// Un test cuyo resultado depende de un fichero compartido es de la
+        /// clase que solo falla acompañada: verde en la máquina de quien lo
+        /// escribe, rojo en el CI. Cada uno con su directorio.
         private func viewModel(_ api: FakeTrainingAPI, now: Date = t0) -> StandingViewModel {
-            StandingViewModel(api: api, now: { now })
+            StandingViewModel(api: api, now: { now }, lastGood: isolatedStore())
+        }
+
+        private func isolatedStore() -> LastGoodStore {
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent("standing-vm-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+            return LastGoodStore(directory: url)
         }
 
         // MARK: - Conservar el dato bueno

@@ -6,6 +6,14 @@ final class StandingViewModel {
     enum State {
         case loading
         case loaded(StandingDTO)
+
+        /// Lo último que se pudo leer, en un arranque sin red.
+        ///
+        /// Estado propio y no un `.loaded` con un DTO fabricado: de la caché se
+        /// guarda una PROYECCIÓN, así que la pantalla puede enseñar menos que
+        /// con red. Disfrazarla de DTO pediría inventar los campos que no se
+        /// guardan, y esta app no inventa datos.
+        case cached(StandingCache, capturedAt: Date)
         /// Con el motivo: no estar inscrito y no tener posición todavía son
         /// estados legítimos, no fallos, y se cuentan distinto.
         case notFound(NotFoundReason)
@@ -39,9 +47,31 @@ final class StandingViewModel {
     private let api: TrainingAPI
     private let now: @Sendable () -> Date
 
-    init(api: TrainingAPI = APIClient.shared, now: @escaping @Sendable () -> Date = Date.init) {
+    private let lastGood: LastGoodStore
+
+    init(
+        api: TrainingAPI = APIClient.shared,
+        now: @escaping @Sendable () -> Date = Date.init,
+        lastGood: LastGoodStore = .appContainer
+    ) {
         self.api = api
         self.now = now
+        self.lastGood = lastGood
+    }
+
+    /// Lo último que se pudo leer, si sirve.
+    ///
+    /// `nil` cuando no hay nada, cuando no se pudo leer o cuando está caducada:
+    /// en los tres casos el error es la respuesta honesta. Una caché de más de
+    /// 48 horas no se enseña como dato vigente — mismo umbral que el widget,
+    /// que se niega a mostrar un puesto de anteanoche sin etiquetarlo.
+    private func cachedState(auth: AuthSession) -> State? {
+        guard let userId = auth.user?.id else { return nil }
+        guard case let .presente(cache, capturedAt) = lastGood.read(
+            StandingCache.self, key: .standing, userId: userId, now: now()
+        ) else { return nil }
+        guard cache.isReadable else { return nil }
+        return .cached(cache, capturedAt: capturedAt)
     }
 
     func load(
@@ -69,14 +99,35 @@ final class StandingViewModel {
             state = .loaded(standing)
             refreshError = nil
             lastUpdated = now()
+
+            // La caché de arranque sin cobertura. Escribir es lo ÚLTIMO que
+            // puede romper una carga que salió bien: `write` devuelve `false`
+            // y no lanza.
+            if let userId = auth.user?.id {
+                lastGood.write(
+                    StandingCache(
+                        convocatoriaName: convocatoriaName,
+                        position: standing.position,
+                        totalParticipants: standing.totalCandidates,
+                        score: standing.score,
+                        finality: finality.persisted
+                    ),
+                    key: .standing,
+                    userId: userId,
+                    at: now()
+                )
+            }
         } catch let err as APIError where err.notFoundReason != nil {
+            // **Una respuesta no es una ausencia.** «No está inscrito» es un
+            // hecho del backend, y enseñar la caché encima diría que sigue
+            // inscrito cuando ya no lo está.
             state = .notFound(err.notFoundReason ?? .resourceMissing)
         } catch {
             let mensaje = (error as? APIError)?.userMessage ?? error.localizedDescription
             if teniaDatos {
                 refreshError = "\(mensaje) Se muestra el último dato consultado."
             } else {
-                state = .error(mensaje)
+                state = cachedState(auth: auth) ?? .error(mensaje)
             }
         }
 
@@ -520,6 +571,39 @@ struct MyConvocatoriaContentView: View {
                 )
                 refreshFooter
             }
+        case .cached(let cache, let capturedAt):
+            // Lo último que se pudo leer, y dicho que lo es.
+            //
+            // Un aspirante en el garaje de un parque tenía antes la pantalla
+            // vacía. Ahora tiene su puesto, con la fecha por delante: la cifra
+            // sin la fecha sería peor que no tenerla, porque se leería como de
+            // ahora.
+            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+                HStack(alignment: .top, spacing: Theme.spacing.sm.value) {
+                    Image(systemName: "wifi.slash")
+                        .foregroundStyle(Color.muted)
+                        .accessibilityHidden(true)
+                    Text(SnapshotCopy.consultadoEl(capturedAt))
+                        .font(.metaCaption)
+                        .foregroundStyle(Color.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                CachedStandingCard(cache: cache)
+                Button("Reintentar") { Task { await standingVM.load(
+                    convocatoriaId: convocatoriaId,
+                    auth: auth,
+                    convocatoriaName: convocatoriaName,
+                    finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
+                ) } }
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.brand)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("standing.retryCached")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle()
+            .accessibilityIdentifier("standing.cached")
         case .notFound(let reason):
             ContentUnavailableView(
                 reason.title,
