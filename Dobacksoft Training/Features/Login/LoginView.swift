@@ -26,6 +26,11 @@ struct LoginView: View {
         LoginFormRules.canSubmit(email: email, password: password)
     }
 
+    /// Si hay algo que explicar antes del formulario.
+    private var hasSessionNotice: Bool {
+        auth.canRetryRestore || auth.logoutReason?.notice != nil
+    }
+
     var body: some View {
         // El `GeometryReader` es lo que permite las dos cosas a la vez: centrado
         // cuando el formulario cabe —como estaba— y scroll cuando no cabe. Con
@@ -52,6 +57,14 @@ struct LoginView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .pageBackground()
+        // El foco arranca en el email: es lo que deja la pantalla lista para
+        // teclear en cuanto aparece. Salvo cuando hay aviso de sesión — ahí el
+        // teclado taparía el «Reintentar», que es justamente la salida que se
+        // le está ofreciendo.
+        .onAppear {
+            guard !hasSessionNotice else { return }
+            focus = .email
+        }
     }
 
     // MARK: - Cabecera
@@ -119,6 +132,7 @@ struct LoginView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel("Error: \(errorMessage)")
+                    .accessibilityIdentifier("login.error")
             }
 
             Button {
@@ -264,10 +278,20 @@ struct LoginView: View {
                 password: LoginFormRules.password(from: password)
             )
         } catch let err as APIError {
-            errorMessage = err.userMessage
+            fail(with: err.userMessage)
         } catch {
-            errorMessage = "Error inesperado: \(error.localizedDescription)"
+            fail(with: "Error inesperado: \(error.localizedDescription)")
         }
+    }
+
+    /// El error, escrito y dicho.
+    ///
+    /// Sin el anuncio el texto rojo aparecía en silencio: quien usa VoiceOver
+    /// pulsaba «Iniciar sesión», no oía nada, y no tenía forma de saber que la
+    /// pantalla ya le había contestado.
+    private func fail(with message: String) {
+        errorMessage = message
+        AccessibilityNotification.Announcement(message).post()
     }
 }
 
