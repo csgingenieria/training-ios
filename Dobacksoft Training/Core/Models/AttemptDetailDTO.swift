@@ -224,6 +224,19 @@ nonisolated struct AttemptScoreFamilyDTO: Hashable, Sendable {
 nonisolated extension AttemptScoreFamilyDTO: Decodable {}
 
 struct AttemptEventDTO: Hashable, Sendable, Identifiable {
+    /// La identidad que le da el backend.
+    ///
+    /// Es la llave con la que este evento se cruza con el del mapa
+    /// (`GpsEventDTO.id`), y se añadió al contrato precisamente para eso. El
+    /// cliente la ignoraba: derivaba una identidad de `type` + `timestamp`
+    /// mientras la buena viajaba en la respuesta.
+    ///
+    /// Se ignoraba por una comprobación mal hecha de nuestro lado — se miró
+    /// `Fixtures/attempt-detail.json`, que es un fixture escrito a mano en
+    /// este repo, y se dio por respuesta del endpoint. Un fixture es algo que
+    /// escribimos nosotros: no puede declarar sobre el contrato.
+    let backendId: String?
+
     let type: String?
 
     /// Intensidad del canal que disparó el detector.
@@ -272,7 +285,46 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     /// número en cubos que había que reconstruir.
     let sensorSeverity: String?
 
-    var id: String { (type ?? "ev") + "-" + (timestamp ?? UUID().uuidString) }
+    /// Explícito y con valores por defecto: el campo nuevo va primero y sin él
+    /// cada test que construye un evento a mano tendría que nombrarlo.
+    init(
+        backendId: String? = nil,
+        type: String? = nil,
+        severity: Double? = nil,
+        confidence: String? = nil,
+        description: String? = nil,
+        timestamp: String? = nil,
+        source: String? = nil,
+        penaltyPoints: Double? = nil,
+        categoria: String? = nil,
+        affectsScore: Bool? = nil,
+        noPenaltyReason: String? = nil,
+        sensorSeverity: String? = nil
+    ) {
+        self.backendId = backendId
+        self.type = type
+        self.severity = severity
+        self.confidence = confidence
+        self.description = description
+        self.timestamp = timestamp
+        self.source = source
+        self.penaltyPoints = penaltyPoints
+        self.categoria = categoria
+        self.affectsScore = affectsScore
+        self.noPenaltyReason = noPenaltyReason
+        self.sensorSeverity = sensorSeverity
+    }
+
+    /// La identidad del backend cuando llega; si no, una derivada.
+    ///
+    /// La derivación sobrevive solo como respaldo: `Identifiable` dentro de un
+    /// `ForEach` no admite dos filas con la misma identidad —SwiftUI reutiliza
+    /// la fila equivocada—, así que tiene que haber algo. Pero la del backend
+    /// gana siempre: cruzar por una llave inventada teniendo la buena en la
+    /// mano es el defecto que esto cierra.
+    var id: String {
+        backendId ?? ((type ?? "ev") + "-" + (timestamp ?? UUID().uuidString))
+    }
 
     /// De dónde salió el evento, en castellano.
     ///
@@ -401,7 +453,32 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     }
 }
 
-nonisolated extension AttemptEventDTO: Decodable {}
+nonisolated extension AttemptEventDTO: Decodable {
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            // Por `APISentinel`: una cadena vacía no es una identidad, y
+            // dejarla pasar haría colisionar en "" a todos los eventos sin id.
+            backendId: APISentinel.text(try c.decodeIfPresent(String.self, forKey: .id)),
+            type: try c.decodeIfPresent(String.self, forKey: .type),
+            severity: try c.decodeIfPresent(Double.self, forKey: .severity),
+            confidence: try c.decodeIfPresent(String.self, forKey: .confidence),
+            description: try c.decodeIfPresent(String.self, forKey: .description),
+            timestamp: try c.decodeIfPresent(String.self, forKey: .timestamp),
+            source: try c.decodeIfPresent(String.self, forKey: .source),
+            penaltyPoints: try c.decodeIfPresent(Double.self, forKey: .penaltyPoints),
+            categoria: try c.decodeIfPresent(String.self, forKey: .categoria),
+            affectsScore: try c.decodeIfPresent(Bool.self, forKey: .affectsScore),
+            noPenaltyReason: try c.decodeIfPresent(String.self, forKey: .noPenaltyReason),
+            sensorSeverity: try c.decodeIfPresent(String.self, forKey: .sensorSeverity)
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, type, severity, confidence, description, timestamp, source
+        case penaltyPoints, categoria, affectsScore, noPenaltyReason, sensorSeverity
+    }
+}
 
 struct AttemptDetailDTO: Sendable {
     let id: String?

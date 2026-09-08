@@ -8,6 +8,20 @@ private final class BundleToken {}
 
 /// Helper para cargar fixtures JSON desde el bundle de tests.
 /// Los archivos .json viven en `Dobacksoft TrainingTests/Fixtures/`.
+///
+/// **Un fixture no es evidencia sobre el contrato.** Casi todos estos los
+/// escribimos a mano —«Juan Pérez», `attempt-001`— para poder decodificar algo
+/// en los tests. Que un campo no esté en el fixture no significa que el backend
+/// no lo envíe: significa que quien escribió el fixture no lo puso.
+///
+/// Ya costó una afirmación equivocada enviada al equipo de backend: se dijo que
+/// los eventos de la ficha no traían `id` «comprobado contra la respuesta
+/// congelada», habiendo mirado este archivo. Sí lo traen. Para saber qué envía
+/// el contrato hay que leer el blueprint —`app/blueprints/mobile_api/` en el
+/// repo training— o una respuesta capturada del endpoint, y decir cuál de las
+/// dos se miró.
+///
+/// Los que SÍ vienen de una respuesta real lo dicen en su nombre (`-real`).
 enum JSONFixture {
     /// Errors raised while resolving or reading a fixture.
     enum Failure: Error, CustomStringConvertible {

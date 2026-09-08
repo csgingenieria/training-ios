@@ -56,6 +56,7 @@
   ],
   "events": [
     {
+      "id": "d24bd48c-9353-485e-825b-79687334c9c6",
       "type": "EVT_01",
       "severity": 0.6,
       "confidence": "HIGH",
@@ -69,6 +70,7 @@
       "sensorSeverity": "MODERADO"
     },
     {
+      "id": "6f1c0b52-7a48-4d31-9c0e-2b7d5e93a114",
       "type": "EVT_06",
       "severity": 0.95,
       "confidence": "HIGH",
