@@ -33,9 +33,86 @@ import XCTest
 /// With it, missing credentials fail instead of skipping, so a green run cannot
 /// be mistaken for coverage that never ran. Without it, the skip stays correct
 /// for anyone who has no staging access at all.
+///
+/// ## Two accounts means two runs, and each must say which it is
+///
+/// There is a candidate account and an instructor account. The walkthrough
+/// skips the screens a role does not have, which is right — but it cannot tell
+/// «this role does not have it» from «this screen is broken». With the
+/// candidate account, if «Mi posición» stopped opening, it would skip exactly
+/// as it does for an instructor, and the run would still report success.
+///
+/// So a verification pass declares the role, and then the screens that role
+/// owns can no longer be skipped:
+///
+/// ```
+/// # Aspirante: «Mi posición» y «Mi progreso» son obligatorias.
+/// TEST_RUNNER_STAGING_EMAIL=… TEST_RUNNER_STAGING_PASSWORD=… \
+///   TEST_RUNNER_STAGING_REQUIRED=1 TEST_RUNNER_STAGING_ROLE=student \
+///   xcodebuild test … -only-testing:"Dobacksoft TrainingUITests/StagingWalkthroughUITests"
+///
+/// # Instructor: «Resultados» es obligatoria.
+/// TEST_RUNNER_STAGING_EMAIL=… TEST_RUNNER_STAGING_PASSWORD=… \
+///   TEST_RUNNER_STAGING_REQUIRED=1 TEST_RUNNER_STAGING_ROLE=manager \
+///   xcodebuild test … -only-testing:"Dobacksoft TrainingUITests/StagingWalkthroughUITests"
+/// ```
+///
+/// An unrecognised `STAGING_ROLE` fails rather than being ignored: a typo
+/// («aspirante» for «student») would leave the run believing it verifies more
+/// than it does.
 @MainActor
 final class StagingWalkthroughUITests: XCTestCase {
     private var credentials: (email: String, password: String)!
+
+    /// Qué rol se está usando en esta corrida, si se declara.
+    ///
+    /// Existe porque hay DOS cuentas de staging, una de aspirante y otra de
+    /// instructor, y sin declararlo dos corridas no compran cobertura de nada.
+    /// El recorrido se salta las pantallas que el rol no tiene —correcto—, pero
+    /// **no distingue «este rol no la tiene» de «esta pantalla está rota»**: con
+    /// la cuenta de aspirante, si «Mi posición» dejara de abrir, se saltaría
+    /// igual y la corrida diría «TEST SUCCEEDED». Es el mismo agujero que
+    /// `STAGING_REQUIRED` cierra un nivel más abajo.
+    ///
+    /// Declarado el rol, la pantalla que ESE rol debe tener ya no se puede
+    /// saltar: falla.
+    private enum StagingRole: String {
+        case student
+        case manager
+
+        /// Si este rol tiene «Mi posición» y «Mi progreso».
+        var hasOwnStanding: Bool { self == .student }
+
+        /// Si este rol tiene «Resultados» y el panel.
+        var hasResultados: Bool { self == .manager }
+    }
+
+    private var declaredRole: StagingRole?
+
+    /// Se salta, o falla si el rol declarado dice que esa pantalla es suya.
+    ///
+    /// `expected` es la pregunta «¿este rol debería tener esto?». Con el rol sin
+    /// declarar no se sabe, y el salto sigue siendo lo honesto.
+    private func skipUnlessTheRoleShouldHaveIt(
+        _ screen: String,
+        expected: (StagingRole) -> Bool,
+        detail: String
+    ) throws {
+        if let role = declaredRole, expected(role) {
+            XCTFail(
+                "«\(screen)» no apareció, y el rol declarado (\(role.rawValue)) SÍ la tiene. "
+                + "Esto es un fallo del recorrido, no una pantalla que este rol no use. "
+                + detail
+            )
+            return
+        }
+        throw XCTSkip(
+            "«\(screen)» no apareció. \(detail) "
+            + "Sin STAGING_ROLE no se puede saber si este rol debería tenerla, así que "
+            + "esta corrida NO prueba nada sobre esa pantalla. Declaralo con "
+            + "TEST_RUNNER_STAGING_ROLE=student|manager."
+        )
+    }
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -74,6 +151,18 @@ final class StagingWalkthroughUITests: XCTestCase {
             )
         }
         credentials = (email, password)
+
+        // El rol es opcional, pero un valor que no reconocemos NO se ignora en
+        // silencio: una errata («aspirante» en vez de «student») dejaría la
+        // corrida creyendo que verifica más de lo que verifica.
+        let rawRole = (env["STAGING_ROLE"] ?? "").trimmingCharacters(in: .whitespaces).lowercased()
+        if !rawRole.isEmpty {
+            guard let role = StagingRole(rawValue: rawRole) else {
+                XCTFail("STAGING_ROLE=«\(rawRole)» no se reconoce. Valores: student, manager.")
+                return
+            }
+            declaredRole = role
+        }
     }
 
     /// Walks every tab the signed-in account can reach and attaches what it saw.
@@ -181,7 +270,12 @@ final class StagingWalkthroughUITests: XCTestCase {
             // de acción, en un ScrollView.
             let miPosicion = app.scrollViews.buttons["Mi posición"].firstMatch
             guard miPosicion.waitForExistence(timeout: 10) else {
-                throw XCTSkip("Este rol no tiene «Mi posición»: los intentos se alcanzan por otro sitio.")
+                try skipUnlessTheRoleShouldHaveIt(
+                    "Mi posición",
+                    expected: \.hasOwnStanding,
+                    detail: "Los intentos se alcanzan por otro sitio en los roles que no la tienen."
+                )
+                return
             }
             miPosicion.tap()
             XCTAssertTrue(
@@ -263,7 +357,12 @@ final class StagingWalkthroughUITests: XCTestCase {
 
         let resultados = app.buttons["Resultados"]
         guard resultados.waitForExistence(timeout: 10) else {
-            throw XCTSkip("This role has no «Resultados» — it is instructor-only.")
+            try skipUnlessTheRoleShouldHaveIt(
+                "Resultados",
+                expected: \.hasResultados,
+                detail: "Es una pantalla solo de instructor."
+            )
+            return
         }
         resultados.tap()
 
