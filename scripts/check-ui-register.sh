@@ -44,6 +44,18 @@ REGISTRO='\b(vas|vais|irás|tendrás|podrás|deberás|harás|verás|sabrás|quer
 # it shows up as the plural or inside a phrase.
 VOCABULARIO='asignación de plaza|adjudicación de plaza|\bplazas\b|\bcupos?\b|línea de corte|nota de corte|(dentro|fuera) de plaza|\bno aptos?\b|\baptos?\b|\baprobad[oa]s?\b|\bsuspens[oa]s?\b|\badmitid[oa]s?\b|\bexcluid[oa]s?\b'
 
+# One noun for the person the app is about: «aspirante».
+#
+# The product called them three things at once — «Alumno» in the attempt
+# summary, «candidatos» in the convocatoria metrics, «alumno» in the manager
+# profile — and the share sheet, the one piece of copy that leaves the app,
+# used a fourth. They are candidates in a public examination, and «alumno»
+# describes a course.
+#
+# «candidate»/«candidato» stays legitimate in DTO field names, comments and
+# fixtures, which this scan does not read: it only sees UI literals.
+PERSONA='\b(alumn[oa]s?|candidat[oa]s?)\b'
+
 # Extracts UI string literals from the Swift sources of a target.
 literales() {
   rg --no-heading --line-number --only-matching '"[^"\\]{4,}"' \
@@ -89,8 +101,19 @@ if [ "$vocabulario" -gt 0 ]; then
   fallos=$((fallos + vocabulario))
 fi
 
+escanear "$PERSONA"
+persona=$?
+if [ "$persona" -gt 0 ]; then
+  echo
+  echo "✗ $persona UI string(s) call the person something other than «aspirante»."
+  echo "  They are candidates in a public examination, not students on a course:"
+  echo "  «Aspirante», «aspirantes» — never «alumno» or «candidatos»."
+  echo
+  fallos=$((fallos + persona))
+fi
+
 if [ "$fallos" -gt 0 ]; then
   exit 1
 fi
 
-echo "✓ UI strings: formal register, and no forbidden vocabulary."
+echo "✓ UI strings: formal register, one noun for the person, no forbidden vocabulary."

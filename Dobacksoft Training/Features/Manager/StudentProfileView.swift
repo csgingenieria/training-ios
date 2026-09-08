@@ -54,7 +54,7 @@ struct StudentProfileView: View {
             case .loading:
                 VStack(spacing: Theme.spacing.md.value) {
                     ProgressView().tint(Color.brand)
-                    Text("Cargando alumno…")
+                    Text("Cargando el aspirante…")
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
                 }
@@ -62,7 +62,7 @@ struct StudentProfileView: View {
                 .pageBackground()
             case .notFound:
                 ContentUnavailableView(
-                    "Alumno no encontrado",
+                    "Aspirante no encontrado",
                     systemImage: "person.crop.circle.badge.questionmark",
                     description: Text("No dispone de acceso a este aspirante, o el aspirante no existe.")
                 )
@@ -79,7 +79,7 @@ struct StudentProfileView: View {
                 }
             }
         }
-        .navigationTitle("Alumno")
+        .navigationTitle("Aspirante")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
@@ -100,7 +100,7 @@ struct StudentProfileView: View {
                     attemptsSection(profile.attempts)
                 }
                 if profile.standings.isEmpty && profile.attempts.isEmpty {
-                    Text("Este alumno todavía no tiene intentos cerrados.")
+                    Text("Este aspirante todavía no tiene intentos cerrados.")
                         .font(.bodyText)
                         .foregroundStyle(Color.muted)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -188,7 +188,7 @@ struct ConvocatoriaRow: View {
             }
 
             HStack(spacing: Theme.spacing.base.value) {
-                metric(icon: "person.3.fill", text: "\(conv.totalCandidates) candidatos")
+                metric(icon: "person.3.fill", text: "\(conv.totalCandidates) aspirantes")
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.semibold))
@@ -216,7 +216,7 @@ struct ConvocatoriaRow: View {
     private var accessibilitySummary: String {
         var parts: [String] = [conv.name]
         if let status = conv.status { parts.append(StatusVocabulary.convocatoria(status).label) }
-        parts.append("\(conv.totalCandidates) candidatos")
+        parts.append("\(conv.totalCandidates) aspirantes")
         return parts.joined(separator: ", ")
     }
 }

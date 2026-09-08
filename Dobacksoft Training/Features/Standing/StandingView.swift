@@ -232,6 +232,10 @@ struct StandingMetric: View {
 
 private struct StudentAttemptRoute: Hashable {
     let attemptId: String
+
+    /// Cuándo fue el intento. La lleva la fila de la lista y el detalle no la
+    /// recibe del API, así que viaja en la ruta.
+    var createdAt: String?
 }
 
 /// Tab del STUDENT en el dashboard: muestra saludo + selector de convocatorias
@@ -316,7 +320,8 @@ struct MyStandingTabView: View {
                 attemptId: route.attemptId,
                 convocatoriaName: selectedConvocatoria?.name,
                 finality: GradeFinality(convocatoriaStatus: selectedConvocatoria?.status),
-                convocatoriaClosedAt: selectedConvocatoria?.closedAt
+                convocatoriaClosedAt: selectedConvocatoria?.closedAt,
+                createdAt: route.createdAt
             )
         }
     }
@@ -462,7 +467,8 @@ struct MyConvocatoriaContentView: View {
                         attemptId: route.attemptId,
                         convocatoriaName: convocatoriaName,
                         finality: GradeFinality(convocatoriaStatus: convocatoriaStatus),
-                        convocatoriaClosedAt: convocatoriaClosedAt
+                        convocatoriaClosedAt: convocatoriaClosedAt,
+                        createdAt: route.createdAt
                     )
                 }
             }
@@ -627,7 +633,10 @@ struct MyConvocatoriaContentView: View {
                 } else {
                     VStack(spacing: 0) {
                         ForEach(filtered) { attempt in
-                            NavigationLink(value: StudentAttemptRoute(attemptId: attempt.id)) {
+                            NavigationLink(value: StudentAttemptRoute(
+                                attemptId: attempt.id,
+                                createdAt: attempt.createdAt
+                            )) {
                                 AttemptSummaryRow(attempt: attempt)
                             }
                             .buttonStyle(.plain)

@@ -47,6 +47,13 @@ struct AttemptDetailView: View {
     /// aclaración de la nota.
     var convocatoriaClosedAt: String?
 
+    /// Cuándo fue el intento.
+    ///
+    /// `AttemptDetailDTO` no la trae —el contrato del detalle no la envía— pero
+    /// el resumen de la lista sí, y quien navega la tiene en la mano. Sin ella
+    /// dos vueltas al mismo recorrido son indistinguibles una vez abiertas.
+    var createdAt: String?
+
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = AttemptDetailViewModel()
 
@@ -73,6 +80,7 @@ struct AttemptDetailView: View {
                     convocatoriaName: convocatoriaName,
                     finality: finality,
                     convocatoriaClosedAt: convocatoriaClosedAt,
+                    createdAt: createdAt,
                     attempt: attempt
                 )
             case .error(let msg):
@@ -104,18 +112,13 @@ struct AttemptDetailView: View {
     }
 
     private func shareText(_ attempt: AttemptDetailDTO) -> String {
-        var lines: [String] = ["Intento Training · CMadrid"]
-        if let candName = attempt.candidate?.name { lines.append("Alumno: \(candName)") }
-        if let routeLabel = attempt.route?.label ?? attempt.route?.id {
-            lines.append("Ruta: \(routeLabel)")
-        }
-        if let s = attempt.score {
-            lines.append("Nota: \(ScoreFormat.attempt(s))/10")
-        }
-        if let dq = attempt.dataQuality {
-            lines.append("Calidad: \(dq)")
-        }
-        return lines.joined(separator: "\n")
+        AttemptShareText.build(
+            candidateName: attempt.candidate?.name,
+            routeLabel: attempt.route?.label ?? attempt.route?.id,
+            score: attempt.score,
+            quality: attempt.quality,
+            createdAt: createdAt
+        )
     }
 
     private func load() async {
@@ -141,6 +144,7 @@ private struct AttemptDetailContent: View {
 
     var finality: GradeFinality = .unknown
     var convocatoriaClosedAt: String?
+    var createdAt: String?
 
     let attempt: AttemptDetailDTO
 
@@ -275,6 +279,12 @@ private struct AttemptDetailContent: View {
             }
 
             VStack(spacing: Theme.spacing.sm.value) {
+                // Primero la fecha: es lo que sitúa el intento. Sin ella el
+                // resumen empezaba por el recorrido, que es justamente el dato
+                // que comparten todas las vueltas indistinguibles entre sí.
+                if let fecha = APIDate.shortDateTime(createdAt) {
+                    summaryRow(label: "Fecha", value: fecha)
+                }
                 if let cand = attempt.candidate {
                     // Desde el ranking y la matriz se llega al perfil del
                     // aspirante; entrando por una alerta de Webfleet no había
@@ -282,14 +292,14 @@ private struct AttemptDetailContent: View {
                     if let candidateId = cand.id, !candidateId.isEmpty, auth.user?.isAdminLike == true {
                         NavigationLink(value: AttemptStudentRoute(studentId: candidateId)) {
                             summaryRow(
-                                label: "Alumno",
+                                label: "Aspirante",
                                 value: cand.name ?? "—",
                                 showsDisclosure: true
                             )
                         }
                         .buttonStyle(.plain)
                     } else {
-                        summaryRow(label: "Alumno", value: cand.name ?? "—")
+                        summaryRow(label: "Aspirante", value: cand.name ?? "—")
                     }
                 }
                 if let route = attempt.route {

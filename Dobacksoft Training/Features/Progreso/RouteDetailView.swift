@@ -34,7 +34,8 @@ struct RouteDetailView: View {
                 attemptId: ruta.attemptId,
                 convocatoriaName: ruta.convocatoriaName,
                 finality: GradeFinality(convocatoriaClosedAt: ruta.convocatoriaClosedAt),
-                convocatoriaClosedAt: ruta.convocatoriaClosedAt
+                convocatoriaClosedAt: ruta.convocatoriaClosedAt,
+                createdAt: ruta.createdAt
             )
         }
         .task(id: code) { await load() }
@@ -214,7 +215,8 @@ struct RouteDetailView: View {
                         NavigationLink(value: ProgresoAttemptRoute(
                             attemptId: intento.id,
                             convocatoriaName: detalle.convocatoria?.name ?? convocatoriaName,
-                            convocatoriaClosedAt: detalle.convocatoria?.closedAt
+                            convocatoriaClosedAt: detalle.convocatoria?.closedAt,
+                            createdAt: intento.createdAt
                         )) {
                             AttemptSummaryRow(attempt: intento)
                         }

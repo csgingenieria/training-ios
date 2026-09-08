@@ -42,7 +42,7 @@ nonisolated extension ProfileStandingDTO: Decodable {}
 ///
 /// IMPORTANTE: 404 (no 403) cuando el alumno no existe, es de otra org, o no
 /// tiene rol STUDENT — defense in depth, no leak de existencia. Tratar como
-/// `APIError.notFound` y mostrar "Alumno no encontrado".
+/// `APIError.notFound` y mostrar "Aspirante no encontrado".
 ///
 /// IMPORTANTE: `attempts.count` NO es lo mismo que la suma de
 /// `standings[*].attemptsCompleted`. El listado incluye intentos cerrados sin

@@ -27,7 +27,8 @@ struct ProgresoView: View {
                 attemptId: ruta.attemptId,
                 convocatoriaName: ruta.convocatoriaName,
                 finality: GradeFinality(convocatoriaClosedAt: ruta.convocatoriaClosedAt),
-                convocatoriaClosedAt: ruta.convocatoriaClosedAt
+                convocatoriaClosedAt: ruta.convocatoriaClosedAt,
+                createdAt: ruta.createdAt
             )
         }
         .navigationDestination(for: ProgresoRouteRoute.self) { ruta in
@@ -319,6 +320,9 @@ struct ProgresoAttemptRoute: Hashable {
     /// en el detalle del intento. Viaja en la ruta porque quien la conoce es
     /// la pantalla de origen, no el destino.
     var convocatoriaClosedAt: String?
+
+    /// Cuándo fue el intento, por lo mismo: el detalle no la recibe del API.
+    var createdAt: String?
 }
 
 /// El detalle de un recorrido, desde su fila de progreso.
