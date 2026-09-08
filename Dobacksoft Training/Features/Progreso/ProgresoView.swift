@@ -23,7 +23,12 @@ struct ProgresoView: View {
         .pageBackground()
         .navigationTitle("Mi progreso")
         .navigationDestination(for: ProgresoAttemptRoute.self) { ruta in
-            AttemptDetailView(attemptId: ruta.attemptId, convocatoriaName: ruta.convocatoriaName)
+            AttemptDetailView(
+                attemptId: ruta.attemptId,
+                convocatoriaName: ruta.convocatoriaName,
+                finality: GradeFinality(convocatoriaClosedAt: ruta.convocatoriaClosedAt),
+                convocatoriaClosedAt: ruta.convocatoriaClosedAt
+            )
         }
         .navigationDestination(for: ProgresoRouteRoute.self) { ruta in
             RouteDetailView(
@@ -306,6 +311,14 @@ struct ProgresoView: View {
 struct ProgresoAttemptRoute: Hashable {
     let attemptId: String
     let convocatoriaName: String?
+
+    /// Cuándo se cerró la convocatoria, o `nil` si sigue abierta.
+    ///
+    /// `/me/progress` y `/me/routes/<code>` no envían su estado, solo esta
+    /// fecha, así que es de aquí de donde sale la aclaración legal de la nota
+    /// en el detalle del intento. Viaja en la ruta porque quien la conoce es
+    /// la pantalla de origen, no el destino.
+    var convocatoriaClosedAt: String?
 }
 
 /// El detalle de un recorrido, desde su fila de progreso.

@@ -36,6 +36,17 @@ struct AttemptDetailView: View {
     /// identificador, así que lo aporta quien navega hasta aquí y lo conoce.
     var convocatoriaName: String?
 
+    /// Si la nota de esta convocatoria es provisional o definitiva.
+    ///
+    /// Como el nombre, lo aporta quien navega: el contrato del intento no
+    /// envía el estado de la convocatoria. Por defecto `.unknown`, que no
+    /// afirma nada — los caminos del instructor entran así.
+    var finality: GradeFinality = .unknown
+
+    /// Cuándo se cerró la convocatoria, cuando se sabe. Solo acompaña a la
+    /// aclaración de la nota.
+    var convocatoriaClosedAt: String?
+
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = AttemptDetailViewModel()
 
@@ -58,7 +69,12 @@ struct AttemptDetailView: View {
                     description: Text("No dispone de acceso a este intento, o el intento no existe.")
                 )
             case .loaded(let attempt):
-                AttemptDetailContent(convocatoriaName: convocatoriaName, attempt: attempt)
+                AttemptDetailContent(
+                    convocatoriaName: convocatoriaName,
+                    finality: finality,
+                    convocatoriaClosedAt: convocatoriaClosedAt,
+                    attempt: attempt
+                )
             case .error(let msg):
                 ContentUnavailableView {
                     Label("Error", systemImage: "exclamationmark.triangle.fill")
@@ -123,6 +139,9 @@ private struct AttemptDetailContent: View {
     /// contrato solo envía el identificador.
     var convocatoriaName: String?
 
+    var finality: GradeFinality = .unknown
+    var convocatoriaClosedAt: String?
+
     let attempt: AttemptDetailDTO
 
     var body: some View {
@@ -169,6 +188,8 @@ private struct AttemptDetailContent: View {
                 if !attempt.events.isEmpty {
                     eventsCard
                 }
+
+                legalFooter
             }
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.base.value)
@@ -179,6 +200,28 @@ private struct AttemptDetailContent: View {
         }
         .navigationDestination(for: AttemptMapRoute.self) { route in
             AttemptMapView(attemptId: route.attemptId)
+        }
+    }
+
+    /// Qué vale esta pantalla legalmente.
+    ///
+    /// El portal lo dice en todas sus páginas, esta incluida; la app no lo
+    /// decía en ninguna. Y es la pantalla que más se fotografía y se pasa:
+    /// justo donde la frase tiene que estar.
+    ///
+    /// Con la finalidad desconocida no se pinta nada. Un camino que no sabe el
+    /// estado de la convocatoria no puede afirmar que el resultado es
+    /// provisional, igual que no puede afirmar que es definitivo.
+    @ViewBuilder
+    private var legalFooter: some View {
+        if let note = finality.note(closedAt: convocatoriaClosedAt) {
+            Text(note)
+                .font(.metaCaption)
+                .foregroundStyle(Color.muted)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("attempt.legalNotice")
         }
     }
 

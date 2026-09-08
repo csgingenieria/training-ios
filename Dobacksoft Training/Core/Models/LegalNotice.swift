@@ -25,4 +25,14 @@ nonisolated enum LegalNotice: Sendable {
     /// requires them to know.
     static let outcomeDecidedByCMadrid =
         "El resultado de la oposición lo determina CMadrid al cierre formal de la convocatoria, fuera de esta aplicación."
+
+    /// That a mark shown before the formal close is not yet a decision.
+    ///
+    /// The portal prints this on every page, the attempt screen included. The
+    /// client only said the mark «puede variar», which is the mild half: it
+    /// describes the number moving, not what the number does not yet mean. The
+    /// attempt detail is also the screen most likely to be photographed and
+    /// passed around, which is exactly where the sentence has to be.
+    static let provisionalHasNoLegalEffect =
+        "Resultado provisional. No tiene efecto jurídico hasta el cierre oficial de la convocatoria."
 }

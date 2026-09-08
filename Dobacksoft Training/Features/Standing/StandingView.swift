@@ -303,6 +303,7 @@ struct MyStandingTabView: View {
                     convocatoriaId: selectedId,
                     convocatoriaStatus: selectedConvocatoria?.status,
                     convocatoriaName: selectedConvocatoria?.name,
+                    convocatoriaClosedAt: selectedConvocatoria?.closedAt,
                     embedded: true
                 )
             }
@@ -313,7 +314,9 @@ struct MyStandingTabView: View {
         .navigationDestination(for: StudentAttemptRoute.self) { route in
             AttemptDetailView(
                 attemptId: route.attemptId,
-                convocatoriaName: selectedConvocatoria?.name
+                convocatoriaName: selectedConvocatoria?.name,
+                finality: GradeFinality(convocatoriaStatus: selectedConvocatoria?.status),
+                convocatoriaClosedAt: selectedConvocatoria?.closedAt
             )
         }
     }
@@ -424,6 +427,9 @@ struct MyConvocatoriaContentView: View {
     /// Nombre de la convocatoria, para la vista rápida del widget.
     var convocatoriaName: String?
 
+    /// Cuándo se cerró, para fechar la aclaración de la nota en el intento.
+    var convocatoriaClosedAt: String?
+
     var embedded: Bool = false
 
     @Environment(AuthSession.self) private var auth
@@ -452,7 +458,12 @@ struct MyConvocatoriaContentView: View {
                 // de volver a secas sobre una pantalla sin nombre.
                 .navigationTitle("Mi posición")
                 .navigationDestination(for: StudentAttemptRoute.self) { route in
-                    AttemptDetailView(attemptId: route.attemptId, convocatoriaName: convocatoriaName)
+                    AttemptDetailView(
+                        attemptId: route.attemptId,
+                        convocatoriaName: convocatoriaName,
+                        finality: GradeFinality(convocatoriaStatus: convocatoriaStatus),
+                        convocatoriaClosedAt: convocatoriaClosedAt
+                    )
                 }
             }
         }

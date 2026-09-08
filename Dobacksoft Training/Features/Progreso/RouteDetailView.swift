@@ -30,7 +30,12 @@ struct RouteDetailView: View {
         .pageBackground()
         .navigationTitle(title)
         .navigationDestination(for: ProgresoAttemptRoute.self) { ruta in
-            AttemptDetailView(attemptId: ruta.attemptId, convocatoriaName: ruta.convocatoriaName)
+            AttemptDetailView(
+                attemptId: ruta.attemptId,
+                convocatoriaName: ruta.convocatoriaName,
+                finality: GradeFinality(convocatoriaClosedAt: ruta.convocatoriaClosedAt),
+                convocatoriaClosedAt: ruta.convocatoriaClosedAt
+            )
         }
         .task(id: code) { await load() }
         .refreshable { await load() }
@@ -208,7 +213,8 @@ struct RouteDetailView: View {
                     ForEach(detalle.attempts) { intento in
                         NavigationLink(value: ProgresoAttemptRoute(
                             attemptId: intento.id,
-                            convocatoriaName: detalle.convocatoria?.name ?? convocatoriaName
+                            convocatoriaName: detalle.convocatoria?.name ?? convocatoriaName,
+                            convocatoriaClosedAt: detalle.convocatoria?.closedAt
                         )) {
                             AttemptSummaryRow(attempt: intento)
                         }

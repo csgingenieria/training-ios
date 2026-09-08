@@ -50,15 +50,79 @@ struct GradeFinalityTests {
 
     @Test func provisionalExplainsItself() {
         #expect(GradeFinality.provisional.note != nil)
-        #expect(GradeFinality.definitive.note == nil)
-        #expect(GradeFinality.unknown.note == nil)
+        #expect(GradeFinality.unknown.note == nil, "un estado desconocido no afirma nada")
     }
 
-    /// The explanation must not hint at admission, seats or a verdict.
-    @Test func theExplanationStaysWithinArticle22() throws {
-        let note = try #require(GradeFinality.provisional.note).lowercased()
-        for banned in ["apto", "plaza", "corte", "admit", "aprob", "suspens"] {
-            #expect(!note.contains(banned), "«\(banned)» aparece en: \(note)")
+    /// The portal prints «No tienen efecto jurídico hasta el cierre oficial de
+    /// la convocatoria» on every page. The client only said the mark «puede
+    /// variar», which is the mild half: what a candidate needs to know is that
+    /// nothing on this screen is yet a decision about them.
+    @Test func theProvisionalNoteStatesItHasNoLegalEffect() throws {
+        let note = try #require(GradeFinality.provisional.note)
+        #expect(note.contains("efecto jurídico"))
+        #expect(note.contains("cierre oficial"))
+    }
+
+    /// A settled mark says so. Silence read as «still provisional», which is
+    /// the opposite of true once the convocatoria is locked.
+    @Test func theDefinitiveNoteSaysTheMarkNoLongerMoves() throws {
+        let note = try #require(GradeFinality.definitive.note)
+        #expect(note.contains("definitiv"))
+        #expect(!note.contains("provisional"))
+    }
+
+    /// The closing date is appended only where it describes a close that has
+    /// already happened. On an open convocatoria `closedAt` is nil by contract
+    /// — it is not a future deadline — so the provisional note ignores it
+    /// rather than inventing «cierra el».
+    @Test func theClosingDateIsAppendedOnlyWhereItHasHappened() throws {
+        let closed = "2026-10-12T00:00:00Z"
+
+        let definitive = try #require(GradeFinality.definitive.note(closedAt: closed))
+        #expect(definitive.contains("12/10/2026"))
+
+        let pending = try #require(GradeFinality.pendingConfirmation.note(closedAt: closed))
+        #expect(pending.contains("12/10/2026"))
+
+        let provisional = try #require(GradeFinality.provisional.note(closedAt: closed))
+        #expect(!provisional.contains("12/10/2026"), "una convocatoria abierta no tiene fecha de cierre")
+
+        #expect(GradeFinality.unknown.note(closedAt: closed) == nil)
+    }
+
+    /// Without a date the overload returns exactly the plain note: a dangling
+    /// «()» or a stray separator would be worse than saying nothing.
+    @Test func withoutADateTheNoteIsUnchanged() {
+        for finality in [GradeFinality.provisional, .pendingConfirmation, .definitive, .unknown] {
+            #expect(finality.note(closedAt: nil) == finality.note)
+        }
+    }
+
+    /// `/me/progress` and `/me/routes/<code>` do not send the convocatoria
+    /// status — only `closedAt`, documented as nil while it is open. So those
+    /// two screens derive the floor: open means provisional, closed means at
+    /// most pending confirmation. Never `.definitive`, because from a date
+    /// alone CLOSED and LOCKED are indistinguishable and only LOCKED settles
+    /// the mark.
+    @Test func aClosingDateAloneNeverClaimsTheMarkIsSettled() {
+        #expect(GradeFinality(convocatoriaClosedAt: nil) == .provisional)
+        #expect(GradeFinality(convocatoriaClosedAt: "2026-10-12T00:00:00Z") == .pendingConfirmation)
+        #expect(GradeFinality(convocatoriaClosedAt: "   ") == .provisional, "una cadena vacía no es una fecha")
+    }
+
+    /// No explanation — in any state, with or without a date — may hint at
+    /// admission, seats or a verdict.
+    @Test func noExplanationEverLeavesArticle22() {
+        let notes = [GradeFinality.provisional, .pendingConfirmation, .definitive, .unknown]
+            .flatMap { [$0.note, $0.note(closedAt: "2026-10-12T00:00:00Z")] }
+            .compactMap { $0 }
+
+        #expect(!notes.isEmpty, "si no hay ninguna frase que revisar, este test no prueba nada")
+
+        for note in notes.map({ $0.lowercased() }) {
+            for banned in ["apto", "plaza", "corte", "admit", "aprob", "suspens", "exclu"] {
+                #expect(!note.contains(banned), "«\(banned)» aparece en: \(note)")
+            }
         }
     }
 }

@@ -66,11 +66,43 @@ nonisolated enum GradeFinality: Sendable {
     var note: String? {
         switch self {
         case .provisional:
-            "La convocatoria sigue abierta: esta nota puede variar hasta su cierre."
+            // La primera frase es la del portal, y es la que importa: dice que
+            // esto todavía no significa nada sobre la persona. La segunda
+            // explica por qué puede moverse el número.
+            LegalNotice.provisionalHasNoLegalEffect
+                + " La convocatoria sigue abierta y esta nota puede variar hasta su cierre."
         case .pendingConfirmation:
             "El acta está firmada. Durante las 24 horas siguientes al cierre aún puede revisarse."
-        case .definitive, .unknown:
+        case .definitive:
+            // El silencio se leía como «sigue siendo provisional», que es lo
+            // contrario de lo que ocurre con la convocatoria bloqueada.
+            "Resultado definitivo al cierre de la convocatoria."
+        case .unknown:
             nil
         }
+    }
+
+    /// La misma aclaración, con la fecha del cierre cuando se conoce.
+    ///
+    /// La fecha se añade **solo donde describe un cierre que ya ocurrió**. En
+    /// una convocatoria abierta `closedAt` llega `nil` por contrato —no es un
+    /// plazo futuro—, así que la nota provisional lo ignora en lugar de
+    /// inventarse un «cierra el».
+    func note(closedAt: String?) -> String? {
+        guard let note else { return nil }
+        guard self != .provisional, let fecha = APIDate.shortDate(closedAt) else { return note }
+        return "\(note) (\(fecha))"
+    }
+
+    /// La finalidad que se puede afirmar teniendo solo la fecha de cierre.
+    ///
+    /// `/me/progress` y `/me/routes/<code>` no envían el estado de la
+    /// convocatoria: solo `closedAt`, documentado como `nil` mientras sigue
+    /// abierta. Con eso se deriva el suelo —abierta es provisional, cerrada es
+    /// como mucho pendiente de confirmación— y **nunca `.definitive`**, porque
+    /// una fecha no distingue `CLOSED` de `LOCKED` y solo `LOCKED` fija la nota.
+    init(convocatoriaClosedAt closedAt: String?) {
+        let trimmed = (closedAt ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        self = trimmed.isEmpty ? .provisional : .pendingConfirmation
     }
 }
