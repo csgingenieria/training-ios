@@ -22,6 +22,11 @@ protocol TrainingAPI: Sendable {
     // Alumno
     func myConvocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO]
     func standing(convocatoriaId: String, accessToken: String) async throws -> StandingDTO
+
+    /// Cómo va el aspirante. `conv_id` opcional; **nunca vacío**: el backend
+    /// responde 400 porque una cadena vacía caería a su respaldo y
+    /// contestaría por otra convocatoria con aspecto de respuesta correcta.
+    func progress(convocatoriaId: String?, accessToken: String) async throws -> ProgressDTO
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO]
 
     // Instructor / administración

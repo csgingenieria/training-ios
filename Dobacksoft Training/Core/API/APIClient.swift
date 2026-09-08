@@ -55,6 +55,10 @@ actor APIClient {
         try await get("/api/v1/me/convocatorias/\(convocatoriaId)/standing", token: accessToken)
     }
 
+    func progress(convocatoriaId: String?, accessToken: String) async throws -> ProgressDTO {
+        try await get(ProgressQuery.path(convocatoriaId: convocatoriaId), token: accessToken)
+    }
+
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO] {
         let response: MyAttemptsListDTO = try await get(
             "/api/v1/me/convocatorias/\(convocatoriaId)/attempts",

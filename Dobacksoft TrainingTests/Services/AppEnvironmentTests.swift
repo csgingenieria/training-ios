@@ -43,3 +43,27 @@ struct AppEnvironmentTests {
         #expect(AppEnvironment.userAgent.hasPrefix("DobacksoftTraining/"))
     }
 }
+
+/// `?conv_id=` must never travel empty.
+///
+/// The backend answers 400 on purpose: its own service gates the filter with a
+/// real `if`, so an empty string would fall through to the fallback and answer
+/// about ANOTHER convocatoria wearing the shape of a correct response. A
+/// candidate reading someone else's grade is worse than an error.
+@Suite struct ProgressQueryTests {
+    @Test func aConvocatoriaTravelsAsAQueryParameter() {
+        #expect(ProgressQuery.path(convocatoriaId: "c-1") == "/api/v1/me/progress?conv_id=c-1")
+    }
+
+    @Test func noConvocatoriaOmitsTheParameterInsteadOfSendingItEmpty() {
+        #expect(ProgressQuery.path(convocatoriaId: nil) == "/api/v1/me/progress")
+        #expect(ProgressQuery.path(convocatoriaId: "") == "/api/v1/me/progress")
+        #expect(ProgressQuery.path(convocatoriaId: "   ") == "/api/v1/me/progress")
+    }
+
+    @Test func theEmptyParameterNeverAppears() {
+        for id in [nil, "", "  "] as [String?] {
+            #expect(ProgressQuery.path(convocatoriaId: id).contains("conv_id=") == false)
+        }
+    }
+}

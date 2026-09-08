@@ -19,6 +19,8 @@ actor FakeTrainingAPI: TrainingAPI {
 
     /// Consumed in order by `standing(convocatoriaId:accessToken:)`.
     var standingResults: [Result<StandingDTO, Error>] = []
+    var progressResults: [Result<ProgressDTO, Error>] = []
+    private(set) var progressConvocatoriaIds: [String?] = []
 
     // MARK: Recorded calls
 
@@ -33,6 +35,7 @@ actor FakeTrainingAPI: TrainingAPI {
     func setRefreshResult(_ result: Result<RefreshResponseDTO, Error>) { refreshResult = result }
     func setMeResults(_ results: [Result<UserDTO, Error>]) { meResults = results }
     func setStandingResults(_ results: [Result<StandingDTO, Error>]) { standingResults = results }
+    func setProgressResults(_ results: [Result<ProgressDTO, Error>]) { progressResults = results }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
         guard !queue.isEmpty else { throw APIError.notFound(.resourceMissing) }
@@ -61,6 +64,11 @@ actor FakeTrainingAPI: TrainingAPI {
     func standing(convocatoriaId: String, accessToken: String) async throws -> StandingDTO {
         standingTokens.append(accessToken)
         return try next(&standingResults)
+    }
+
+    func progress(convocatoriaId: String?, accessToken: String) async throws -> ProgressDTO {
+        progressConvocatoriaIds.append(convocatoriaId)
+        return try next(&progressResults)
     }
 
     func myConvocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {

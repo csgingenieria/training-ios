@@ -163,4 +163,38 @@ import Foundation
 
         #expect(detalles.count == Self.attemptStates.count)
     }
+
+    // MARK: - Tendencia del recorrido
+
+    /// `_evolucion_de_recorrido` in `mobile_api/services.py`, verified
+    /// 2026-09-08 on `origin/main`.
+    ///
+    /// `primer` is the one worth freezing: it is NOT «no data», it is the first
+    /// lap of that route. Read as unknown it would leave a blank where a fact
+    /// belongs, and a blank in a progress screen reads as «you have not driven
+    /// this», which is the opposite of what happened.
+    private static let trends = ["subiendo", "bajando", "estable", "primer"]
+
+    @Test func everyTrendHasALabelAndOnlyTheFirstLapHasNoArrow() {
+        for raw in Self.trends {
+            let trend = ProgressTrend(apiValue: raw)
+            #expect(trend != nil, "«\(raw)» no se reconoce")
+            #expect(trend?.label.isEmpty == false)
+        }
+
+        // La flecha se omite solo en la primera vuelta: no hay nada contra lo
+        // que comparar, y una flecha plana se leería como «no ha mejorado».
+        #expect(ProgressTrend(apiValue: "primer")?.systemImage == nil)
+        for raw in ["subiendo", "bajando", "estable"] {
+            #expect(ProgressTrend(apiValue: raw)?.systemImage != nil, "«\(raw)» sin flecha")
+        }
+    }
+
+    /// The four must read differently. Two trends wording the same label is the
+    /// same defect as a missing value, only harder to see.
+    @Test func theFourTrendsDoNotSayTheSameThing() {
+        let etiquetas = Set(Self.trends.compactMap { ProgressTrend(apiValue: $0)?.label })
+
+        #expect(etiquetas.count == Self.trends.count)
+    }
 }
