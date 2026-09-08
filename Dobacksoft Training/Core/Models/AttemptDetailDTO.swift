@@ -160,19 +160,11 @@ nonisolated struct AttemptScoreFamilyDTO: Hashable, Sendable {
         // Ojo con la forma: un `switch` con `default: break` es un statement,
         // no una expresión, así que aquí hace falta `return` explícito — sin
         // él los textos se evaluaban y se descartaban en silencio.
-        switch reason {
-        case "sin_datos_can":
-            return "El vehículo no entregó datos de la caja."
-        case "sin_minimo_configurado":
-            return "Este recorrido no tiene mínimo fijado para este apartado."
-        case "config_invalida":
-            return "La configuración de este apartado no era válida."
-        case "no_registrado":
-            return "No se registró actividad en este apartado."
-        case "webfleet_poco_muestreo":
-            return "Los datos de flota no tuvieron muestreo suficiente para evaluarlo."
-        default:
-            break
+        // El vocabulario vive en `ScoreReasonCopy`, que comparten este desglose
+        // y la tarjeta de la caja Allison: los dos reciben los MISMOS motivos
+        // por campos distintos, y dos redacciones se habrían separado.
+        if let frase = ScoreReasonCopy.sentence(for: reason) {
+            return frase
         }
 
         // `state` es un conjunto CERRADO y documentado en el blueprint; el de
@@ -439,6 +431,41 @@ struct AttemptDetailDTO: Sendable {
     let scoreBreakdown: [AttemptScoreFamilyDTO]
     let events: [AttemptEventDTO]
     let convocatoriaId: String?
+
+    // MARK: - Los cuatro bloques de conducción (bloque C)
+    //
+    // Contestan «qué nota tengo y en qué he fallado» cuando falta la mitad de
+    // estabilidad. Los cuatro son `null` en muchos intentos reales y `null` no
+    // es un error: es «este intento no lo tiene».
+    //
+    // ⚠ `partialWebfleet` y `drivingNarrative` llegan `null` cuando el
+    // indicador de Webfleet no es la ventana del PROPIO intento. Los intentos
+    // enriquecidos antes del 2026-08-06 guardan el preset SEMANAL, y
+    // atribuirle al aspirante la conducción del camión durante la semana es
+    // imputarle conducta ajena. Ese `null` es el backend negándose a hacerlo,
+    // así que el cliente no lo rellena ni lo trata como fallo.
+
+    let allison: AllisonDTO?
+    let partialWebfleet: PartialWebfleetDTO?
+    let drivingNarrative: DrivingNarrativeDTO?
+
+    /// ¿Se preguntó a Webfleet y no había viaje en la ventana?
+    ///
+    /// Distinto de «todavía no se ha preguntado», y la diferencia importa:
+    /// decir «pendiente» a esto manda al aspirante a esperar algo que no va a
+    /// llegar. `nil` en un servidor que no lo manda — que tampoco es lo mismo.
+    let webfleetQueriedNoTrip: Bool?
+
+    /// Si hay algo de conducción que enseñar.
+    var showsDrivingBlocks: Bool {
+        allison != nil || partialWebfleet != nil || drivingNarrative != nil
+    }
+
+    /// Los datos de conducción no van a llegar, y hay que decirlo así.
+    ///
+    /// Solo con un `true` explícito: la ausencia del campo no afirma nada, y
+    /// afirmar que algo no llegará cuando no se sabe es peor que callar.
+    var drivingDataWillNotArrive: Bool { webfleetQueriedNoTrip == true }
 }
 
 nonisolated extension AttemptDetailDTO: Decodable {}

@@ -127,6 +127,15 @@ private struct AttemptDetailContent: View {
                 if !attempt.scoreBreakdown.isEmpty {
                     breakdownCard
                 }
+                // Los cuatro bloques de conducción: lo que contesta «en qué he
+                // fallado» cuando falta la mitad de estabilidad.
+                //
+                // Fuera del `if` de los eventos a propósito: un intento puede
+                // no tener ni un evento y tener la conducción entera, que es
+                // justo el caso en el que esta sección es la única respuesta.
+                // La sección decide sola si hay algo que pintar.
+                DrivingBlocksSection(attempt: attempt)
+
                 if !attempt.events.isEmpty {
                     eventsCard
                 }
