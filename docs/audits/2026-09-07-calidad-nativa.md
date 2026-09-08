@@ -68,7 +68,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 24 | ✅ | important | S | Widget: text styles instead of fixed 34/22/9 pt, and freshness note in the VoiceOver label | accessibility |
 | 25 | ✅ | important | S | Widget palette follows dark mode: colorsets in the widget catalog instead of light-only hex literals | native-craft, accessibility, visual |
 | 26 | — | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
-| 27 | — | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
+| 27 | ◐ | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
 | 28 | — | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
 | 29 | — | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
 | 30 | — | minor | S | Convocatoria chips: 44 pt height, isSelected trait, animated selection, selected chip scrolled into view *(provisional)* | accessibility, native-craft |
@@ -114,18 +114,24 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 23 · parciales: 3 · abiertos: 31.**
+**Cerrados: 23 · parciales: 4 · abiertos: 30.**
 
 Los parciales, con lo que falta de cada uno:
 
 - **#3** — hecho en standing/progreso/convocatorias; el detalle del intento sigue vaciándose
 - **#5** — hecho en convocatorias; falta el vacío de «Mi posición»
 - **#34** — rótulos sí (fdb368a); falta el SharePreview
+- **#27** — `LastGoodStore` hecho y probado, con el borrado al cerrar sesión
+  puesto antes que la escritura (e6d5673). **Nada escribe todavía**:
+  conectarlo pide una proyección por pantalla —los DTO son `Decodable` a
+  propósito— y una decisión de producto: qué hace una fila cacheada al
+  tocarla, si el detalle que abre necesita campos que la proyección no
+  guarda.
 
 Abiertos de severidad *important*: **#15** (gravedad del evento como insignia,
 `sensorSeverity` decodificado y sin pintar), **#19** (objetivos de 44 pt en el
-menú de filtros), **#26** (animaciones con los tokens de `Theme.motion`) y
-**#27** (almacén de último dato conocido). El resto son los 27 menores.
+menú de filtros) y **#26** (animaciones con los tokens de `Theme.motion`). El
+resto son los 27 menores.
 
 ### Verificado contra staging (2026-09-08)
 
