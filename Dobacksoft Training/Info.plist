@@ -4,6 +4,19 @@
 <dict>
 	<key>BASE_URL</key>
 	<string>$(BASE_URL)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.dobacksoft.training</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>dobacksoft-training</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Fraunces72pt-Regular.ttf</string>

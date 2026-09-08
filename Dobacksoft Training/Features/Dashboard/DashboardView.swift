@@ -29,6 +29,10 @@ private struct DashboardContent: View {
 
     @Environment(\.horizontalSizeClass) private var sizeClass
 
+    /// Opcional por lo mismo que el ticker: las previsualizaciones no lo
+    /// inyectan.
+    @Environment(DeepLinkInbox.self) private var deepLinks: DeepLinkInbox?
+
     @State private var router: DashboardRouter
     @SceneStorage("dashboard.section") private var storedSection: String = ""
     @State private var hasRestoredSection = false
@@ -59,10 +63,27 @@ private struct DashboardContent: View {
             if let restored = SidebarSection(rawValue: storedSection) {
                 router.select(restored)
             }
+            // Y después el enlace, que manda sobre lo restaurado: llegó porque
+            // alguien acaba de tocar el widget.
+            openPendingLink()
         }
         .onChange(of: router.section) { _, section in
             storedSection = section.rawValue
         }
+        .onChange(of: deepLinks?.pending) { _, _ in
+            // La app ya estaba abierta cuando llegó el toque.
+            openPendingLink()
+        }
+    }
+
+    /// Atiende el enlace que estuviera esperando.
+    ///
+    /// `select` decide si el rol puede ir: un instructor que toque un widget
+    /// dejado por otra sesión se queda donde está, en vez de aterrizar en una
+    /// pantalla cuyos endpoints le rechazan.
+    private func openPendingLink() {
+        guard let link = deepLinks?.consume() else { return }
+        router.select(link.section)
     }
 
     private var sections: [SidebarSection] {

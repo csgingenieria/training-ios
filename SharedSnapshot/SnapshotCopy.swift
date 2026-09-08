@@ -49,7 +49,13 @@ enum SnapshotCopy {
     }
 
     /// Más de 48 horas: se retiran las cifras.
-    static let caducado = "Sin datos recientes. Abra la aplicación para actualizarlos."
+    ///
+    /// Nombra la pantalla, no «la aplicación»: **solo «Mi posición» republica
+    /// la instantánea**, así que abrir la app y quedarse en Convocatorias deja
+    /// el widget igual de caducado y al aspirante creyendo que no funciona.
+    /// Mismo criterio que `sinDatosAun`, que ya lo hacía bien.
+    static let caducado =
+        "Sin datos recientes. Abra «Mi posición» en la aplicación para actualizarlos."
 
     static let notaNoDisponible = "Nota no disponible."
 

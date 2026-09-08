@@ -236,4 +236,31 @@ struct SnapshotStoreTests {
         #expect(store.write(snapshot()) == false)
         #expect(store.clear() == false)
     }
+
+    // MARK: - Los textos que mandan a alguien a algún sitio
+
+    /// The expiry message names the SCREEN, not «the app».
+    ///
+    /// Only «Mi posición» republishes the snapshot, so opening the app and
+    /// staying on Convocatorias leaves the widget exactly as expired — and the
+    /// candidate concluding it does not work. `sinDatosAun` already got this
+    /// right; `caducado` said «Abra la aplicación».
+    @Test func theExpiryMessageNamesTheScreenThatFixesIt() {
+        #expect(SnapshotCopy.caducado.contains("«Mi posición»"))
+        #expect(SnapshotCopy.sinDatosAun.contains("«Mi posición»"))
+    }
+
+    /// Every message that asks the person to do something says WHERE.
+    ///
+    /// The control half matters: `sinPosicionDetalle` explains and asks for
+    /// nothing, so it needs no destination. Without that split this test would
+    /// pass by demanding a screen name from sentences that have no action.
+    @Test func aMessageThatAsksForSomethingSaysWhere() {
+        for message in [SnapshotCopy.caducado, SnapshotCopy.sinDatosAun, SnapshotCopy.desactivado] {
+            #expect(message.contains("aplicación") || message.contains("perfil"),
+                    "pide algo y no dice dónde: \(message)")
+        }
+        #expect(!SnapshotCopy.sinPosicionDetalle.contains("Abra"),
+                "explica, no pide: no debe mandar a ninguna pantalla")
+    }
 }

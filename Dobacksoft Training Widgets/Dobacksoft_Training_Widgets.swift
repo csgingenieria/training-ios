@@ -80,6 +80,11 @@ struct StandingWidgetEntryView: View {
         content
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityText)
+            // El toque abre «Mi posición», que es la pantalla que el propio
+            // widget dice que hay que abrir y la única que republica la
+            // instantánea. Sin esto abría Convocatorias: la instrucción era
+            // cierta y el toque la contradecía.
+            .widgetURL(SnapshotLink.miPosicion)
     }
 
     @ViewBuilder
