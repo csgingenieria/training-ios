@@ -261,7 +261,30 @@ nonisolated extension ProgressConvocatoriaDTO: Decodable {}
 struct ProgressEnrollmentDTO: Sendable, Hashable, Identifiable {
     let convocatoriaId: String?
     let name: String?
+
+    /// El número de inscripción de ESTA convocatoria.
+    ///
+    /// Se me escapaba: viajaba en la respuesta real y el DTO lo tiraba. El
+    /// barrido contra el fixture no lo cazó porque comparaba el nombre contra
+    /// todo el directorio, y `plaza` existía en OTRO tipo — un falso negativo,
+    /// que es peor que un falso positivo porque dice que está cubierto.
+    ///
+    /// Importa de verdad en `/me/pin`: la tablet pide el PIN **y** este número,
+    /// y sin él la pantalla del PIN se queda a medias delante del camión.
+    let plaza: String?
+
     var id: String { convocatoriaId ?? name ?? "" }
 }
 
-nonisolated extension ProgressEnrollmentDTO: Decodable {}
+nonisolated extension ProgressEnrollmentDTO: Decodable {
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            convocatoriaId: try c.decodeIfPresent(String.self, forKey: .convocatoriaId),
+            name: APISentinel.text(try c.decodeIfPresent(String.self, forKey: .name)),
+            plaza: APISentinel.text(try c.decodeIfPresent(String.self, forKey: .plaza))
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey { case convocatoriaId, name, plaza }
+}

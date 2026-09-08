@@ -22,6 +22,9 @@ actor FakeTrainingAPI: TrainingAPI {
     var progressResults: [Result<ProgressDTO, Error>] = []
     var cardResults: [Result<CardDTO, Error>] = []
     var gpsResults: [Result<GpsPayloadDTO, Error>] = []
+    var pinResults: [Result<PinDTO, Error>] = []
+    var passwordResult: Result<Void, Error> = .success(())
+    private(set) var passwordBodies: [[String]] = []
     private(set) var progressConvocatoriaIds: [String?] = []
 
     // MARK: Recorded calls
@@ -40,6 +43,8 @@ actor FakeTrainingAPI: TrainingAPI {
     func setProgressResults(_ results: [Result<ProgressDTO, Error>]) { progressResults = results }
     func setCardResults(_ results: [Result<CardDTO, Error>]) { cardResults = results }
     func setGpsResults(_ results: [Result<GpsPayloadDTO, Error>]) { gpsResults = results }
+    func setPinResults(_ results: [Result<PinDTO, Error>]) { pinResults = results }
+    func setPasswordResult(_ result: Result<Void, Error>) { passwordResult = result }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
         guard !queue.isEmpty else { throw APIError.notFound(.resourceMissing) }
@@ -81,6 +86,20 @@ actor FakeTrainingAPI: TrainingAPI {
 
     func attemptGps(id: String, accessToken: String) async throws -> GpsPayloadDTO {
         try next(&gpsResults)
+    }
+
+    func myPin(accessToken: String) async throws -> PinDTO {
+        try next(&pinResults)
+    }
+
+    func changePassword(
+        current: String,
+        new: String,
+        confirm: String,
+        accessToken: String
+    ) async throws {
+        passwordBodies.append([current, new, confirm])
+        try passwordResult.get()
     }
 
     func myConvocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {

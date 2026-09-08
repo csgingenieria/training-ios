@@ -207,6 +207,18 @@ struct ProfileView: View {
                 if user.isStudent {
                     MyCardSection()
                 }
+
+                Section("Acceso") {
+                    // El PIN va detrás de un toque, no en una fila: el backend
+                    // audita CADA consulta, y una fila que se carga sola
+                    // dejaría una entrada en el registro por abrir el perfil.
+                    if user.isStudent {
+                        NavigationLink("Mi PIN de tablet") { MyPinView() }
+                            .accessibilityIdentifier("profile.pin")
+                    }
+                    NavigationLink("Cambiar la contraseña") { ChangePasswordView() }
+                        .accessibilityIdentifier("profile.password")
+                }
             }
 
             Section {

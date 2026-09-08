@@ -63,6 +63,27 @@ actor APIClient {
         try await get("/api/v1/attempts/\(id)/gps", token: accessToken)
     }
 
+    func myPin(accessToken: String) async throws -> PinDTO {
+        try await get("/api/v1/me/pin", token: accessToken)
+    }
+
+    func changePassword(
+        current: String,
+        new: String,
+        confirm: String,
+        accessToken: String
+    ) async throws {
+        try await patchVoid(
+            "/api/v1/me/password",
+            body: [
+                "currentPassword": current,
+                "newPassword": new,
+                "confirmPassword": confirm,
+            ],
+            token: accessToken
+        )
+    }
+
     func myCard(accessToken: String) async throws -> CardDTO {
         try await get("/api/v1/me/card", token: accessToken)
     }
@@ -138,6 +159,39 @@ actor APIClient {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
         return try await send(request)
+    }
+
+    /// Una respuesta cuyo cuerpo no interesa.
+    ///
+    /// Tolera cualquier objeto JSON: el backend devuelve `{message}` y mañana
+    /// puede devolver otra cosa. Un DTO por un campo que nadie lee se
+    /// convertiría en un fallo de decodificación por un cambio inocuo.
+    private struct EmptyResponse: Decodable {
+        init(from decoder: any Decoder) throws {
+            _ = try? decoder.container(keyedBy: AnyKey.self)
+        }
+        private struct AnyKey: CodingKey {
+            var stringValue: String
+            var intValue: Int? { nil }
+            init?(stringValue: String) { self.stringValue = stringValue }
+            init?(intValue: Int) { nil }
+        }
+    }
+
+    /// `PATCH` sin respuesta útil.
+    ///
+    /// El cambio de contraseña devuelve `{message}` y la pantalla no lo usa: lo
+    /// que importa es que no lanzara. Decodificar un DTO para tirarlo obligaría
+    /// a inventar un tipo por un campo que nadie lee.
+    private func patchVoid(
+        _ path: String,
+        body: [String: Any],
+        token: String? = nil
+    ) async throws {
+        var request = try makeRequest(method: "PATCH", path: path, token: token)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        _ = try await send(request) as EmptyResponse
     }
 
     private func makeRequest(method: String, path: String, token: String?) throws -> URLRequest {

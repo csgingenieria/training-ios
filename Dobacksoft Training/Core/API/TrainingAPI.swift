@@ -33,6 +33,24 @@ protocol TrainingAPI: Sendable {
 
     /// La traza de la vuelta. `track` es la buena; `points` el respaldo.
     func attemptGps(id: String, accessToken: String) async throws -> GpsPayloadDTO
+
+    /// El PIN de tablet del propio aspirante.
+    ///
+    /// ⚠ El backend AUDITA cada consulta, también cuando el PIN no se puede
+    /// mostrar. No llamarlo de fondo ni en un refresco automático: se llama
+    /// cuando la persona entra a verlo.
+    func myPin(accessToken: String) async throws -> PinDTO
+
+    /// Cambia la contraseña del usuario autenticado.
+    ///
+    /// Única escritura de cuenta del API móvil y primer `PATCH` del
+    /// blueprint: excepción puntual y enumerada a D-API-001.
+    func changePassword(
+        current: String,
+        new: String,
+        confirm: String,
+        accessToken: String
+    ) async throws
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO]
 
     // Instructor / administración
