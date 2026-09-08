@@ -18,6 +18,24 @@ struct ConvocatoriaDetailView: View {
             .padding(.vertical, Theme.spacing.base.value)
         }
         .pageBackground()
+        .navigationDestination(for: ConvocatoriaAction.self) { action in
+            switch action {
+            case .resultados:
+                ResultadosView(
+                    convocatoriaId: convocatoria.id,
+                    convocatoriaName: convocatoria.name
+                )
+            case .miPosicion:
+                // La MISMA pantalla que la pestaña «Mi posición», no una
+                // versión recortada.
+                MyConvocatoriaContentView(
+                    convocatoriaId: convocatoria.id,
+                    convocatoriaStatus: convocatoria.status,
+                    convocatoriaName: convocatoria.name,
+                    convocatoriaClosedAt: convocatoria.closedAt
+                )
+            }
+        }
         .navigationTitle(convocatoria.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -114,9 +132,7 @@ struct ConvocatoriaDetailView: View {
                 // contestaba: el ranking decía quién iba delante sin decir de
                 // qué está hecha la nota, y la matriz decía qué había conducido
                 // cada uno sin decir en qué orden quedaban.
-                actionRow(icon: "tablecells", label: "Resultados") {
-                    ResultadosView(convocatoriaId: convocatoria.id, convocatoriaName: convocatoria.name)
-                }
+                actionRow(icon: "tablecells", label: "Resultados", action: .resultados)
             }
             if auth.user?.isStudent == true {
                 if auth.user?.isAdminLike == true {
@@ -131,13 +147,7 @@ struct ConvocatoriaDetailView: View {
                 // mismo rótulo llevaba a dos pantallas distintas según el
                 // camino, y en iPad éste es el único que existe, porque la
                 // selección del sidebar no es automatizable.
-                actionRow(icon: "trophy.fill", label: "Mi posición") {
-                    MyConvocatoriaContentView(
-                        convocatoriaId: convocatoria.id,
-                        convocatoriaStatus: convocatoria.status,
-                        convocatoriaName: convocatoria.name
-                    )
-                }
+                actionRow(icon: "trophy.fill", label: "Mi posición", action: .miPosicion)
             }
         }
         .background(
@@ -148,14 +158,23 @@ struct ConvocatoriaDetailView: View {
     }
 
     @ViewBuilder
-    private func actionRow<Destination: View>(
+    /// Una fila que abre otra pantalla, **por valor y no por destino**.
+    ///
+    /// Era `NavigationLink { destino }`, y eso dejó de funcionar el día que la
+    /// pila de cada sección pasó a tener `path` enlazado: una vista empujada
+    /// por un enlace de destino queda FUERA de la pila gestionada, así que los
+    /// enlaces por valor que ella contenga no tienen dónde apilarse. La
+    /// pantalla se abría y dentro no se podía tocar nada.
+    ///
+    /// Le costó al instructor su tabla de resultados: ni una celda ni un
+    /// nombre abrían nada, y la auditoría no podía verlo porque leyó código de
+    /// antes de ese cambio.
+    private func actionRow(
         icon: String,
         label: String,
-        @ViewBuilder destination: @escaping () -> Destination
+        action: ConvocatoriaAction
     ) -> some View {
-        NavigationLink {
-            destination()
-        } label: {
+        NavigationLink(value: action) {
             HStack(spacing: Theme.spacing.md.value) {
                 Image(systemName: icon)
                     .font(.body(size: 16, weight: .semibold))
@@ -178,4 +197,14 @@ struct ConvocatoriaDetailView: View {
         .accessibilityHint("Tocar para abrir")
     }
 
+}
+
+/// Lo que se puede abrir desde el detalle de una convocatoria.
+///
+/// Existe porque las filas pasaron a ser enlaces por VALOR: con la pila de
+/// cada sección gestionada por `DashboardRouter`, un enlace de destino empuja
+/// fuera de esa pila y todo lo que esté dentro deja de navegar.
+nonisolated enum ConvocatoriaAction: Hashable {
+    case resultados
+    case miPosicion
 }

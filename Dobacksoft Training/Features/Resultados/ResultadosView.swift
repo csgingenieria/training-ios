@@ -359,6 +359,10 @@ struct ResultadosView: View {
             NavigationLink(value: ResultadoStudentRoute(studentId: row.candidateId)) {
                 label
             }
+            // Identidad estable, y además el caso de control que dice si el
+            // contenedor de la matriz se come la navegación: es otro
+            // `NavigationLink` en la MISMA tabla, con otro destino.
+            .accessibilityIdentifier("resultados.aspirante")
             .buttonStyle(.plain)
             .accessibilityLabel(accessibilityRowLabel(row))
         } else {
@@ -391,6 +395,14 @@ struct ResultadosView: View {
             .frame(minWidth: cellMinWidth, alignment: .center)
             .padding(.horizontal, Theme.spacing.xs.value)
             .padding(.vertical, Theme.spacing.md.value)
+            // El área tocable es la CELDA, no sus dígitos.
+            //
+            // Sin esto, el objetivo de un `NavigationLink` cuyo contenido es un
+            // `Text` son los glifos: «9,7» son unos veinte puntos de ancho en
+            // una celda de sesenta y dos, y el resto de la celda no responde.
+            // Todas las demás filas del proyecto lo llevan; esta no, y es la
+            // única vía que el instructor tiene para abrir un intento.
+            .contentShape(Rectangle())
 
         if let attemptId = cell?.attemptId, cell?.score != nil {
             NavigationLink(value: ResultadoAttemptRoute(attemptId: attemptId)) {
@@ -398,6 +410,12 @@ struct ResultadosView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(candidateName), \(circuitLabel), nota \(cell?.score.map(ScoreFormat.attempt) ?? "—")")
+            // Identidad estable para el recorrido automatizado. Esta vista no
+            // tenía ninguna, así que el camino del INSTRUCTOR hasta un intento
+            // —matriz, celda, detalle— no se podía ejercitar: es el único
+            // camino a esa pantalla que su rol tiene, y era el que nadie había
+            // recorrido nunca contra datos reales.
+            .accessibilityIdentifier("resultados.celda")
         } else {
             content
                 .accessibilityLabel("\(candidateName), \(circuitLabel), sin conducir")

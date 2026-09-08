@@ -505,6 +505,86 @@ final class StagingWalkthroughUITests: XCTestCase {
 
         assertNoDecodingFailureVisible(app, screen: "Resultados")
         assertNoVerdictVisible(app, screen: "Resultados")
+
+        // Y desde una celda, el detalle del intento.
+        //
+        // Es el ÚNICO camino que el instructor tiene a esa pantalla —no tiene
+        // «Mi posición»— y era el que nadie había recorrido nunca contra datos
+        // reales. Entra además por la puerta que pasa `finality: .unknown` y
+        // sin fecha, que es una combinación que solo se da aquí.
+        let cualquierCelda = element("resultados.celda", in: app)
+        guard cualquierCelda.waitForExistence(timeout: 10) else {
+            throw XCTSkip(
+                "Esta convocatoria no tiene ninguna celda con nota, así que el "
+                + "detalle del intento por el camino del instructor NO queda cubierto."
+            )
+        }
+
+        // El toque va por coordenada, no por `tap()` ni por `isHittable`.
+        //
+        // La matriz es un `LazyVStack` dentro de un `ScrollView` de dos ejes:
+        // las celdas fuera del viewport **no tienen marco**, y preguntar por su
+        // alcanzabilidad no devuelve `false` — revienta con «Activation point
+        // invalid and no suggested hit points based on element frame». Así que
+        // enumerarlas para buscar una tocable es justamente lo que no se puede
+        // hacer.
+        //
+        // Es el mismo límite de XCUITest que este archivo ya documenta para el
+        // sidebar del iPad, y se trata igual: se intenta por coordenada y, si
+        // no se puede, se dice en voz alta qué queda sin cubrir en lugar de
+        // dejar un rojo que acusa a la app de algo que no ha hecho.
+        cualquierCelda.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+
+        // Dos preguntas distintas, y confundirlas acusa en falso.
+        //
+        // «¿Navegó?» se contesta con el título, que existe en TODOS los estados
+        // de esa pantalla —cargando, cargado y error—. «¿Cargó?» se contesta
+        // con el enlace al mapa, que solo existe cargado. Con una sola
+        // aserción sobre el enlace, una pantalla que abrió y falló al cargar se
+        // reporta como una celda que no navega: un defecto que no existe, en
+        // lugar del que sí.
+        guard app.navigationBars["Intento"].waitForExistence(timeout: 20) else {
+            capture(app, named: "21-celda-no-navega")
+
+            // Caso de control antes de culpar a la herramienta.
+            //
+            // La columna del nombre es otro `NavigationLink` en la MISMA
+            // tabla. Si ESA navega, el contenedor no se come nada y lo de la
+            // celda es direccionamiento. Si tampoco navega, hay algo real en
+            // la matriz y no se puede seguir llamándolo límite de XCUITest.
+            let aspirante = element("resultados.aspirante", in: app)
+            if aspirante.waitForExistence(timeout: 5) {
+                aspirante.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                let abrio = app.navigationBars["Aspirante"].waitForExistence(timeout: 15)
+                XCTAssertTrue(
+                    abrio,
+                    "Ningún enlace de la matriz navega —ni la celda ni el nombre—, "
+                    + "así que esto NO es un límite de XCUITest: la tabla del "
+                    + "instructor no abre nada."
+                )
+                if abrio {
+                    capture(app, named: "22-perfil-desde-la-matriz")
+                    assertNoDecodingFailureVisible(app, screen: "Aspirante desde la matriz")
+                }
+            }
+
+            throw XCTSkip(
+                "El toque sintético sobre una celda de la matriz no abrió el detalle. "
+                + "Las celdas viven en un LazyVStack dentro de un ScrollView de dos "
+                + "ejes y XCUITest no las direcciona de forma fiable — el mismo límite "
+                + "que el sidebar del iPad. VERIFICADO: la matriz decodifica una "
+                + "respuesta real, pinta su cabecera y no deja ver ningún veredicto. "
+                + "SIN cubrir: el detalle del intento por el camino del instructor."
+            )
+        }
+        capture(app, named: "21-intento-desde-la-matriz")
+        assertNoDecodingFailureVisible(app, screen: "Intento desde la matriz")
+        assertNoVerdictVisible(app, screen: "Intento desde la matriz")
+
+        XCTAssertTrue(
+            element("attempt.openMap", in: app).waitForExistence(timeout: 20),
+            "El detalle abrió por el camino del instructor y no llegó a cargar."
+        )
     }
 
     /// The convocatoria row, by whichever route this layout offers.

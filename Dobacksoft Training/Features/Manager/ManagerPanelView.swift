@@ -237,6 +237,15 @@ struct ManagerPanelView: View {
             }
         }
         .navigationTitle("Panel")
+        // Por VALOR y no por destino: con la pila de cada sección gestionada
+        // por `DashboardRouter`, un enlace de destino empuja fuera de esa pila
+        // y las pantallas que abre dejan de poder navegar por dentro.
+        .navigationDestination(for: PanelRoute.self) { route in
+            switch route {
+            case .alertas:       WebfletAlertsView()
+            case .convocatorias: ConvocatoriasListView()
+            }
+        }
         .task(id: ticker?.generation ?? 0) { await load() }
         .refreshable { await load() }
         .navigationDestination(for: PanelStudentRoute.self) { route in
@@ -599,9 +608,7 @@ struct ManagerPanelView: View {
 
     @ViewBuilder
     private func alertsShortcut(lowQuality: Int) -> some View {
-        NavigationLink {
-            WebfletAlertsView()
-        } label: {
+        NavigationLink(value: PanelRoute.alertas) {
             HStack(spacing: Theme.spacing.md.value) {
                 Image(systemName: "bell.badge.fill")
                     .font(.body(size: 18, weight: .semibold))
@@ -637,9 +644,7 @@ struct ManagerPanelView: View {
                     .foregroundStyle(Color.ink)
                 Spacer()
                 if !convocatorias.isEmpty {
-                    NavigationLink {
-                        ConvocatoriasListView()
-                    } label: {
+                    NavigationLink(value: PanelRoute.convocatorias) {
                         Text("Ver todas")
                             .font(.metaCaption)
                             .foregroundStyle(Color.brand)
@@ -825,4 +830,10 @@ private struct SyncResultSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
     }
+}
+
+/// Lo que se puede abrir desde el panel del instructor.
+nonisolated enum PanelRoute: Hashable {
+    case alertas
+    case convocatorias
 }
