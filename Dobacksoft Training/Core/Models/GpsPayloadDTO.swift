@@ -192,4 +192,39 @@ struct GpsEventDTO: Sendable, Hashable, Identifiable {
     }
 }
 
-nonisolated extension GpsEventDTO: Decodable {}
+nonisolated extension GpsEventDTO: Decodable {
+    /// Lectura tolerante en todo lo que no es estructural.
+    ///
+    /// El `id` y las coordenadas sí son estructurales —sin identidad no hay
+    /// cruce con la ficha, y sin coordenadas el evento no se coloca— pero
+    /// llegan como opcionales y su ausencia ya está prevista. Lo demás es
+    /// comentario sobre el evento, y ninguna de esas cifras vale el mapa
+    /// entero: `severity` llegaba como TEXTO desde este endpoint y hundía el
+    /// trazado completo de la vuelta.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: APISentinel.text(c.lenientString(forKey: .id)),
+            type: c.lenientString(forKey: .type),
+            severity: c.lenientDouble(forKey: .severity),
+            source: c.lenientString(forKey: .source),
+            timestamp: c.lenientString(forKey: .timestamp),
+            lat: c.lenientDouble(forKey: .lat),
+            lng: c.lenientDouble(forKey: .lng),
+            penaltyPoints: c.lenientDouble(forKey: .penaltyPoints),
+            noPenaltyReason: c.lenientString(forKey: .noPenaltyReason),
+            stabilityLossPercent: c.lenientDouble(forKey: .stabilityLossPercent),
+            narrative: c.lenientString(forKey: .narrative),
+            advice: c.lenientString(forKey: .advice),
+            speedKmh: c.lenientDouble(forKey: .speedKmh),
+            limitKmh: c.lenientDouble(forKey: .limitKmh),
+            excessKmh: c.lenientDouble(forKey: .excessKmh)
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, type, severity, source, timestamp, lat, lng
+        case penaltyPoints, noPenaltyReason, stabilityLossPercent
+        case narrative, advice, speedKmh, limitKmh, excessKmh
+    }
+}

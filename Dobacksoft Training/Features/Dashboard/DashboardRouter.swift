@@ -136,17 +136,24 @@ final class DashboardRouter {
         paths[section] = NavigationPath()
     }
 
-    /// Elegir sección con intención.
+    /// Elegir sección.
     ///
-    /// Elegir la que ya se está viendo la devuelve a su raíz, que es lo que
-    /// hace la plataforma al tocar la pestaña actual. Elegir otra no toca
-    /// ninguna pila: solo la reselección hace pop.
+    /// **No hace pop, y es deliberado.** Hacía pop a la raíz al reelegir la
+    /// sección visible, imitando el «toca la pestaña actual para volver
+    /// arriba» de la plataforma. Esa comodidad costaba navegación:
+    /// `TabView(selection:)` y `List(selection:)` escriben su binding, y una
+    /// escritura del valor que ya estaba —que SwiftUI hace al reconciliar, no
+    /// solo al tocar— llegaba aquí y vaciaba la pila. Una pantalla que la
+    /// persona había abierto desaparecía sola.
+    ///
+    /// Se vio como un fallo intermitente del recorrido contra staging: la
+    /// ficha del recorrido «no abría» desde «Mi progreso», a veces. Sí abría, y
+    /// algo la tiraba.
+    ///
+    /// Volver a la raíz sigue siendo posible con `popToRoot`, pidiéndolo — y
+    /// nunca como efecto secundario de un binding.
     func select(_ section: SidebarSection) {
         guard available.contains(section) else { return }
-        if self.section == section {
-            popToRoot(section)
-            return
-        }
         self.section = section
     }
 }

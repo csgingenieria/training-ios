@@ -278,6 +278,23 @@ struct MyStandingTabView: View {
             }
         }
         .navigationTitle("Mi posición")
+        // El destino vive en la RAÍZ, fuera del switch.
+        //
+        // Estaba dentro de `content(selectedId:)`, o sea dentro de la rama
+        // `.loaded`: si esa rama se rerenderiza en el momento en que el enlace
+        // dispara, el destino no está y el toque no empuja nada. Se veía como
+        // un fallo intermitente contra staging —«el intento no abre», a
+        // veces— y es el MISMO defecto que se corrigió esta mañana en la lista
+        // de convocatorias y que aquí se quedó sin corregir.
+        .navigationDestination(for: StudentAttemptRoute.self) { route in
+            AttemptDetailView(
+                attemptId: route.attemptId,
+                convocatoriaName: selectedConvocatoria?.name,
+                finality: GradeFinality(convocatoriaStatus: selectedConvocatoria?.status),
+                convocatoriaClosedAt: selectedConvocatoria?.closedAt,
+                createdAt: route.createdAt
+            )
+        }
         .task(id: ticker?.generation ?? 0) { await load() }
         .refreshable { await load() }
     }
@@ -330,15 +347,6 @@ struct MyStandingTabView: View {
             .padding(.vertical, Theme.spacing.base.value)
         }
         .pageBackground()
-        .navigationDestination(for: StudentAttemptRoute.self) { route in
-            AttemptDetailView(
-                attemptId: route.attemptId,
-                convocatoriaName: selectedConvocatoria?.name,
-                finality: GradeFinality(convocatoriaStatus: selectedConvocatoria?.status),
-                convocatoriaClosedAt: selectedConvocatoria?.closedAt,
-                createdAt: route.createdAt
-            )
-        }
     }
 
     @ViewBuilder

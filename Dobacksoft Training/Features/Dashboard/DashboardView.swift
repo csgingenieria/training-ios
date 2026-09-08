@@ -105,9 +105,10 @@ private struct DashboardContent: View {
         }
     }
 
-    /// El binding de las pestañas pasa por `select`, no por `section` directo:
-    /// así tocar la pestaña que ya se está viendo la devuelve a su raíz, que es
-    /// lo que hace la plataforma.
+    /// El binding de las pestañas pasa por `select` para que la sección quede
+    /// acotada al rol. `select` ya NO hace pop: una escritura del valor actual
+    /// —que SwiftUI hace al reconciliar— vaciaba la pila y tiraba la pantalla
+    /// que la persona tenía abierta.
     private var tabSelection: Binding<SidebarSection> {
         Binding(
             get: { router.section },

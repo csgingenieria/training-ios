@@ -236,6 +236,13 @@ actor APIClient {
             do {
                 return try decoder.decode(T.self, from: data)
             } catch {
+                // La RUTA del campo, nunca su valor: el mensaje que ve el
+                // aspirante sigue siendo el mismo, pero ahora queda constancia
+                // de qué se rompió. Sin esto, un fallo de decodificación en
+                // campo no se puede arreglar.
+                AppLog.api.error(
+                    "Decodificación fallida en \(String(describing: T.self), privacy: .public): \(DecodingFailure.summary(error), privacy: .public)"
+                )
                 throw APIError.decoding(error)
             }
         case 401:

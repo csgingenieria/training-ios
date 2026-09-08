@@ -87,7 +87,7 @@ xcodebuild test \
   -parallel-testing-enabled NO \
   "${@:--only-testing:Dobacksoft TrainingUITests/StagingWalkthroughUITests}" \
   2>&1 | rg -v "CHHapticPattern" \
-       | rg "error:|Test skipped|Test Case .* (passed|failed|skipped)|Test run with|TEST (SUCCEEDED|FAILED)"
+       | rg "error:|XCTAssert|XCTFail|Test skipped|Test Case .* (passed|failed|skipped)|Test run with|TEST (SUCCEEDED|FAILED)|Assertion Failure"
 
 # El código de salida es el de xcodebuild, no el del filtro.
 exit "${PIPESTATUS[0]}"

@@ -121,17 +121,39 @@ struct DashboardRouterTests {
         #expect(router.path(for: .convocatorias).isEmpty)
     }
 
-    /// Selecting the section that is already showing pops it to its root —
-    /// the platform behaviour for tapping the current tab.
-    @Test func reselectingTheCurrentSectionPopsItToItsRoot() {
+    /// **Selecting the section already showing must NOT pop it.**
+    ///
+    /// It used to, imitating «tap the current tab to go to its root». That
+    /// nicety cost navigation: `TabView(selection:)` and `List(selection:)`
+    /// write their binding, and a write of the value that is already current —
+    /// which SwiftUI does during reconciliation, not only on a tap — reached
+    /// `select` and popped the stack. A pushed screen vanished on its own.
+    ///
+    /// It showed up as an intermittent UI-test failure on staging: the route
+    /// sheet «did not open» from «Mi progreso», sometimes. It had opened, and
+    /// something had thrown it away.
+    ///
+    /// Losing «tap the tab to go home» is a small loss. Silently discarding a
+    /// screen the person opened is what makes someone think the app is broken.
+    @Test func reselectingTheCurrentSectionKeepsItsStack() {
         let router = DashboardRouter(isAdminLike: false, isStudent: true)
         router.push("una-convocatoria", in: .convocatorias)
-        #expect(router.path(for: .convocatorias).count == 1)
 
         router.select(.convocatorias)
 
-        #expect(router.path(for: .convocatorias).isEmpty)
+        #expect(router.path(for: .convocatorias).count == 1, "la pila no se descarta")
         #expect(router.section == .convocatorias)
+    }
+
+    /// Going back to the root is still possible — but only by asking for it,
+    /// never as a side effect of a binding write.
+    @Test func poppingToRootIsExplicitOrItDoesNotHappen() {
+        let router = DashboardRouter(isAdminLike: false, isStudent: true)
+        router.push("una-convocatoria", in: .convocatorias)
+
+        router.popToRoot(.convocatorias)
+
+        #expect(router.path(for: .convocatorias).isEmpty)
     }
 
     /// Selecting a DIFFERENT section leaves both stacks alone. Only
