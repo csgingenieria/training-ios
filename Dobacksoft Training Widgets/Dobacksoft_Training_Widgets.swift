@@ -197,7 +197,8 @@ struct StandingWidgetEntryView: View {
                     Text("\(standing.position)")
                         .font(.title3.weight(.bold))
                     Text("de \(standing.totalCandidates)")
-                        .font(.system(size: 9))
+                        .font(.caption2)
+                        .minimumScaleFactor(0.8)
                 }
                 .privacySensitive()
             } else {
@@ -234,7 +235,13 @@ struct StandingWidgetEntryView: View {
     private func positionBlock(_ standing: StandingSnapshot.Standing) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("\(standing.position)")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                // Estilo de texto y no un tamaño fijo: `.system(size:)` ignora
+                // el tamaño de letra del sistema, y un bombero con la letra
+                // grande veía el puesto igual de pequeño que todo lo demás.
+                .font(.largeTitle.weight(.bold))
+                .fontDesign(.rounded)
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
                 .foregroundStyle(Color.widgetInk)
             Text("de \(standing.totalCandidates)")
                 .font(.caption2)
@@ -247,7 +254,10 @@ struct StandingWidgetEntryView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let score = standing.score {
                 Text(ScoreFormat.aggregate(score))
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(.title2.weight(.semibold))
+                    .fontDesign(.rounded)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
                     .foregroundStyle(Color.widgetInk)
                     .privacySensitive()
             } else {
@@ -276,7 +286,7 @@ struct StandingWidgetEntryView: View {
     }
 
     private func scoreLabel(_ standing: StandingSnapshot.Standing) -> String {
-        standing.finality == .provisional ? SnapshotCopy.notaProvisional : SnapshotCopy.nota
+        StandingWidgetCopy.scoreLabel(standing)
     }
 
     /// Con el dato entre 6 y 48 horas se muestra cuándo se consultó. Un puesto
@@ -285,7 +295,8 @@ struct StandingWidgetEntryView: View {
     private var ageNote: some View {
         if entry.state.freshness == .envejecido, let capturedAt {
             Text(SnapshotCopy.consultadoEl(capturedAt))
-                .font(.system(size: 9))
+                .font(.caption2)
+                .minimumScaleFactor(0.8)
                 .foregroundStyle(Color.widgetMuted)
                 .lineLimit(2)
         }
@@ -295,21 +306,18 @@ struct StandingWidgetEntryView: View {
 
     /// Derivado del estado, nunca compuesto a mano sobre las cifras: antes
     /// VoiceOver leía el puesto y la nota incluso con la pantalla bloqueada.
+    ///
+    /// El texto vive en `SharedSnapshot` porque este target no tiene host de
+    /// tests, y porque le faltaba la nota de frescura: quien usa VoiceOver oía
+    /// una cifra de hace dos días como si fuera de ahora.
     private var accessibilityText: String {
-        if redactionReasons.contains(.privacy) { return SnapshotCopy.redactado }
-
-        if let standing {
-            var parts = ["\(SnapshotCopy.widgetName). Puesto \(standing.position) de \(standing.totalCandidates)"]
-            if let score = standing.score {
-                parts.append("\(scoreLabel(standing)) \(ScoreFormat.aggregate(score))")
-            } else {
-                parts.append(SnapshotCopy.notaNoDisponible)
-            }
-            parts.append(standing.convocatoriaName)
-            return parts.joined(separator: ". ")
-        }
-
-        return "\(SnapshotCopy.widgetName). \(message ?? SnapshotCopy.ilegibleCorto)"
+        StandingWidgetCopy.accessibilityText(
+            redacted: redactionReasons.contains(.privacy),
+            standing: standing,
+            message: message,
+            capturedAt: capturedAt,
+            freshness: entry.state.freshness
+        )
     }
 }
 

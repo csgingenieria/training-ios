@@ -17,6 +17,13 @@ import Foundation
 /// The old wording is deliberately not quoted here: a repository-wide sweep for
 /// the forbidden roots should come back empty, and a comment that recites them
 /// turns that sweep into a false positive.
+///
+/// It lives in `SharedSnapshot/` so the widget shares it. It did not, and drift
+/// started again within the day: the app was changed to state that a
+/// provisional result has no legal effect while the widget went on saying only
+/// that the mark may vary. Two surfaces describing one state in two ways is the
+/// exact failure this file was created to end — and the widget is the surface
+/// other people see, sitting on a home screen.
 nonisolated enum LegalNotice: Sendable {
     /// Who decides the outcome of the examination, when, and where.
     ///

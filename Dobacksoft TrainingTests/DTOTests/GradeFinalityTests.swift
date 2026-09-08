@@ -110,6 +110,25 @@ struct GradeFinalityTests {
         #expect(GradeFinality(convocatoriaClosedAt: "   ") == .provisional, "una cadena vacía no es una fecha")
     }
 
+    /// **The app and the widget cannot contradict each other about a
+    /// provisional result.**
+    ///
+    /// They cannot be identical — the app has room for the explanation and the
+    /// widget does not — so the property that holds is containment: the
+    /// widget's sentence is exactly how the app's begins.
+    ///
+    /// This is the drift that started the same day the app's wording changed:
+    /// `GradeFinality` gained «no tiene efecto jurídico» and the widget went on
+    /// saying only that the mark may vary. The widget is the surface other
+    /// people see, sitting on someone's home screen.
+    @Test func theWidgetSaysTheFirstHalfOfWhatTheAppSays() throws {
+        let app = try #require(GradeFinality.provisional.note)
+        #expect(app.hasPrefix(SnapshotCopy.notaProvisionalDetalle))
+        #expect(SnapshotCopy.notaProvisionalDetalle == LegalNotice.provisionalHasNoLegalEffect)
+        #expect(app.count > SnapshotCopy.notaProvisionalDetalle.count,
+                "si fueran iguales, este test no estaría comprobando la contención")
+    }
+
     /// No explanation — in any state, with or without a date — may hint at
     /// admission, seats or a verdict.
     @Test func noExplanationEverLeavesArticle22() {

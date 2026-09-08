@@ -64,8 +64,17 @@ enum SnapshotCopy {
     static let notaProvisional = "Nota provisional"
     static let nota = "Nota"
 
-    static let notaProvisionalDetalle =
-        "La convocatoria sigue abierta: esta nota puede variar hasta su cierre."
+    /// La aclaración de la nota provisional en el widget.
+    ///
+    /// Es **la misma frase** que abre la de la app (`GradeFinality`), no otra
+    /// redacción: aquí no cabe la explicación completa, así que se queda la
+    /// mitad que importa —que esto todavía no significa nada sobre la
+    /// persona— y se deja fuera el «puede variar», que describe el número.
+    ///
+    /// Un test comprueba que la de la app EMPIEZA por esta, que es la
+    /// propiedad que impide que las dos superficies se contradigan. Iguales no
+    /// pueden ser: una tiene sitio y la otra no.
+    static let notaProvisionalDetalle = LegalNotice.provisionalHasNoLegalEffect
 
     /// Acompaña a las cifras cuando el dato tiene entre 6 y 48 horas.
     static func consultadoEl(_ date: Date) -> String {
