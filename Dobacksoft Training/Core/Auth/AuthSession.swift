@@ -8,8 +8,13 @@ final class AuthSession {
     private let api: TrainingAPI
 
     /// `APIClient.shared` por defecto; los tests inyectan un doble.
-    init(api: TrainingAPI = APIClient.shared) {
+    /// Dónde vive la caché de arranque sin cobertura. Se inyecta para poder
+    /// probar que cerrar sesión la borra de verdad.
+    private let lastGood: LastGoodStore
+
+    init(api: TrainingAPI = APIClient.shared, lastGood: LastGoodStore = .appContainer) {
         self.api = api
+        self.lastGood = lastGood
     }
 
     var user: UserDTO?
@@ -137,6 +142,15 @@ final class AuthSession {
         // Sin esto, el widget de quien acaba de salir seguiría enseñando su
         // puesto en la pantalla de inicio.
         SnapshotPublisher.shared.clear()
+
+        // Y sin esto, la caché de arranque sin cobertura sobreviviría a la
+        // sesión. Va ANTES de poner `user` a nil, que es de donde sale el
+        // identificador con el que está guardada: al revés no habría a quién
+        // borrar, y el defecto sería silencioso — nadie ve una caché que no se
+        // borra hasta que la lee otra persona en el mismo dispositivo.
+        if let userId = user?.id {
+            lastGood.clear(userId: userId)
+        }
 
         user = nil
         accessToken = nil
