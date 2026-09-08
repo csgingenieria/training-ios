@@ -40,65 +40,99 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 
 57 ítems — bloqueantes 2, importantes 26, menores 29. Esfuerzo: S 42 · M 13 · L 2 (S = menos de una hora, M = media jornada, L = una jornada o más).
 
-| # | Sev. | Esf. | Ítem | Lentes |
-|---|------|------|------|--------|
-| 1 | blocker | S | «Mi posición» tab: reset errorMessage on load so Reintentar/pull-to-refresh can recover *(provisional)* | states |
-| 2 | blocker | S | Purge forbidden-root UI strings («asignación de plaza», «tolerancia admitida») and add a UI-copy freeze test *(provisional)* | states, ipad, native-craft, visual |
-| 3 | important | M | Keep the last good data on refresh: no blanking to a spinner, no error replacing loaded content *(provisional)* | states, native-craft |
-| 4 | important | S | Embedded standing/attempts error cards get a heading, an icon and a per-section «Reintentar» *(provisional)* | states, accessibility |
-| 5 | important | S | Empty states («Sin convocatorias», «Todavía no está inscrito») are refreshable and offer «Actualizar» *(provisional)* | native-craft |
-| 6 | important | M | Offline or slow launch: tell the candidate their session is intact instead of dropping them on the login form | states |
-| 7 | important | S | Forced logout explains itself: «Su sesión ha caducado por seguridad» | states |
-| 8 | important | S | Login form: focus chain, submit-on-return, and VoiceOver announcement of the error | accessibility, ipad, native-craft |
-| 9 | important | S | Login layout: cap the form at 420 pt and make it scroll so the button survives landscape/keyboard/large text | ipad |
-| 10 | important | S | Add an OnBrand colorset so primary buttons and selected chips keep ≥4.5:1 contrast in dark mode *(provisional)* | accessibility, visual |
-| 11 | important | S | «Mi posición» names the convocatoria and its closing date; «activas» count filtered or dropped *(provisional)* | visual, states |
-| 12 | important | S | Align the provisional-results legal notice with the portal and show it on the attempt detail *(provisional)* | visual |
-| 13 | important | S | Missing score is stated, not implied: «Sin nota» in the row and «Nota no disponible» hero in the detail *(provisional)* | states |
-| 14 | important | S | Attempt detail shows the attempt date (threaded from the list, no API change) *(provisional)* | visual |
-| 15 | important | S | Show the grading gravity of each event (Leve / Moderada / Grave) as a badge | visual |
-| 16 | important | M | Per-route progress grid («Sus recorridos») with best grade, «Pendiente» and an «Actual» badge on the counting attempt *(provisional)* | visual |
-| 17 | important | S | One spoken and visible scale for grades: «8,5 sobre 10» for VoiceOver, «/10» caption on the standing score, one hero element *(provisional)* | accessibility, visual |
-| 18 | important | S | Translate the role: «Aspirante» / «Instructor» / «Administración» instead of STUDENT/Student; hide the organisation UUID | accessibility, visual |
-| 19 | important | S | «Filtros» menu and «Restablecer filtros»: 44 pt targets and announced active state *(provisional)* | accessibility |
-| 20 | important | M | Refresh on return to foreground and show «Actualizado a las HH:mm» on data screens *(provisional)* | native-craft |
-| 21 | important | M | Dashboard router: one shared section + NavigationPath per section for TabView and sidebar | ipad |
-| 22 | important | M | Widget deep-links to «Mi posición»; «caducado» copy names the screen that refreshes it | states, native-craft, ipad |
-| 23 | important | M | Readable-width cap (680 pt) for every ScrollView content column on iPad *(provisional)* | ipad |
-| 24 | important | S | Widget: text styles instead of fixed 34/22/9 pt, and freshness note in the VoiceOver label | accessibility |
-| 25 | important | S | Widget palette follows dark mode: colorsets in the widget catalog instead of light-only hex literals | native-craft, accessibility, visual |
-| 26 | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
-| 27 | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
-| 28 | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
-| 29 | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
-| 30 | minor | S | Convocatoria chips: 44 pt height, isSelected trait, animated selection, selected chip scrolled into view *(provisional)* | accessibility, native-craft |
-| 31 | minor | S | CardButtonStyle with press highlight and iPad pointer hover for every NavigationLink card/row *(provisional)* | ipad |
-| 32 | minor | S | Haptics on login result and chip selection via .sensoryFeedback *(provisional)* | native-craft |
-| 33 | minor | S | Per-row progress bar in the score breakdown (web parity), guarded by max > 0 | visual |
-| 34 | minor | S | Share sheets use UI labels, not enum codes, and carry a SharePreview *(provisional)* | visual, native-craft |
-| 35 | minor | S | One noun for the person: «aspirante» (drop «candidatos» / «alumno» in STUDENT-facing copy) *(provisional)* | visual |
-| 36 | minor | S | Show the route code next to its name in attempt rows and detail *(provisional)* | visual |
-| 37 | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
-| 38 | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
-| 39 | minor | M | Semantic numeric roles in Theme+Typography (metricValue / metricValueLarge / scoreHero) *(provisional)* | visual |
-| 40 | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
-| 41 | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
-| 42 | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
-| 43 | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
-| 44 | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
-| 45 | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
-| 46 | minor | S | Launch and Login use Theme tokens (themed text field style, muted caption, scaled icon) | visual |
-| 47 | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
-| 48 | minor | M | Metric rows stack vertically at accessibility text sizes (AnyLayout), no fixed-height dividers *(provisional)* | accessibility |
-| 49 | minor | S | Widget uses the app's Fraunces/Inter via shared font factories | visual |
-| 50 | minor | S | DisclosureChevron component and a 2 pt spacing token (chevron/spacing literals) *(provisional)* | visual |
-| 51 | minor | S | Convocatorias in regular width: adaptive two-column grid of cards | ipad |
-| 52 | minor | S | App Shortcut «Ver mi posición» once the deep link exists | native-craft |
-| 53 | minor | L | Republish the widget snapshot on any app foreground (BGAppRefresh optional later) | native-craft |
-| 54 | important | M | MANAGER · Resultados table: scale column widths with Dynamic Type and grow the name column into the iPad pane | accessibility, ipad |
-| 55 | minor | S | MANAGER · Resultados VoiceOver: hide duplicate position cell, label «#» as «Puesto», hide «·» separators, «sin dato» for «—» | accessibility |
-| 56 | minor | S | MANAGER · Panel polish: adaptive KPI grid, 44 pt search-clear button, hide «Ver todas» in regular width | ipad, accessibility |
-| 57 | minor | S | Project hygiene: remove Apple Watch (device family 4) from the four test configurations | ipad |
+| # | Est. | Sev. | Esf. | Ítem | Lentes |
+|---|------|------|------|------|--------|
+| 1 | ✅ | blocker | S | «Mi posición» tab: reset errorMessage on load so Reintentar/pull-to-refresh can recover *(provisional)* | states |
+| 2 | ✅ | blocker | S | Purge forbidden-root UI strings («asignación de plaza», «tolerancia admitida») and add a UI-copy freeze test *(provisional)* | states, ipad, native-craft, visual |
+| 3 | ◐ | important | M | Keep the last good data on refresh: no blanking to a spinner, no error replacing loaded content *(provisional)* | states, native-craft |
+| 4 | ✅ | important | S | Embedded standing/attempts error cards get a heading, an icon and a per-section «Reintentar» *(provisional)* | states, accessibility |
+| 5 | ◐ | important | S | Empty states («Sin convocatorias», «Todavía no está inscrito») are refreshable and offer «Actualizar» *(provisional)* | native-craft |
+| 6 | ✅ | important | M | Offline or slow launch: tell the candidate their session is intact instead of dropping them on the login form | states |
+| 7 | ✅ | important | S | Forced logout explains itself: «Su sesión ha caducado por seguridad» | states |
+| 8 | ✅ | important | S | Login form: focus chain, submit-on-return, and VoiceOver announcement of the error | accessibility, ipad, native-craft |
+| 9 | ✅ | important | S | Login layout: cap the form at 420 pt and make it scroll so the button survives landscape/keyboard/large text | ipad |
+| 10 | ✅ | important | S | Add an OnBrand colorset so primary buttons and selected chips keep ≥4.5:1 contrast in dark mode *(provisional)* | accessibility, visual |
+| 11 | ✅ | important | S | «Mi posición» names the convocatoria and its closing date; «activas» count filtered or dropped *(provisional)* | visual, states |
+| 12 | ✅ | important | S | Align the provisional-results legal notice with the portal and show it on the attempt detail *(provisional)* | visual |
+| 13 | ✅ | important | S | Missing score is stated, not implied: «Sin nota» in the row and «Nota no disponible» hero in the detail *(provisional)* | states |
+| 14 | ✅ | important | S | Attempt detail shows the attempt date (threaded from the list, no API change) *(provisional)* | visual |
+| 15 | — | important | S | Show the grading gravity of each event (Leve / Moderada / Grave) as a badge | visual |
+| 16 | ✅ | important | M | Per-route progress grid («Sus recorridos») with best grade, «Pendiente» and an «Actual» badge on the counting attempt *(provisional)* | visual |
+| 17 | ✅ | important | S | One spoken and visible scale for grades: «8,5 sobre 10» for VoiceOver, «/10» caption on the standing score, one hero element *(provisional)* | accessibility, visual |
+| 18 | ✅ | important | S | Translate the role: «Aspirante» / «Instructor» / «Administración» instead of STUDENT/Student; hide the organisation UUID | accessibility, visual |
+| 19 | — | important | S | «Filtros» menu and «Restablecer filtros»: 44 pt targets and announced active state *(provisional)* | accessibility |
+| 20 | ✅ | important | M | Refresh on return to foreground and show «Actualizado a las HH:mm» on data screens *(provisional)* | native-craft |
+| 21 | ✅ | important | M | Dashboard router: one shared section + NavigationPath per section for TabView and sidebar | ipad |
+| 22 | ✅ | important | M | Widget deep-links to «Mi posición»; «caducado» copy names the screen that refreshes it | states, native-craft, ipad |
+| 23 | ✅ | important | M | Readable-width cap (680 pt) for every ScrollView content column on iPad *(provisional)* | ipad |
+| 24 | ✅ | important | S | Widget: text styles instead of fixed 34/22/9 pt, and freshness note in the VoiceOver label | accessibility |
+| 25 | ✅ | important | S | Widget palette follows dark mode: colorsets in the widget catalog instead of light-only hex literals | native-craft, accessibility, visual |
+| 26 | — | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
+| 27 | — | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
+| 28 | — | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
+| 29 | — | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
+| 30 | — | minor | S | Convocatoria chips: 44 pt height, isSelected trait, animated selection, selected chip scrolled into view *(provisional)* | accessibility, native-craft |
+| 31 | — | minor | S | CardButtonStyle with press highlight and iPad pointer hover for every NavigationLink card/row *(provisional)* | ipad |
+| 32 | — | minor | S | Haptics on login result and chip selection via .sensoryFeedback *(provisional)* | native-craft |
+| 33 | — | minor | S | Per-row progress bar in the score breakdown (web parity), guarded by max > 0 | visual |
+| 34 | ◐ | minor | S | Share sheets use UI labels, not enum codes, and carry a SharePreview *(provisional)* | visual, native-craft |
+| 35 | ✅ | minor | S | One noun for the person: «aspirante» (drop «candidatos» / «alumno» in STUDENT-facing copy) *(provisional)* | visual |
+| 36 | — | minor | S | Show the route code next to its name in attempt rows and detail *(provisional)* | visual |
+| 37 | — | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
+| 38 | — | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
+| 39 | — | minor | M | Semantic numeric roles in Theme+Typography (metricValue / metricValueLarge / scoreHero) *(provisional)* | visual |
+| 40 | — | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
+| 41 | — | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
+| 42 | — | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
+| 43 | — | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
+| 44 | — | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
+| 45 | — | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
+| 46 | — | minor | S | Launch and Login use Theme tokens (themed text field style, muted caption, scaled icon) | visual |
+| 47 | — | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
+| 48 | — | minor | M | Metric rows stack vertically at accessibility text sizes (AnyLayout), no fixed-height dividers *(provisional)* | accessibility |
+| 49 | — | minor | S | Widget uses the app's Fraunces/Inter via shared font factories | visual |
+| 50 | — | minor | S | DisclosureChevron component and a 2 pt spacing token (chevron/spacing literals) *(provisional)* | visual |
+| 51 | — | minor | S | Convocatorias in regular width: adaptive two-column grid of cards | ipad |
+| 52 | — | minor | S | App Shortcut «Ver mi posición» once the deep link exists | native-craft |
+| 53 | — | minor | L | Republish the widget snapshot on any app foreground (BGAppRefresh optional later) | native-craft |
+| 54 | ✅ | important | M | MANAGER · Resultados table: scale column widths with Dynamic Type and grow the name column into the iPad pane | accessibility, ipad |
+| 55 | — | minor | S | MANAGER · Resultados VoiceOver: hide duplicate position cell, label «#» as «Puesto», hide «·» separators, «sin dato» for «—» | accessibility |
+| 56 | — | minor | S | MANAGER · Panel polish: adaptive KPI grid, 44 pt search-clear button, hide «Ver todas» in regular width | ipad, accessibility |
+| 57 | — | minor | S | Project hygiene: remove Apple Watch (device family 4) from the four test configurations | ipad |
+
+
+### Estado (verificado el 2026-09-08)
+
+`✅` cerrado · `◐` parcial · `—` abierto. **Verificado leyendo el código, no de
+memoria**: el bloqueante #1 se dio por cerrado durante un día entero de trabajo
+encima, y seguía abierto — `load()` nunca limpiaba `errorMessage` y la rama del
+error iba antes que la del contenido, así que un fallo pasajero dejaba muerta
+la pantalla principal del aspirante. `RefreshTicker` (#20) lo empeoró antes de
+que nadie lo notara: al recargar solo al volver del fondo, una cobertura mala
+podía dejarla muerta sin que el aspirante tocara nada.
+
+Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
+mensajes de commit no sobrevive a una sesión.
+
+**Cerrados: 23 · parciales: 3 · abiertos: 31.**
+
+Los parciales, con lo que falta de cada uno:
+
+- **#3** — hecho en standing/progreso/convocatorias; el detalle del intento sigue vaciándose
+- **#5** — hecho en convocatorias; falta el vacío de «Mi posición»
+- **#34** — rótulos sí (fdb368a); falta el SharePreview
+
+Abiertos de severidad *important*: **#15** (gravedad del evento como insignia,
+`sensorSeverity` decodificado y sin pintar), **#19** (objetivos de 44 pt en el
+menú de filtros), **#26** (animaciones con los tokens de `Theme.motion`) y
+**#27** (almacén de último dato conocido). El resto son los 27 menores.
+
+**Lo que ninguna de estas casillas cubre: nada está verificado contra staging
+en un dispositivo.** Las pruebas de UI necesitan credenciales que esta sesión
+no tiene, y las tres corridas de iPad de la sesión anterior se saltaron sus
+tests por falta de credenciales devolviendo `TEST SUCCEEDED`. Un ✅ de esta
+tabla significa «el código hace lo que dice y hay un test que lo fija», no
+«visto funcionando con datos reales».
 
 ### Detalle
 

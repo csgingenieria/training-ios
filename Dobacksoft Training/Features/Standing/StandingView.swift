@@ -247,25 +247,34 @@ struct MyStandingTabView: View {
     /// pantalla no puede caerse por faltarle el motivo para recargar.
     @Environment(RefreshTicker.self) private var ticker: RefreshTicker?
 
-    @State private var convocatorias: [ConvocatoriaSummaryDTO] = []
-    @State private var selectedId: String?
-    @State private var isLoading = true
-    @State private var errorMessage: String?
+    @State private var viewModel = MyStandingTabViewModel()
 
-    private var selectedConvocatoria: ConvocatoriaSummaryDTO? {
-        convocatorias.first { $0.id == selectedId }
-    }
+    private var convocatorias: [ConvocatoriaSummaryDTO] { viewModel.convocatorias }
+    private var selectedConvocatoria: ConvocatoriaSummaryDTO? { viewModel.selectedConvocatoria }
 
     var body: some View {
+        // Un solo enum, mutuamente excluyente. Eran tres banderas
+        // independientes que podían decir «cargando», «error» y «aquí están
+        // sus datos» a la vez, y el orden de estas ramas decidía qué mentira
+        // ganaba: el error iba antes del contenido, así que un fallo pasajero
+        // dejaba la pantalla principal del aspirante muerta para siempre.
         Group {
-            if isLoading {
+            switch viewModel.state {
+            case .loading:
                 centeredLoading("Cargando…")
-            } else if let errorMessage {
-                errorView(errorMessage)
-            } else if convocatorias.isEmpty {
+            case .error(let mensaje):
+                errorView(mensaje)
+            case .empty:
                 emptyView
-            } else if let selectedId, convocatorias.contains(where: { $0.id == selectedId }) {
-                content(selectedId: selectedId)
+            case .loaded:
+                if let id = viewModel.selectedId {
+                    content(selectedId: id)
+                } else {
+                    // No debería ocurrir —el view model reconcilia la
+                    // selección con lo que llega—, pero una lista con datos y
+                    // sin selección no puede quedarse en blanco.
+                    emptyView
+                }
             }
         }
         .navigationTitle("Mi posición")
@@ -381,9 +390,9 @@ struct MyStandingTabView: View {
 
     @ViewBuilder
     private func convocatoriaChip(_ conv: ConvocatoriaSummaryDTO) -> some View {
-        let isSelected = conv.id == selectedId
+        let isSelected = conv.id == viewModel.selectedId
         Button {
-            selectedId = conv.id
+            viewModel.selectedId = conv.id
         } label: {
             Text(conv.name)
                 .font(.body(size: 13, weight: .semibold, relativeTo: .footnote))
@@ -401,20 +410,7 @@ struct MyStandingTabView: View {
     }
 
     private func load() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            convocatorias = try await auth.authorized { token in
-                try await APIClient.shared.myConvocatorias(accessToken: token)
-            }
-            if selectedId == nil || !convocatorias.contains(where: { $0.id == selectedId }) {
-                selectedId = convocatorias.first?.id
-            }
-        } catch let err as APIError {
-            errorMessage = err.userMessage
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        await viewModel.load(auth: auth)
     }
 }
 
