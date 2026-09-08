@@ -148,6 +148,7 @@ struct ConvocatoriasListView: View {
                     .accessibilityIdentifier("convocatorias.row")
                 }
             }
+            .readableWidth()
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.base.value)
         }

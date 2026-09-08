@@ -311,6 +311,7 @@ struct MyStandingTabView: View {
                     embedded: true
                 )
             }
+            .readableWidth()
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.base.value)
         }
@@ -447,6 +448,7 @@ struct MyConvocatoriaContentView: View {
             } else {
                 ScrollView {
                     inner
+                        .readableWidth()
                         .padding(.horizontal, Theme.spacing.base.value)
                         .padding(.vertical, Theme.spacing.base.value)
                 }

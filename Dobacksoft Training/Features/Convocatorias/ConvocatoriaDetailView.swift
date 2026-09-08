@@ -13,6 +13,7 @@ struct ConvocatoriaDetailView: View {
                 }
                 actionsList
             }
+            .readableWidth()
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.base.value)
         }

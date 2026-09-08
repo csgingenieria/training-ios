@@ -276,6 +276,7 @@ struct ManagerPanelView: View {
                 pendientesSection
                 activeConvocatoriasSection(convocatorias: convocatorias)
             }
+            .readableWidth()
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.base.value)
         }
@@ -737,6 +738,7 @@ private struct SyncResultSheet: View {
                             .foregroundStyle(Color.muted)
                     }
                 }
+                .readableWidth()
                 .padding(.horizontal, Theme.spacing.base.value)
                 .padding(.vertical, Theme.spacing.lg.value)
             }
