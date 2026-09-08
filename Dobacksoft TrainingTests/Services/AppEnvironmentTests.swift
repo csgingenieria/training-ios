@@ -67,3 +67,28 @@ struct AppEnvironmentTests {
         }
     }
 }
+
+/// `?conv_id=` on the route detail, with the same discipline as the progress
+/// screen: empty is a 400, and worse, the backend's own fallback would answer
+/// about another convocatoria wearing the shape of a correct response.
+@Suite struct RouteQueryTests {
+    @Test func aConvocatoriaTravelsAsAQueryParameter() {
+        #expect(RouteQuery.path(code: "2A1", convocatoriaId: "c-1")
+                == "/api/v1/me/routes/2A1?conv_id=c-1")
+    }
+
+    @Test func noConvocatoriaOmitsTheParameterInsteadOfSendingItEmpty() {
+        for vacio in [nil, "", "   "] as [String?] {
+            #expect(RouteQuery.path(code: "2A1", convocatoriaId: vacio) == "/api/v1/me/routes/2A1")
+        }
+    }
+
+    /// Route codes come from the catalogue and nothing in the contract promises
+    /// they are URL-safe. A space in a code would break the path silently.
+    @Test func theCodeIsEncodedForTheUrl() {
+        let path = RouteQuery.path(code: "2A 1/B", convocatoriaId: nil)
+
+        #expect(path.contains(" ") == false)
+        #expect(path.hasPrefix("/api/v1/me/routes/"))
+    }
+}

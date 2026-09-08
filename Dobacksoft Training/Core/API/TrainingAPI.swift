@@ -34,6 +34,11 @@ protocol TrainingAPI: Sendable {
     /// La traza de la vuelta. `track` es la buena; `points` el respaldo.
     func attemptGps(id: String, accessToken: String) async throws -> GpsPayloadDTO
 
+    /// El detalle de un recorrido del aspirante.
+    ///
+    /// `conv_id` opcional y **nunca vacío**, igual que en `/me/progress`.
+    func myRoute(code: String, convocatoriaId: String?, accessToken: String) async throws -> RouteDetailDTO
+
     /// El PIN de tablet del propio aspirante.
     ///
     /// ⚠ El backend AUDITA cada consulta, también cuando el PIN no se puede

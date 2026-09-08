@@ -23,6 +23,8 @@ actor FakeTrainingAPI: TrainingAPI {
     var cardResults: [Result<CardDTO, Error>] = []
     var gpsResults: [Result<GpsPayloadDTO, Error>] = []
     var pinResults: [Result<PinDTO, Error>] = []
+    var routeResults: [Result<RouteDetailDTO, Error>] = []
+    private(set) var routeRequests: [(String, String?)] = []
     var passwordResult: Result<Void, Error> = .success(())
     private(set) var passwordBodies: [[String]] = []
     private(set) var progressConvocatoriaIds: [String?] = []
@@ -44,6 +46,7 @@ actor FakeTrainingAPI: TrainingAPI {
     func setCardResults(_ results: [Result<CardDTO, Error>]) { cardResults = results }
     func setGpsResults(_ results: [Result<GpsPayloadDTO, Error>]) { gpsResults = results }
     func setPinResults(_ results: [Result<PinDTO, Error>]) { pinResults = results }
+    func setRouteResults(_ results: [Result<RouteDetailDTO, Error>]) { routeResults = results }
     func setPasswordResult(_ result: Result<Void, Error>) { passwordResult = result }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
@@ -90,6 +93,11 @@ actor FakeTrainingAPI: TrainingAPI {
 
     func myPin(accessToken: String) async throws -> PinDTO {
         try next(&pinResults)
+    }
+
+    func myRoute(code: String, convocatoriaId: String?, accessToken: String) async throws -> RouteDetailDTO {
+        routeRequests.append((code, convocatoriaId))
+        return try next(&routeResults)
     }
 
     func changePassword(

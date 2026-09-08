@@ -79,10 +79,23 @@ y el coste es casi nulo.
 3. **Read-only.** Salvo los endpoints de cuenta (bloque F), todo lo pedido es `GET`.
    El cliente no escribe nada que toque la nota.
 
-4. **Un aspirante puede tener varias inscripciones.** `student/routes.py:162-174` (comentario
-   dentro de `progreso()`) documenta que **en producción hay uno con dos** (comprobado). Todo
-   endpoint con dimensión de convocatoria acepta `conv_id` opcional y, sin él, cae a la primera
-   inscripción activa — mismo patrón que `dashboard()` y `progreso()`.
+4. **Un aspirante puede tener varias inscripciones.** Todo endpoint con dimensión de
+   convocatoria acepta `conv_id` opcional y, sin él, cae a la primera inscripción activa —
+   mismo patrón que `dashboard()` y `progreso()`.
+
+   > **Corrección (2026-09-08).** La v1 de este documento decía que «en producción hay uno con
+   > dos (comprobado)», citando un comentario del backend. **Medido contra producción: 30
+   > inscripciones, 30 aspirantes distintos, máximo una cada uno. Ninguno tiene dos.** El
+   > backend corrigió la afirmación en sus cuatro sitios (PR #911) y aquí se corrige en los dos.
+   >
+   > **No cambia nada de lo que se pide.** El caso es alcanzable por diseño —multi-turno,
+   > `D-MT-001`, varias convocatorias en paralelo— y por eso `conv_id` sigue siendo necesario y
+   > el cliente sigue teniendo selector de convocatoria. Lo que cambia es el porqué: se sostenía
+   > con un dato de producción que no existe, y ahora se sostiene con el diseño, que es donde
+   > estaba la razón de verdad.
+   >
+   > Lo apunto porque es el mismo error que este pedido cometió cuatro veces: dar por bueno un
+   > comentario en vez de comprobar el dato.
 
    «Activa» en los servicios del portal significa `EnrollmentStatus.ACTIVE`
    (`student_service.py:225-232`, `:1422-1430`), que es **más estricto** que el
@@ -298,7 +311,8 @@ Detalle por recorrido del aspirante. Equivale a `/student/ruta/<route_code>`
 - **Servicio existente:** `get_student_route_detail(route_code, student_id, org_id)`
   (`student_service.py:1274`). **No acepta `conv_id`**: resuelve la matrícula con
   `_active_enrollment(student_id, org_id)` (la `ACTIVE` más reciente), así que para el aspirante
-  con dos inscripciones contestaría por la otra convocatoria; hay que añadirle el parámetro
+  con dos inscripciones —caso alcanzable por diseño, hoy sin ningún ejemplo en producción—
+  contestaría por la otra convocatoria; hay que añadirle el parámetro
   (cambio de servicio, no de dominio) o documentar aquí la excepción a la restricción 4.
 - **Campos** (camelCase, fechas ISO 8601): `route{code, name, description, distanceKm,
   durationMin, active, required}` (`required` ← `exigida`, que decide el texto «este recorrido no

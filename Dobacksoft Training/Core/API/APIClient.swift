@@ -63,6 +63,13 @@ actor APIClient {
         try await get("/api/v1/attempts/\(id)/gps", token: accessToken)
     }
 
+    func myRoute(code: String, convocatoriaId: String?, accessToken: String) async throws -> RouteDetailDTO {
+        try await get(
+            RouteQuery.path(code: code, convocatoriaId: convocatoriaId),
+            token: accessToken
+        )
+    }
+
     func myPin(accessToken: String) async throws -> PinDTO {
         try await get("/api/v1/me/pin", token: accessToken)
     }

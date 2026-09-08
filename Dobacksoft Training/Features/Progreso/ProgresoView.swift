@@ -25,6 +25,13 @@ struct ProgresoView: View {
         .navigationDestination(for: ProgresoAttemptRoute.self) { ruta in
             AttemptDetailView(attemptId: ruta.attemptId, convocatoriaName: ruta.convocatoriaName)
         }
+        .navigationDestination(for: ProgresoRouteRoute.self) { ruta in
+            RouteDetailView(
+                code: ruta.code,
+                convocatoriaId: ruta.convocatoriaId,
+                convocatoriaName: ruta.convocatoriaName
+            )
+        }
         .task(id: convocatoriaId) { await load() }
         .refreshable { await load() }
     }
@@ -197,8 +204,15 @@ struct ProgresoView: View {
 
     @ViewBuilder
     private func row(_ entrada: ProgressEvolutionDTO, convocatoriaName: String?) -> some View {
-        let destino = entrada.attemptId.map {
-            ProgresoAttemptRoute(attemptId: $0, convocatoriaName: convocatoriaName)
+        // La fila lleva al RECORRIDO, no al intento suelto: la pregunta de
+        // esta pantalla es «¿cómo voy en este recorrido?», y desde su ficha se
+        // alcanza cada vuelta. Sin código no hay destino.
+        let destino = entrada.routeCode.map {
+            ProgresoRouteRoute(
+                code: $0,
+                convocatoriaId: convocatoriaId,
+                convocatoriaName: convocatoriaName
+            )
         }
 
         Group {
@@ -291,5 +305,12 @@ struct ProgresoView: View {
 /// Destino de navegación propio, para no depender del de otra pantalla.
 struct ProgresoAttemptRoute: Hashable {
     let attemptId: String
+    let convocatoriaName: String?
+}
+
+/// El detalle de un recorrido, desde su fila de progreso.
+struct ProgresoRouteRoute: Hashable {
+    let code: String
+    let convocatoriaId: String?
     let convocatoriaName: String?
 }
