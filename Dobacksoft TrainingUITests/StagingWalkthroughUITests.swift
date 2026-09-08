@@ -106,9 +106,20 @@ final class StagingWalkthroughUITests: XCTestCase {
             )
             return
         }
+        // Dos saltos distintos, y decirlos igual desinforma: la primera
+        // corrida con rol declarado escribió «declaralo con
+        // TEST_RUNNER_STAGING_ROLE» en un log donde el rol SÍ estaba puesto.
+        // Quien lo leyera concluiría que la corrida no valía.
+        if let role = declaredRole {
+            throw XCTSkip(
+                "«\(screen)» no aparece, y es correcto: el rol declarado "
+                + "(\(role.rawValue)) no la tiene. \(detail) "
+                + "Este salto es esperado y no oculta nada."
+            )
+        }
         throw XCTSkip(
             "«\(screen)» no apareció. \(detail) "
-            + "Sin STAGING_ROLE no se puede saber si este rol debería tenerla, así que "
+            + "SIN STAGING_ROLE no se puede saber si este rol debería tenerla, así que "
             + "esta corrida NO prueba nada sobre esa pantalla. Declaralo con "
             + "TEST_RUNNER_STAGING_ROLE=student|manager."
         )
