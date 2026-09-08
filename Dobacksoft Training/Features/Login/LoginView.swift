@@ -1,92 +1,159 @@
 import SwiftUI
 
 struct LoginView: View {
+    /// El formulario no crece más que esto.
+    ///
+    /// En iPad sin acotar se estiraba a 960 pt: dos campos de texto de un metro
+    /// de ancho para escribir un correo. 420 pt es el ancho de un iPhone grande,
+    /// que es la medida a la que este formulario está pensado.
+    private static let maxFormWidth: CGFloat = 420
+
     @Environment(AuthSession.self) private var auth
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
 
-    var body: some View {
-        VStack(spacing: Theme.spacing.lg.value) {
-            Spacer()
+    /// Qué campo tiene el teclado. Es lo que permite que Return avance.
+    @FocusState private var focus: LoginFormRules.Field?
 
-            VStack(spacing: Theme.spacing.md.value) {
+    /// Si la pantalla es baja: iPhone en horizontal, o con el teclado fuera.
+    private var isShort: Bool { verticalSizeClass == .compact }
+
+    private var canSubmit: Bool {
+        LoginFormRules.canSubmit(email: email, password: password)
+    }
+
+    var body: some View {
+        // El `GeometryReader` es lo que permite las dos cosas a la vez: centrado
+        // cuando el formulario cabe —como estaba— y scroll cuando no cabe. Con
+        // los `Spacer()` de antes, en horizontal o con texto grande el botón se
+        // iba por debajo de la pantalla y no había forma de alcanzarlo.
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: Theme.spacing.lg.value) {
+                    header
+                    sessionNotice
+                    form
+                    footer
+                }
+                .frame(maxWidth: Self.maxFormWidth)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, Theme.spacing.base.value)
+                .padding(.vertical, Theme.spacing.lg.value)
+                .frame(minHeight: proxy.size.height, alignment: .center)
+            }
+            // Arrastrar hacia abajo cierra el teclado: en una pantalla baja el
+            // teclado tapa el botón, y sin esto no queda nada que tocar fuera.
+            .scrollDismissesKeyboard(.interactively)
+            // Sin esto rebota siempre, también cuando no hay nada que scrollear.
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .pageBackground()
+    }
+
+    // MARK: - Cabecera
+
+    @ViewBuilder
+    private var header: some View {
+        VStack(spacing: Theme.spacing.md.value) {
+            // El escudo son 56 pt que en horizontal no caben, y es decorativo:
+            // lo primero que sobra cuando hay que elegir entre el adorno y el
+            // botón de entrar.
+            if !isShort {
                 Image(systemName: "shield.fill")
                     .font(.system(size: 56))
                     .foregroundStyle(Color.brand)
                     .accessibilityHidden(true)
-                Text("Training")
-                    .font(.appTitle)
-                    .foregroundStyle(Color.ink)
-                Text("CMadrid · Conductor de camión de bomberos")
-                    .font(.metaCaption)
-                    .foregroundStyle(Color.muted)
-                    .multilineTextAlignment(.center)
             }
-
-            sessionNotice
-
-            VStack(spacing: Theme.spacing.md.value) {
-                TextField("Email", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.bodyText)
-                    .keyboardType(.emailAddress)
-                    .textContentType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .accessibilityLabel("Correo electrónico")
-                    .accessibilityIdentifier("login.email")
-
-                SecureField("Contraseña", text: $password)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.bodyText)
-                    .textContentType(.password)
-                    .accessibilityLabel("Contraseña")
-                    .accessibilityIdentifier("login.password")
-
-                if let errorMessage {
-                    Text(errorMessage)
-                        .font(.bodyText)
-                        .foregroundStyle(Color.danger)
-                        .multilineTextAlignment(.center)
-                        // Sin esto el texto se queda en una línea y se corta:
-                        // «No se ha podido conectar. Compruebe s…». Es el único
-                        // mensaje que ve alguien que no consigue entrar, así que
-                        // truncado no le dice nada.
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity)
-                        .accessibilityLabel("Error: \(errorMessage)")
-                }
-
-                Button {
-                    Task { await login() }
-                } label: {
-                    if isLoading {
-                        ProgressView()
-                            // El indicador ocupa el sitio del rótulo del botón,
-                            // así que sigue el mismo color que él.
-                            .tint(Color.onBrand)
-                    } else {
-                        Text("Iniciar sesión")
-                    }
-                }
-                .buttonStyle(.brandPrimary)
-                .disabled(isLoading || email.isEmpty || password.isEmpty)
-                .accessibilityLabel(isLoading ? "Iniciando sesión" : "Iniciar sesión")
-                .accessibilityIdentifier("login.submit")
-            }
-            .padding(.horizontal, Theme.spacing.xl.value)
-
-            Spacer()
-
-            Text("v1 · API \(AppEnvironment.baseURLHost ?? "sin configurar")")
+            Text("Training")
+                .font(.appTitle)
+                .foregroundStyle(Color.ink)
+            Text("CMadrid · Conductor de camión de bomberos")
                 .font(.metaCaption)
                 .foregroundStyle(Color.muted)
-                .accessibilityHidden(true)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
-        .pageBackground()
+    }
+
+    // MARK: - El formulario
+
+    @ViewBuilder
+    private var form: some View {
+        VStack(spacing: Theme.spacing.md.value) {
+            TextField("Email", text: $email)
+                .textFieldStyle(.roundedBorder)
+                .font(.bodyText)
+                .keyboardType(.emailAddress)
+                .textContentType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .focused($focus, equals: .email)
+                .submitLabel(.next)
+                .onSubmit { advance(from: .email) }
+                .accessibilityLabel("Correo electrónico")
+                .accessibilityIdentifier("login.email")
+
+            SecureField("Contraseña", text: $password)
+                .textFieldStyle(.roundedBorder)
+                .font(.bodyText)
+                .textContentType(.password)
+                .focused($focus, equals: .password)
+                .submitLabel(.go)
+                .onSubmit { advance(from: .password) }
+                .accessibilityLabel("Contraseña")
+                .accessibilityIdentifier("login.password")
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.bodyText)
+                    .foregroundStyle(Color.danger)
+                    .multilineTextAlignment(.center)
+                    // Sin esto el texto se queda en una línea y se corta:
+                    // «No se ha podido conectar. Compruebe s…». Es el único
+                    // mensaje que ve alguien que no consigue entrar, así que
+                    // truncado no le dice nada.
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel("Error: \(errorMessage)")
+            }
+
+            Button {
+                submit()
+            } label: {
+                if isLoading {
+                    ProgressView()
+                        // El indicador ocupa el sitio del rótulo del botón,
+                        // así que sigue el mismo color que él.
+                        .tint(Color.onBrand)
+                } else {
+                    Text("Iniciar sesión")
+                }
+            }
+            .buttonStyle(.brandPrimary)
+            // `canSubmit` y no `isEmpty`: un campo con solo espacios estaba
+            // habilitando el botón y gastando uno de los cinco intentos por
+            // minuto en una petición que no podía funcionar.
+            .disabled(isLoading || !canSubmit)
+            // Con teclado físico —cualquier iPad con funda— Return envía
+            // también cuando el foco no está en ningún campo.
+            .keyboardShortcut(.defaultAction)
+            .accessibilityLabel(isLoading ? "Iniciando sesión" : "Iniciar sesión")
+            .accessibilityIdentifier("login.submit")
+        }
+    }
+
+    // MARK: - Pie
+
+    @ViewBuilder
+    private var footer: some View {
+        Text("v1 · API \(AppEnvironment.baseURLHost ?? "sin configurar")")
+            .font(.metaCaption)
+            .foregroundStyle(Color.muted)
+            .accessibilityHidden(true)
     }
 
     /// Por qué está viendo este formulario, cuando hay algo que explicar.
@@ -152,7 +219,6 @@ struct LoginView: View {
             RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
                 .fill(Color.brandTint)
         )
-        .padding(.horizontal, Theme.spacing.xl.value)
         // Una sola parada de VoiceOver: el icono es decorativo y leer el texto
         // partido en trozos no ayuda a nadie.
         .accessibilityElement(children: .contain)
@@ -160,12 +226,43 @@ struct LoginView: View {
         .accessibilityIdentifier(identifier)
     }
 
+    // MARK: - Qué hace Return
+
+    /// Return: del email al siguiente campo, del último a enviar.
+    ///
+    /// La decisión no vive aquí — vive en `LoginFormRules`, que sí se puede
+    /// probar. Esto solo la aplica.
+    private func advance(from field: LoginFormRules.Field) {
+        if let next = LoginFormRules.nextField(after: field) {
+            focus = next
+            return
+        }
+        guard LoginFormRules.submitsOnReturn(from: field, email: email, password: password) else {
+            // Formulario incompleto: se deja el foco donde está en lugar de
+            // gastar un intento en una petición que va a fallar.
+            return
+        }
+        submit()
+    }
+
+    private func submit() {
+        guard !isLoading, canSubmit else { return }
+        // Se cierra el teclado antes de pedir: con el teclado fuera, el
+        // indicador de carga del botón queda tapado y parece que no pasa nada.
+        focus = nil
+        Task { await login() }
+    }
+
     private func login() async {
         errorMessage = nil
         isLoading = true
         defer { isLoading = false }
         do {
-            try await auth.login(email: email, password: password)
+            try await auth.login(
+                // El email recortado, la contraseña tal cual se escribió.
+                email: LoginFormRules.email(from: email),
+                password: LoginFormRules.password(from: password)
+            )
         } catch let err as APIError {
             errorMessage = err.userMessage
         } catch {
