@@ -195,34 +195,25 @@ final class StagingWalkthroughUITests: XCTestCase {
         try signIn(app)
         dismissSystemSavePasswordSheet()
 
-        // Compact width gets a TabView and every destination is reachable.
-        // Regular width gets a NavigationSplitView, and XCUITest cannot drive
-        // a SwiftUI `List(selection:)` sidebar: six approaches — tapping the
-        // static text, the containing cell, a normalized coordinate, and the
-        // row with `.isButton` and its children combined — all left the detail
-        // pane where it was. The app itself is fine; a person taps it and it
-        // moves, and there are screenshots of every screen rendering on iPad.
+        // Ancho compacto da un TabView; ancho regular, un NavigationSplitView.
+        // Los dos se recorren, y sus destinos se leen igual (`destinations`).
         //
-        // So on that layout this asserts what it honestly can — the session
-        // opened, the landing screen decoded, nothing implies a verdict — and
-        // says out loud what it cannot cover, instead of leaving a red test
-        // that fails for a tooling limit and teaches everyone to ignore red.
-        guard app.tabBars.firstMatch.exists else {
-            capture(app, named: "01-sidebar")
-            assertNoDecodingFailureVisible(app, screen: "Pantalla inicial")
-            assertNoVerdictVisible(app, screen: "Pantalla inicial")
-
-            let rows = destinations(in: app)
-            XCTAssertGreaterThanOrEqual(
-                rows.count, 2,
-                "El sidebar no ofrece destinos: la sesión no llegó a abrirse."
-            )
-            throw XCTSkip(
-                "Layout de sidebar: XCUITest no acciona la selección de un List de SwiftUI. "
-                + "Verificado: sesión abierta y \(rows.count) destinos presentes (\(rows.joined(separator: ", "))). "
-                + "SIN cubrir: la navegación a cada uno."
-            )
-        }
+        // Este test se SALTABA el layout de sidebar entero, citando que
+        // «XCUITest no acciona la selección de un List de SwiftUI» con seis
+        // aproximaciones probadas y afirmando que la app estaba bien porque
+        // «una persona lo toca y se mueve».
+        //
+        // No estaba bien. Las filas eran `Label` con `.tag()`, y una fila de
+        // List en iOS **no es seleccionable al toque** fuera del modo edición:
+        // no le faltaba nada a la herramienta, le faltaba el
+        // `NavigationLink(value:)` que Apple documenta para ese sidebar. Medido
+        // así: la fila mide 288×52 pt, está donde dice, se toca en su centro y
+        // el panel no se movía. En iPad ese sidebar es la vía principal de
+        // todo, y no funcionaba para nadie.
+        //
+        // El salto se retira porque ya no hay nada que saltar. `testIPadSidebar`
+        // guarda el control que separa las dos causas, para que la próxima nota
+        // heredada tenga que demostrarse.
 
         let places = destinations(in: app)
         if places.count < 2 {
@@ -266,8 +257,7 @@ final class StagingWalkthroughUITests: XCTestCase {
         // `boundBy: 1` landed on Convocatorias for a STUDENT session — the test
         // then screenshotted the wrong screen and skipped without saying so.
         // «Mi posición» es una pestaña en iPhone y una fila del sidebar en
-        // iPad, y la del sidebar no se puede accionar desde XCUITest. Pero
-        // también se llega desde el detalle de la convocatoria, que es un
+        // iPad. Se llega también desde el detalle de la convocatoria, que es un
         // camino que un aspirante usa y que existe en los dos layouts.
         if destinations(in: app).contains("Mi posición"), navigate(to: "Mi posición", in: app) {
             // Llegado por la pestaña.
@@ -335,6 +325,66 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// `no_medido` — and the row went silent. Fixtures could not catch it,
     /// because they were written from the same reading of the contract as the
     /// code they were checking.
+    /// El sidebar del iPad: ¿se puede navegar por él o no?
+    ///
+    /// El recorrido general se SALTA este layout citando un límite de XCUITest
+    /// —«no acciona la selección de un List de SwiftUI», seis aproximaciones
+    /// probadas— y ese salto lleva ahí desde antes de que el sidebar se
+    /// reescribiera sobre `DashboardRouter`.
+    ///
+    /// Se vuelve a intentar por una razón concreta: hoy un «límite documentado
+    /// de la herramienta» estaba tapando un defecto real de la app —la tabla
+    /// del instructor no navegaba y la explicación cómoda encajaba— y una nota
+    /// heredada no es una medición.
+    ///
+    /// Distingue las dos causas, que es lo único que hace útil el intento: si
+    /// la fila no tiene marco válido, es direccionamiento y se dice; si lo
+    /// tiene y aun así no mueve el panel, el sidebar no navega y eso es de la
+    /// app. En iPad este sidebar es la vía principal de todo, así que la
+    /// diferencia importa.
+    func testIPadSidebar() throws {
+        let app = launchClean()
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        guard !app.tabBars.firstMatch.waitForExistence(timeout: 10) else {
+            throw XCTSkip("Layout compacto: este test es del sidebar, que solo existe en ancho regular.")
+        }
+
+        // «Perfil» la tiene todo rol, y su panel de detalle lleva un título
+        // propio con el que se reconoce sin depender de los datos.
+        let perfil = element("sidebar.perfil", in: app)
+        XCTAssertTrue(
+            perfil.waitForExistence(timeout: 15),
+            "El sidebar no ofrece «Perfil»: la sesión no llegó a abrirse."
+        )
+
+        // El control que separa las dos causas.
+        let marco = perfil.frame
+        guard marco.width > 0, marco.height > 0 else {
+            throw XCTSkip(
+                "La fila «sidebar.perfil» existe sin marco válido (\(marco)): es "
+                + "direccionamiento de XCUITest, no la app. SIN cubrir: la navegación "
+                + "del sidebar."
+            )
+        }
+
+        perfil.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+
+        let abrio = app.navigationBars["Perfil"].waitForExistence(timeout: 15)
+        capture(app, named: "30-ipad-sidebar-perfil")
+
+        XCTAssertTrue(
+            abrio,
+            "La fila «Perfil» tiene marco válido (\(marco)) y su toque no mueve el "
+            + "panel de detalle. Con marco, esto NO es direccionamiento: el sidebar "
+            + "del iPad no navega, y en ese layout es la vía principal de todo."
+        )
+
+        assertNoDecodingFailureVisible(app, screen: "Perfil en iPad")
+        assertNoVerdictVisible(app, screen: "Perfil en iPad")
+    }
+
     /// «Mi progreso», la ficha del recorrido y el mapa: las pantallas que
     /// consumen los seis endpoints nuevos y que **nada había ejercitado contra
     /// datos reales**.
@@ -352,15 +402,10 @@ final class StagingWalkthroughUITests: XCTestCase {
         try signIn(app)
         dismissSystemSavePasswordSheet()
 
-        guard app.tabBars.firstMatch.exists else {
-            throw XCTSkip(
-                "Layout de sidebar: XCUITest no acciona la selección de un List de SwiftUI. "
-                + "Mismo límite que el recorrido general."
-            )
-        }
-
-        let progreso = app.tabBars.buttons["Mi progreso"]
-        guard progreso.waitForExistence(timeout: 15) else {
+        // En los dos layouts: pestaña en compacto, fila del sidebar en regular.
+        // `navigate` sabe hacer las dos cosas — y ahora que las filas del
+        // sidebar son enlaces de verdad, la segunda funciona.
+        guard destinations(in: app).contains("Mi progreso") else {
             try skipUnlessTheRoleShouldHaveIt(
                 "Mi progreso",
                 expected: \.hasOwnStanding,
@@ -369,7 +414,10 @@ final class StagingWalkthroughUITests: XCTestCase {
             return
         }
 
-        XCTAssertTrue(select(progreso, attempts: 3), "«Mi progreso» no llegó a seleccionarse.")
+        XCTAssertTrue(
+            navigate(to: "Mi progreso", in: app),
+            "«Mi progreso» está en los destinos y no se llegó a abrir."
+        )
 
         // La pantalla tiene que resolverse: o su título, o su vacío explicado.
         // Lo que NO puede es quedarse en el error de decodificación.
@@ -499,7 +547,9 @@ final class StagingWalkthroughUITests: XCTestCase {
 
         XCTAssertTrue(
             app.staticTexts["Aspirante"].waitForExistence(timeout: 20),
-            "«Resultados» never rendered its table header."
+            "«Resultados» no pintó la cabecera de su tabla. "
+            + "Barras: \(app.navigationBars.allElementsBoundByIndex.compactMap { $0.exists ? $0.identifier : nil }). "
+            + "Textos visibles: \(app.staticTexts.allElementsBoundByIndex.prefix(25).compactMap { $0.exists ? $0.label : nil })."
         )
         capture(app, named: "20-resultados")
 
@@ -608,12 +658,18 @@ final class StagingWalkthroughUITests: XCTestCase {
                 return row
             }
         } else {
-            // Sidebar: el instructor aterriza en Panel y el aspirante en
-            // Convocatorias, y la selección del sidebar no es automatizable.
-            // Cada uno tiene su propia fila, con su propio identificador.
-            // El del panel primero: el instructor aterriza ahí. Probar antes
-            // el de la lista gastaba los tres intentos —con swipeUp entre
-            // ellos— y dejaba el panel scrolleado antes de mirar el correcto.
+            // Sidebar: se navega primero, igual que con pestañas.
+            //
+            // Antes no se navegaba porque «la selección del sidebar no es
+            // automatizable», y se buscaban filas en el panel que hubiera
+            // puesto. Sí es automatizable: lo que faltaba era el
+            // `NavigationLink(value:)` en las filas del sidebar de la app.
+            if navigate(to: "Convocatorias", in: app),
+               let row = hittableRow("convocatorias.row", in: app) {
+                return row
+            }
+            // Y si no, la fila que el panel del instructor tenga a mano: él
+            // aterriza ahí y su tarjeta lleva su propio identificador.
             for identifier in ["panel.convocatoria", "convocatorias.row"] {
                 if let row = hittableRow(identifier, in: app) { return row }
             }
@@ -759,7 +815,10 @@ final class StagingWalkthroughUITests: XCTestCase {
         // The sidebar's own rows, in the order the app declares them. «Inicio»
         // and «Cuenta» are section headers, not destinations, so they are not
         // in this list.
-        return ["Panel", "Convocatorias", "Mi posición", "Perfil"]
+        // «Mi progreso» faltaba en esta lista, así que en iPad el recorrido
+        // nunca la visitaba: una pantalla entera del aspirante, invisible para
+        // los tests en la mitad de las plataformas soportadas.
+        return ["Panel", "Convocatorias", "Mi posición", "Mi progreso", "Perfil"]
             .filter { sidebar(app).staticTexts[$0].exists }
     }
 

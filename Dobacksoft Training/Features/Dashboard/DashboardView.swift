@@ -155,8 +155,23 @@ private struct DashboardContent: View {
 
     @ViewBuilder
     private func sidebarItem(_ section: SidebarSection) -> some View {
-        Label(section.title, systemImage: section.icon)
-            .tag(section as SidebarSection?)
+        // `NavigationLink(value:)` dentro del `List(selection:)`, que es el
+        // patrón que Apple documenta para el sidebar de un
+        // `NavigationSplitView`.
+        //
+        // Antes era un `Label` con `.tag()`, y así una fila de List en iOS
+        // **no es seleccionable al toque** fuera del modo edición. El proyecto
+        // lo tenía anotado como un límite de XCUITest —«no acciona la
+        // selección de un List de SwiftUI», seis aproximaciones probadas— y
+        // hasta se trabajó alrededor en el producto por esa creencia.
+        //
+        // No era la herramienta. La fila mide 288×52 pt, está donde dice estar,
+        // se toca en su centro y el panel de detalle no se movía. En iPad este
+        // sidebar es la vía principal de todo.
+        NavigationLink(value: section) {
+            Label(section.title, systemImage: section.icon)
+        }
+        .tag(section as SidebarSection?)
             // Una fila de este sidebar cambia el panel de detalle, así que es
             // un botón y conviene que se anuncie como tal: VoiceOver decía
             // solo el texto, sin decir que se puede activar.
