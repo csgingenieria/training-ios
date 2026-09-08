@@ -310,10 +310,15 @@ final class StagingWalkthroughUITests: XCTestCase {
         }
 
         attempt.tap()
-        // Navigation is proven by leaving the tab, not by the tap returning.
+        // La llegada se prueba por algo que es SOLO del detalle del intento.
+        //
+        // Antes era «apareció algún botón en la barra», y «Mi posición» tiene
+        // su propia barra con el menú de orden: la aserción se cumplía en la
+        // pantalla de origen tanto como en la de destino, y por eso este test
+        // pasaba dos corridas y fallaba la tercera sin que cambiara nada.
         XCTAssertTrue(
-            app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 10),
-            "Tapping «\(attempt.label)» did not push a detail screen."
+            element("attempt.openMap", in: app).waitForExistence(timeout: 20),
+            "Tapping «\(attempt.label)» did not push the attempt detail."
         )
         capture(app, named: "11-detalle-intento")
 
@@ -330,6 +335,121 @@ final class StagingWalkthroughUITests: XCTestCase {
     /// `no_medido` — and the row went silent. Fixtures could not catch it,
     /// because they were written from the same reading of the contract as the
     /// code they were checking.
+    /// «Mi progreso», la ficha del recorrido y el mapa: las pantallas que
+    /// consumen los seis endpoints nuevos y que **nada había ejercitado contra
+    /// datos reales**.
+    ///
+    /// Es el código más joven de la app y el que más puede romperse en
+    /// silencio: cada una decodifica una respuesta que llegó hace días, y un
+    /// fallo de decodificación aquí no es un bug de andar por casa — es un
+    /// aspirante que abre su progreso y ve un error donde debería estar su
+    /// nota.
+    ///
+    /// La auditoría no podía cubrir esto: leyó código. Lo que el backend
+    /// compone con datos de verdad solo se ve corriéndolo.
+    func testMiProgreso() throws {
+        let app = launchClean()
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        guard app.tabBars.firstMatch.exists else {
+            throw XCTSkip(
+                "Layout de sidebar: XCUITest no acciona la selección de un List de SwiftUI. "
+                + "Mismo límite que el recorrido general."
+            )
+        }
+
+        let progreso = app.tabBars.buttons["Mi progreso"]
+        guard progreso.waitForExistence(timeout: 15) else {
+            try skipUnlessTheRoleShouldHaveIt(
+                "Mi progreso",
+                expected: \.hasOwnStanding,
+                detail: "Solo el aspirante tiene progreso propio."
+            )
+            return
+        }
+
+        XCTAssertTrue(select(progreso, attempts: 3), "«Mi progreso» no llegó a seleccionarse.")
+
+        // La pantalla tiene que resolverse: o su título, o su vacío explicado.
+        // Lo que NO puede es quedarse en el error de decodificación.
+        XCTAssertTrue(
+            app.navigationBars["Mi progreso"].waitForExistence(timeout: 20),
+            "«Mi progreso» no llegó a renderizar su barra."
+        )
+        capture(app, named: "20-mi-progreso")
+        assertNoDecodingFailureVisible(app, screen: "Mi progreso")
+        assertNoVerdictVisible(app, screen: "Mi progreso")
+
+        // Un error de carga es un fallo del recorrido, no un estado válido:
+        // esta pantalla es nueva y su endpoint también, y «Reintentar» visible
+        // significa que la respuesta real no se pudo consumir.
+        XCTAssertFalse(
+            element("progreso.retry", in: app).exists,
+            "«Mi progreso» abrió en error contra staging: su endpoint no se pudo consumir."
+        )
+
+        // La ficha del recorrido, si hay recorridos calificados. Sin ellos la
+        // pantalla enseña su vacío, que es legítimo y no se fuerza.
+        let fila = element("progreso.row", in: app)
+        guard fila.waitForExistence(timeout: 10) else {
+            throw XCTSkip(
+                "Esta cuenta no tiene recorridos calificados, así que la ficha del "
+                + "recorrido y el mapa NO quedan cubiertos por esta corrida."
+            )
+        }
+
+        fila.tap()
+        // Se espera la pantalla de destino por su identidad, no «algún botón
+        // en la barra»: eso último se cumple también en la de origen, y este
+        // test pasaba corriendo solo y fallaba en la tanda completa. Un test
+        // que solo falla acompañado es peor que uno que falla siempre — sale
+        // verde en la máquina de quien lo escribe.
+        XCTAssertTrue(
+            element("recorrido.pantalla", in: app).waitForExistence(timeout: 20),
+            "La fila de progreso no abrió la ficha del recorrido."
+        )
+        capture(app, named: "21-ficha-recorrido")
+        assertNoDecodingFailureVisible(app, screen: "Ficha del recorrido")
+        assertNoVerdictVisible(app, screen: "Ficha del recorrido")
+        XCTAssertFalse(
+            element("recorrido.retry", in: app).exists,
+            "La ficha del recorrido abrió en error contra staging."
+        )
+
+        // Y el mapa. Va DOS saltos más allá, no uno: el enlace al mapa vive en
+        // el detalle del intento, no en la ficha del recorrido. La primera
+        // versión de este test lo buscaba aquí y se saltó diciendo que no
+        // cubría el GPS — el salto hizo su trabajo, la navegación era mía y
+        // estaba mal.
+        app.swipeUp()
+        let vuelta = element("recorrido.vuelta", in: app)
+        guard vuelta.waitForExistence(timeout: 8) else {
+            throw XCTSkip(
+                "Esta ficha no tiene vueltas conducidas, así que el detalle del "
+                + "intento y el payload de GPS NO quedan cubiertos por esta corrida."
+            )
+        }
+        vuelta.tap()
+        // Por lo mismo: el detalle del intento se reconoce por su enlace al
+        // mapa, que es suyo y de ninguna otra pantalla.
+        XCTAssertTrue(
+            element("attempt.openMap", in: app).waitForExistence(timeout: 20),
+            "La vuelta no abrió el detalle del intento desde la ficha del recorrido."
+        )
+        assertNoDecodingFailureVisible(app, screen: "Intento desde la ficha")
+
+        // El payload más complicado de los seis: segmentos, traza ajustada y
+        // eventos con coordenadas.
+        element("attempt.openMap", in: app).tap()
+        capture(app, named: "22-mapa-del-intento")
+        assertNoDecodingFailureVisible(app, screen: "Mapa del intento")
+        XCTAssertFalse(
+            element("mapa.retry", in: app).exists,
+            "El mapa abrió en error contra staging: el payload de GPS no se pudo consumir."
+        )
+    }
+
     private func assertNoUnexplainedBreakdownRow(_ app: XCUIApplication) {
         let labels = app.staticTexts.allElementsBoundByIndex
             .prefix(300)

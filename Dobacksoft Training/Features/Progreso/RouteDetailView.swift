@@ -28,6 +28,14 @@ struct RouteDetailView: View {
                 .padding(.vertical, Theme.spacing.base.value)
         }
         .pageBackground()
+        // La pantalla dice quién es.
+        //
+        // Su título es el nombre del recorrido, que depende de los datos, así
+        // que un test no puede reconocerla por el texto. Sin identidad, la
+        // única aserción posible era «apareció algún botón en la barra», que
+        // se cumple también en la pantalla de origen: el test pasaba solo y
+        // fallaba acompañado.
+        .accessibilityIdentifier("recorrido.pantalla")
         .navigationTitle(title)
         .navigationDestination(for: ProgresoAttemptRoute.self) { ruta in
             AttemptDetailView(
@@ -221,6 +229,9 @@ struct RouteDetailView: View {
                             AttemptSummaryRow(attempt: intento)
                         }
                         .buttonStyle(.plain)
+                        // Identidad estable para el recorrido automatizado: el
+                        // nombre de la vuelta depende de los datos.
+                        .accessibilityIdentifier("recorrido.vuelta")
                         if intento.id != detalle.attempts.last?.id {
                             Divider().padding(.leading, Theme.spacing.base.value)
                         }
