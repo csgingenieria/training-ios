@@ -236,6 +236,24 @@ struct ProgressConvocatoriaDTO: Sendable, Hashable {
     /// Cuándo se CERRÓ la convocatoria. `nil` mientras sigue abierta — no es un
     /// plazo futuro, así que la pantalla no puede rotular «cierra el».
     let closedAt: String?
+
+    /// Si el acta está emitida.
+    ///
+    /// Lo encontró el cruce contra la respuesta REAL: viajaba y el cliente lo
+    /// tiraba en silencio. No estaba en ninguna nota que nos pasaran.
+    ///
+    /// **No decide lo que dice la pantalla, y es deliberado.** El backend lo
+    /// calcula como `status in {CLOSED, LOCKED}`, y `GradeFinality` separa esos
+    /// dos a propósito: `LOCKED` es el único estado en que la nota es
+    /// inamovible, porque con `CLOSED` el administrador dispone de 24 horas
+    /// para revertir el cierre. Llamar «definitiva» a una nota que aún puede
+    /// moverse es afirmar de más sobre una persona en una oposición pública.
+    ///
+    /// Así que este campo es menos preciso que lo que el cliente ya deriva, y
+    /// cablearlo al rótulo sería una rebaja disfrazada de simplificación. Se
+    /// decodifica para no perderlo y para poder contrastarlo; el rótulo sigue
+    /// saliendo de `GradeFinality`.
+    let finalScorePublished: Bool?
 }
 
 nonisolated extension ProgressConvocatoriaDTO: Decodable {}

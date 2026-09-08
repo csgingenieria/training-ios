@@ -1,0 +1,141 @@
+{
+  "activeEnrollments": [
+    {
+      "convocatoriaId": "<conv-2>",
+      "name": "<nombre de la convocatoria>",
+      "plaza": "001"
+    }
+  ],
+  "attempts": [
+    {
+      "createdAt": "<iso-8601>",
+      "dataQuality": "HIGH",
+      "distanceKm": null,
+      "durationMin": null,
+      "endedAt": "<iso-8601>",
+      "id": "<attempt-3>",
+      "isCurrentBest": false,
+      "route": {
+        "active": true,
+        "categoria": "EXAMEN",
+        "id": "PROG_B",
+        "label": "PROG_B",
+        "name": "Recorrido PROG_B"
+      },
+      "score": null,
+      "state": "NO_EVALUABLE"
+    },
+    {
+      "createdAt": "<iso-8601>",
+      "dataQuality": "HIGH",
+      "distanceKm": null,
+      "durationMin": null,
+      "endedAt": "<iso-8601>",
+      "id": "<attempt-4>",
+      "isCurrentBest": false,
+      "route": {
+        "active": true,
+        "categoria": "EXAMEN",
+        "id": "PROG_B",
+        "label": "PROG_B",
+        "name": "Recorrido PROG_B"
+      },
+      "score": null,
+      "state": "ESPERANDO"
+    },
+    {
+      "createdAt": "<iso-8601>",
+      "dataQuality": "HIGH",
+      "distanceKm": null,
+      "durationMin": null,
+      "endedAt": null,
+      "id": "<attempt-5>",
+      "isCurrentBest": false,
+      "route": {
+        "active": true,
+        "categoria": "EXAMEN",
+        "id": "PROG_B",
+        "label": "PROG_B",
+        "name": "Recorrido PROG_B"
+      },
+      "score": null,
+      "state": "ESPERANDO"
+    },
+    {
+      "createdAt": "<iso-8601>",
+      "dataQuality": "HIGH",
+      "distanceKm": 12.5,
+      "durationMin": 34,
+      "endedAt": "<iso-8601>",
+      "id": "<attempt-6>",
+      "isCurrentBest": true,
+      "route": {
+        "active": true,
+        "categoria": "EXAMEN",
+        "id": "PROG_A",
+        "label": "PROG_A",
+        "name": "Recorrido PROG_A"
+      },
+      "score": 9.0,
+      "state": "CON_NOTA"
+    },
+    {
+      "createdAt": "<iso-8601>",
+      "dataQuality": "HIGH",
+      "distanceKm": 12.5,
+      "durationMin": 34,
+      "endedAt": "<iso-8601>",
+      "id": "<attempt-7>",
+      "isCurrentBest": false,
+      "route": {
+        "active": true,
+        "categoria": "EXAMEN",
+        "id": "PROG_A",
+        "label": "PROG_A",
+        "name": "Recorrido PROG_A"
+      },
+      "score": 6.0,
+      "state": "CON_NOTA"
+    }
+  ],
+  "bestRoute": {
+    "attemptId": "<attempt-6>",
+    "label": "Recorrido PROG_A",
+    "routeCode": "PROG_A",
+    "score": 9.0
+  },
+  "candidate": {
+    "id": "<user-1>",
+    "name": "<nombre del aspirante>",
+    "plaza": "001"
+  },
+  "completedRequired": 0,
+  "convocatoria": {
+    "closedAt": null,
+    "finalScorePublished": false,
+    "id": "<conv-2>",
+    "name": "<nombre de la convocatoria>"
+  },
+  "evolution": [
+    {
+      "attemptId": "<attempt-6>",
+      "diffVsScore": 0.0,
+      "label": "Recorrido PROG_A",
+      "previousScore": 6.0,
+      "routeCode": "PROG_A",
+      "score": 9.0,
+      "trend": "subiendo"
+    }
+  ],
+  "pendingRequired": 0,
+  "presented": true,
+  "requiredRoutes": null,
+  "score": 9.0,
+  "scoreOfCompleted": null,
+  "worstRoute": {
+    "attemptId": "<attempt-6>",
+    "label": "Recorrido PROG_A",
+    "routeCode": "PROG_A",
+    "score": 9.0
+  }
+}
