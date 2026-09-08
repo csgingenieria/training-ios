@@ -342,7 +342,10 @@ struct MyStandingTabView: View {
                 Text("Hola, \(auth.user?.name.components(separatedBy: " ").first ?? "")")
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
-                Text(subtitleForCount(convocatorias.count))
+                Text(StandingHeaderCopy.subtitle(
+                    selected: selectedConvocatoria,
+                    convocatorias: convocatorias
+                ))
                     .font(.metaCaption)
                     .foregroundStyle(Color.muted)
             }
@@ -389,14 +392,6 @@ struct MyStandingTabView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(conv.name)
         .accessibilityValue(isSelected ? "seleccionada" : "no seleccionada")
-    }
-
-    private func subtitleForCount(_ n: Int) -> String {
-        switch n {
-        case 0: return "Sin convocatorias activas"
-        case 1: return "1 convocatoria activa"
-        default: return "\(n) convocatorias activas"
-        }
     }
 
     private func load() async {
