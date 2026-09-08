@@ -726,6 +726,12 @@ struct MyConvocatoriaContentView: View {
                         }
                         .font(.metaCaption)
                         .foregroundStyle(Color.brand)
+                        // Mismo mínimo: es la única salida de una lista vacía
+                        // por filtros, y su objetivo eran dos palabras en
+                        // `metaCaption`.
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                        .accessibilityIdentifier("attempts.resetFilters")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardStyle()
@@ -804,12 +810,26 @@ struct MyConvocatoriaContentView: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: "line.3.horizontal.decrease.circle")
-                Text("Filtros")
+                // El rótulo dice cuántos filtros hay puestos: antes ponía
+                // «Filtros» pasara lo que pasara, así que para saber si la
+                // lista estaba completa había que abrir el menú.
+                Text(AttemptFilterCopy.buttonLabel(quality: qualityFilter, score: scoreFilter))
             }
             .font(.metaCaption)
             .foregroundStyle(Color.brand)
+            // 44 pt de alto y toda la zona tocable, no solo los glifos: el
+            // rótulo va en `metaCaption` y su objetivo quedaba muy por debajo
+            // del mínimo. Es el control con el que un instructor con guantes
+            // filtra una tabla.
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .accessibilityLabel("Filtros de intentos")
+        // **Lo que faltaba de verdad.** El menú no decía si había algún filtro
+        // puesto, así que quien usa VoiceOver veía una lista más corta de
+        // vueltas sin manera de enterarse de que estaba filtrada — y podía
+        // concluir que había conducido menos de las que condujo.
+        .accessibilityValue(AttemptFilterCopy.spokenState(quality: qualityFilter, score: scoreFilter))
     }
 
     private func applyFiltersAndSort(_ items: [AttemptSummaryDTO]) -> [AttemptSummaryDTO] {

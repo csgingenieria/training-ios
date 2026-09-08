@@ -60,7 +60,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 16 | ✅ | important | M | Per-route progress grid («Sus recorridos») with best grade, «Pendiente» and an «Actual» badge on the counting attempt *(provisional)* | visual |
 | 17 | ✅ | important | S | One spoken and visible scale for grades: «8,5 sobre 10» for VoiceOver, «/10» caption on the standing score, one hero element *(provisional)* | accessibility, visual |
 | 18 | ✅ | important | S | Translate the role: «Aspirante» / «Instructor» / «Administración» instead of STUDENT/Student; hide the organisation UUID | accessibility, visual |
-| 19 | — | important | S | «Filtros» menu and «Restablecer filtros»: 44 pt targets and announced active state *(provisional)* | accessibility |
+| 19 | ✅ | important | S | «Filtros» menu and «Restablecer filtros»: 44 pt targets and announced active state *(provisional)* | accessibility |
 | 20 | ✅ | important | M | Refresh on return to foreground and show «Actualizado a las HH:mm» on data screens *(provisional)* | native-craft |
 | 21 | ✅ | important | M | Dashboard router: one shared section + NavigationPath per section for TabView and sidebar | ipad |
 | 22 | ✅ | important | M | Widget deep-links to «Mi posición»; «caducado» copy names the screen that refreshes it | states, native-craft, ipad |
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 25 · parciales: 3 · abiertos: 29.**
+**Cerrados: 26 · parciales: 3 · abiertos: 28.**
 
 Los parciales, con lo que falta de cada uno:
 
@@ -122,9 +122,8 @@ Los parciales, con lo que falta de cada uno:
 - **#5** — hecho en convocatorias; falta el vacío de «Mi posición»
 - **#34** — rótulos sí (fdb368a); falta el SharePreview
 
-Abiertos de severidad *important*: **#19** (objetivos de 44 pt en el menú de
-filtros) y **#26** (animaciones con los tokens de `Theme.motion`). El resto son
-los 27 menores.
+Abierto de severidad *important*: **#26** (animaciones con los tokens de
+`Theme.motion`). El resto son los 27 menores.
 
 **Corrección del 2026-09-08.** El #15 figuraba abierto por un error de este
 mismo repaso: se comprobó `sensorSeverity` —la etiqueta del sensor— cuando el
