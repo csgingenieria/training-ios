@@ -195,57 +195,15 @@ struct StandingCard: View {
     /// cuando lo que pasa es que va por la mitad del examen.
     @ViewBuilder
     private func compositionBlock(_ composition: GradeComposition) -> some View {
-        // Sin recorridos exigidos la nota es el mejor intento global: no hay
-        // composición que explicar.
-        if !composition.isGlobalBest {
-            VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
-                Divider()
-
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Recorridos exigidos")
-                        .font(.metaCaption)
-                        .foregroundStyle(Color.muted)
-                    Spacer()
-                    Text("\(composition.completedRequired) de \(composition.totalRequired)")
-                        .font(.bodyEmphasis)
-                        .foregroundStyle(Color.ink)
-                }
-
-                if let progress = composition.progress {
-                    ProgressView(value: progress)
-                        .tint(Color.brand)
-                        .accessibilityLabel(
-                            "\(composition.completedRequired) de \(composition.totalRequired) recorridos exigidos conducidos"
-                        )
-                }
-
-                if let explanation = composition.explanation {
-                    Text(explanation)
-                        .font(.metaCaption)
-                        .foregroundStyle(Color.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                // La media de lo conducido es el dato que responde «¿cómo
-                // conduzco?», frente a la nota oficial, que responde «¿cómo voy
-                // en el examen?». Son preguntas distintas y confundirlas es lo
-                // que hacía que un 9,50 se leyera como un 4,75.
-                if let conducted = composition.scoreOfCompleted {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("Media de lo conducido")
-                            .font(.metaCaption)
-                            .foregroundStyle(Color.muted)
-                        Spacer()
-                        Text(ScoreFormat.aggregate(conducted))
-                            .font(.bodyEmphasis)
-                            .foregroundStyle(Color.ink)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        // La explicación vive en `GradeCompositionView`, que comparten esta
+        // pantalla y la de progreso: son cuatro números cuya redacción importa,
+        // y dos copias se habrían separado a la primera corrección.
+        VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
+            if !composition.isGlobalBest { Divider() }
+            GradeCompositionView(composition: composition)
         }
     }
-
+    
 }
 
 struct StandingMetric: View {

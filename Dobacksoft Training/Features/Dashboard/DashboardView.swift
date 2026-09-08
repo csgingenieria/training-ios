@@ -45,6 +45,12 @@ struct DashboardView: View {
                         MyStandingTabView()
                     }
                 }
+
+                Tab("Mi progreso", systemImage: "chart.line.uptrend.xyaxis") {
+                    NavigationStack {
+                        ProgresoView()
+                    }
+                }
             }
 
             Tab("Perfil", systemImage: "person.crop.circle") {
@@ -80,6 +86,7 @@ private struct SidebarDashboard: View {
                     sidebarItem(.convocatorias)
                     if auth.user?.isStudent == true {
                         sidebarItem(.miPosicion)
+                        sidebarItem(.miProgreso)
                     }
                 }
                 Section("Cuenta") {
@@ -126,13 +133,14 @@ private struct SidebarDashboard: View {
         case .panel:         ManagerPanelView()
         case .convocatorias: ConvocatoriasListView()
         case .miPosicion:    MyStandingTabView()
+        case .miProgreso:    ProgresoView()
         case .perfil:        ProfileView()
         }
     }
 }
 
 private enum SidebarSection: Hashable {
-    case panel, convocatorias, miPosicion, perfil
+    case panel, convocatorias, miPosicion, miProgreso, perfil
 
     /// Identidad estable, independiente del rótulo traducible.
     var identifier: String {
@@ -140,6 +148,7 @@ private enum SidebarSection: Hashable {
         case .panel:         return "panel"
         case .convocatorias: return "convocatorias"
         case .miPosicion:    return "miPosicion"
+        case .miProgreso:    return "miProgreso"
         case .perfil:        return "perfil"
         }
     }
@@ -149,6 +158,7 @@ private enum SidebarSection: Hashable {
         case .panel:         return "Panel"
         case .convocatorias: return "Convocatorias"
         case .miPosicion:    return "Mi posición"
+        case .miProgreso:    return "Mi progreso"
         case .perfil:        return "Perfil"
         }
     }
@@ -158,6 +168,7 @@ private enum SidebarSection: Hashable {
         case .panel:         return "chart.bar.doc.horizontal"
         case .convocatorias: return "list.bullet.rectangle"
         case .miPosicion:    return "trophy.fill"
+        case .miProgreso:    return "chart.line.uptrend.xyaxis"
         case .perfil:        return "person.crop.circle"
         }
     }

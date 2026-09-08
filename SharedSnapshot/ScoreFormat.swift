@@ -44,6 +44,16 @@ nonisolated enum ScoreFormat {
         spanish(value, decimals: 2)
     }
 
+    /// Para VoiceOver: «8,5 sobre 10».
+    ///
+    /// Una cifra a secas no dice sobre cuánto, y la nota vive al lado de un
+    /// puesto, de un código de recorrido y de un número de participantes: sin
+    /// la escala, quien escucha la pantalla no sabe cuál de los cuatro números
+    /// le acaban de leer.
+    static func spoken(_ value: Double, decimals: Int) -> String {
+        "\(spanish(value, decimals: decimals)) sobre 10"
+    }
+
     private static func spanish(_ value: Double, decimals: Int) -> String {
         String(format: "%.\(decimals)f", value).replacingOccurrences(of: ".", with: ",")
     }

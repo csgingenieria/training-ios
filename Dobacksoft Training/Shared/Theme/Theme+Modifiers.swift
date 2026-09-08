@@ -25,6 +25,16 @@ extension View {
         self.shadow(color: kind.color, radius: kind.radius, x: 0, y: kind.y)
     }
 
+    /// Acota el contenido a un ancho legible y lo centra.
+    ///
+    /// En el panel de detalle de un iPad las tarjetas, los pares de métricas y
+    /// las notas al pie se estiraban a 700-800 pt: es el aspecto de teléfono
+    /// estirado que el proyecto descartó. 680 pt es donde una línea de texto
+    /// deja de costar un barrido de ojos.
+    func readableWidth(_ max: CGFloat = 680) -> some View {
+        frame(maxWidth: max).frame(maxWidth: .infinity)
+    }
+
     /// Fondo de página estándar — `paper`. Para pantallas que NO usan `Form`/`List`.
     func pageBackground() -> some View {
         self.background(Color.paper.ignoresSafeArea())
