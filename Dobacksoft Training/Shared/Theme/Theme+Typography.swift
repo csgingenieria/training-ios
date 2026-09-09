@@ -21,59 +21,7 @@ import SwiftUI
 //   .font(.display(size:weight:italic:relativeTo:)) → acceso directo a Fraunces.
 //   .font(.body(size:weight:relativeTo:))           → acceso directo a Inter.
 
-private enum FontName {
-    static let displayRegular     = "Fraunces72pt-Regular"
-    static let displayItalic      = "Fraunces72pt-Italic"
-    static let displayBold        = "Fraunces72pt-Bold"
-    static let displayBoldItalic  = "Fraunces72pt-BoldItalic"
-
-    static let bodyRegular        = "Inter-Regular"
-    static let bodyMedium         = "Inter-Medium"
-    static let bodySemiBold       = "Inter-SemiBold"
-    static let bodyBold           = "Inter-Bold"
-}
-
 extension Font {
-    // MARK: - Acceso directo
-
-    static func display(
-        size: CGFloat,
-        weight: Weight = .regular,
-        italic: Bool = true,
-        relativeTo style: TextStyle = .body
-    ) -> Font {
-        let name: String
-        switch (weight, italic) {
-        case (.bold, true), (.semibold, true), (.heavy, true), (.black, true):
-            name = FontName.displayBoldItalic
-        case (.bold, false), (.semibold, false), (.heavy, false), (.black, false):
-            name = FontName.displayBold
-        case (_, true):
-            name = FontName.displayItalic
-        case (_, false):
-            name = FontName.displayRegular
-        }
-        return .custom(name, size: size, relativeTo: style)
-    }
-
-    static func body(
-        size: CGFloat,
-        weight: Weight = .regular,
-        relativeTo style: TextStyle = .body
-    ) -> Font {
-        let name: String
-        switch weight {
-        case .bold, .heavy, .black:
-            name = FontName.bodyBold
-        case .semibold:
-            name = FontName.bodySemiBold
-        case .medium:
-            name = FontName.bodyMedium
-        default:
-            name = FontName.bodyRegular
-        }
-        return .custom(name, size: size, relativeTo: style)
-    }
 
     // MARK: - Roles semánticos
 

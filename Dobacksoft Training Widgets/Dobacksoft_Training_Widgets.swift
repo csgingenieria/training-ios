@@ -235,11 +235,13 @@ struct StandingWidgetEntryView: View {
     private func positionBlock(_ standing: StandingSnapshot.Standing) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("\(standing.position)")
-                // Estilo de texto y no un tamaño fijo: `.system(size:)` ignora
-                // el tamaño de letra del sistema, y un bombero con la letra
-                // grande veía el puesto igual de pequeño que todo lo demás.
-                .font(.largeTitle.weight(.bold))
-                .fontDesign(.rounded)
+                // La tipografía del producto, no la del sistema.
+                //
+                // Era `.largeTitle` con `.rounded`, así que la cifra que el
+                // aspirante mira de un vistazo tenía una cara dentro de la app
+                // —Fraunces— y otra en la pantalla de inicio. `relativeTo`
+                // conserva el respeto al tamaño de letra que se ganó en el #24.
+                .font(.display(size: 34, weight: .bold, italic: false, relativeTo: .largeTitle))
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
                 .foregroundStyle(Color.widgetInk)
@@ -254,8 +256,7 @@ struct StandingWidgetEntryView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let score = standing.score {
                 Text(ScoreFormat.aggregate(score))
-                    .font(.title2.weight(.semibold))
-                    .fontDesign(.rounded)
+                    .font(.display(size: 22, weight: .semibold, italic: false, relativeTo: .title2))
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                     .foregroundStyle(Color.widgetInk)

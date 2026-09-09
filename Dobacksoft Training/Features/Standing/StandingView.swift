@@ -152,6 +152,15 @@ final class StandingViewModel {
             }
         }
 
+        // La convocatoria queda anotada para poder republicar al volver al
+        // frente sin obligar a nadie a entrar aquí. Solo con datos: apuntar la
+        // convocatoria de una carga fallida haría que el republicado pidiera
+        // una posición que no existe.
+        if case .loaded = state {
+            SnapshotPublisher.shared.lastStandingConvocatoriaId = convocatoriaId
+            SnapshotPublisher.shared.lastStandingConvocatoriaName = convocatoriaName
+        }
+
         // La vista rápida se alimenta desde aquí. Un estado de error no
         // publica: un fallo de red pasajero no debe borrar el último dato bueno.
         if let content = SnapshotPublisher.content(

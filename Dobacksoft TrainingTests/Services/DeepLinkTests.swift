@@ -144,4 +144,35 @@ struct DeepLinkTests {
 
         #expect(inbox.pending == .miPosicion)
     }
+
+    // MARK: - El atajo de Siri
+
+    /// **One map of destinations, not two.** The intent takes its route from
+    /// `DeepLink`, so Siri and the widget cannot drift to different screens.
+    @Test func theSiriShortcutUsesTheSameDestinationMap() {
+        #expect(OpenStandingIntent.route == .miPosicion)
+        #expect(OpenStandingIntent.route.section == .miPosicion)
+    }
+
+    /// It opens the app rather than answering out loud. A spoken answer would
+    /// say someone's position in a room where others can hear it, and the
+    /// screen needs the session anyway.
+    @Test func theShortcutOpensTheAppInsteadOfAnswering() {
+        #expect(OpenStandingIntent.openAppWhenRun)
+    }
+
+    /// **One inbox, shared.** An `AppIntent` runs outside the view hierarchy
+    /// and has no access to the SwiftUI environment, so it needs a mailbox it
+    /// can reach — and `RootView` must read that same one. Two inboxes would
+    /// mean the widget's link and Siri's lose each other.
+    @MainActor
+    @Test func theIntentAndTheAppShareOneInbox() {
+        let inbox = DeepLinkInbox.shared
+        _ = inbox.consume()
+
+        inbox.receive(DeepLink.miPosicion)
+        #expect(inbox.pending == .miPosicion)
+        #expect(inbox.consume() == .miPosicion)
+        #expect(inbox.pending == nil, "se atiende una vez, como el del widget")
+    }
 }

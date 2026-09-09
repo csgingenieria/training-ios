@@ -81,7 +81,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 37 | — | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
 | 38 | — | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
 | 39 | — | minor | M | Semantic numeric roles in Theme+Typography (metricValue / metricValueLarge / scoreHero) *(provisional)* | visual |
-| 40 | — | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
+| 40 | ◐ | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
 | 41 | ✅ | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
 | 42 | ✅ | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
 | 43 | ✅ | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
@@ -90,11 +90,11 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 46 | — | minor | S | Launch and Login use Theme tokens (themed text field style, muted caption, scaled icon) | visual |
 | 47 | ✅ | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
 | 48 | ✅ | minor | M | Metric rows stack vertically at accessibility text sizes (AnyLayout), no fixed-height dividers *(provisional)* | accessibility |
-| 49 | — | minor | S | Widget uses the app's Fraunces/Inter via shared font factories | visual |
+| 49 | ✅ | minor | S | Widget uses the app's Fraunces/Inter via shared font factories | visual |
 | 50 | — | minor | S | DisclosureChevron component and a 2 pt spacing token (chevron/spacing literals) *(provisional)* | visual |
 | 51 | ✅ | minor | S | Convocatorias in regular width: adaptive two-column grid of cards | ipad |
-| 52 | — | minor | S | App Shortcut «Ver mi posición» once the deep link exists | native-craft |
-| 53 | — | minor | L | Republish the widget snapshot on any app foreground (BGAppRefresh optional later) | native-craft |
+| 52 | ✅ | minor | S | App Shortcut «Ver mi posición» once the deep link exists | native-craft |
+| 53 | ✅ | minor | L | Republish the widget snapshot on any app foreground (BGAppRefresh optional later) | native-craft |
 | 54 | ✅ | important | M | MANAGER · Resultados table: scale column widths with Dynamic Type and grow the name column into the iPad pane | accessibility, ipad |
 | 55 | ✅ | minor | S | MANAGER · Resultados VoiceOver: hide duplicate position cell, label «#» as «Puesto», hide «·» separators, «sin dato» for «—» | accessibility |
 | 56 | — | minor | S | MANAGER · Panel polish: adaptive KPI grid, 44 pt search-clear button, hide «Ver todas» in regular width | ipad, accessibility |
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 41 · parciales: 1 · abiertos: 15.**
+**Cerrados: 44 · parciales: 2 · abiertos: 11.**
 
 Los parciales, con lo que falta de cada uno:
 
@@ -131,7 +131,18 @@ Los parciales, con lo que falta de cada uno:
   que el acceso no llegaba a tiempo. Si se quiere ese fundido, hay que
   averiguar primero por qué cuesta tanto.
 
-**No queda ningún *important* abierto.** Los 26 restantes son menores.
+**No queda ningún *important* abierto.**
+
+Parciales:
+- **#26** — animaciones locales hechas; descartado por medición el fundido de
+  pantalla completa (139 s sin animaciones · 136 s con las locales · 304 s con
+  el fundido).
+- **#40** — hecha la parte (a), que era el defecto real: la app se tapa fuera
+  de foco, porque la miniatura del conmutador enseñaba la tarjeta con el puesto
+  y la nota. La parte (b) —bloqueo opcional con Face ID— queda sin hacer: es una
+  función nueva con su ajuste, su `NSFaceIDUsageDescription` y su decisión de
+  producto sobre cuándo volver a pedirlo, y la propia auditoría la marca como
+  mejora y no como defecto. Los 26 restantes son menores.
 
 **Reclasificación del 2026-09-08.** El #57 figuraba como *minor* «project
 hygiene» y no lo era: cuatro configuraciones de test declaraban

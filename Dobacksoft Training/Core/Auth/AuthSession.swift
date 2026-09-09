@@ -142,6 +142,10 @@ final class AuthSession {
         // Sin esto, el widget de quien acaba de salir seguiría enseñando su
         // puesto en la pantalla de inicio.
         SnapshotPublisher.shared.clear()
+        // Y la convocatoria recordada, o el republicado al volver al frente
+        // pediría la posición de la convocatoria de otra persona con el token
+        // de la nueva.
+        SnapshotPublisher.shared.clearLastStanding()
 
         // Y sin esto, la caché de arranque sin cobertura sobreviviría a la
         // sesión. Va ANTES de poner `user` a nil, que es de donde sale el

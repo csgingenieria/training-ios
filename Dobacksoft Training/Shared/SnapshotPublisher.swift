@@ -37,6 +37,39 @@ final class SnapshotPublisher {
         publish(enabled ? republish() : .desactivado)
     }
 
+    private static let lastConvocatoriaKey = "snapshot.lastStandingConvocatoriaId"
+    private static let lastConvocatoriaNameKey = "snapshot.lastStandingConvocatoriaName"
+
+    /// La convocatoria de la última posición publicada.
+    ///
+    /// Se guarda para poder republicar al volver al frente sin obligar a nadie
+    /// a entrar en «Mi posición»: hasta ahora esa era la ÚNICA pantalla que
+    /// refrescaba las cifras del widget, así que envejecían aunque la persona
+    /// abriera la app diez veces.
+    var lastStandingConvocatoriaId: String? {
+        get { defaults.string(forKey: Self.lastConvocatoriaKey) }
+        set { defaults.set(newValue, forKey: Self.lastConvocatoriaKey) }
+    }
+
+    /// Y su nombre, porque `StandingDTO` no lo trae y el widget lo enseña.
+    ///
+    /// Es el nombre de una oposición pública, no un dato de nadie: es lo mismo
+    /// que la instantánea ya guarda, y lo que no se guarda —ni aquí ni allí—
+    /// es identificador de persona, correo, plaza ni cupo.
+    var lastStandingConvocatoriaName: String? {
+        get { defaults.string(forKey: Self.lastConvocatoriaNameKey) }
+        set { defaults.set(newValue, forKey: Self.lastConvocatoriaNameKey) }
+    }
+
+    /// Si conviene republicar al volver al frente.
+    ///
+    /// Con la vista rápida apagada, **no**: pedir la posición para no
+    /// publicarla es una petición que no sirve a nadie y toca datos que la
+    /// persona ha dicho que no quiere en su pantalla de inicio.
+    func shouldRefreshOnForeground() -> Bool {
+        isQuickViewEnabled && lastStandingConvocatoriaId != nil
+    }
+
     /// Publica un contenido. Respeta la preferencia: con la vista rápida
     /// apagada solo puede escribirse `.desactivado`.
     func publish(_ content: StandingSnapshot.Content) {
@@ -57,6 +90,14 @@ final class SnapshotPublisher {
 
     /// Borra la instantánea. Al cerrar sesión esto no es opcional: sin ello,
     /// quien ha salido sigue enseñando su puesto en la pantalla de inicio.
+    /// Se borran al cerrar sesión con el resto: sin esto, el republicado al
+    /// volver al frente pediría la posición de la convocatoria de otra persona
+    /// con el token de la nueva.
+    func clearLastStanding() {
+        defaults.removeObject(forKey: Self.lastConvocatoriaKey)
+        defaults.removeObject(forKey: Self.lastConvocatoriaNameKey)
+    }
+
     func clear() {
         store.clear()
         WidgetCenter.shared.reloadAllTimelines()

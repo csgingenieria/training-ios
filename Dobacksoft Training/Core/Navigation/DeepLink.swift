@@ -69,7 +69,20 @@ nonisolated enum DeepLink: Hashable, Sendable {
 @MainActor
 @Observable
 final class DeepLinkInbox {
+    /// Compartido para que un `AppIntent` pueda dejar su destino aquí.
+    ///
+    /// Un intent corre fuera de la jerarquía de vistas y no tiene acceso al
+    /// entorno de SwiftUI, así que necesita un buzón al que llegar. `RootView`
+    /// usa este mismo, no uno propio: dos buzones significarían que el enlace
+    /// del widget y el de Siri se pierden uno al otro.
+    static let shared = DeepLinkInbox()
+
     private(set) var pending: DeepLink?
+
+    /// Un destino ya resuelto, de un `AppIntent` que no pasa por una URL.
+    func receive(_ link: DeepLink) {
+        pending = link
+    }
 
     func receive(_ url: URL) {
         // Una URL que no es nuestra no se convierte en enlace y tampoco
