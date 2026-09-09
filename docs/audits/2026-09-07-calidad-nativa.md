@@ -193,9 +193,20 @@ pantallas al reconciliar un binding, el destino de navegación de «Mi posición
 vivía dentro de una rama condicional, y el sidebar del iPad no navegaba para
 nadie.
 
-**Sin cubrir todavía:** el widget, «Mi PIN de tablet», el cambio de contraseña,
-y el detalle del intento por el camino del instructor en iPhone (la matriz
-scrollea en dos ejes y ahí el direccionamiento de celdas sí es frágil).
+**Sin cubrir, con su razón — dos, no cuatro** (revisado el 2026-09-09; esta
+lista se había quedado atrás nombrando cosas que ya pasan):
+
+- **El widget.** XCUITest no alcanza una extensión de widget desde el proceso
+  de la app. Límite real de la herramienta, comprobado — no una nota heredada.
+- **El cambio de contraseña.** No se automatiza a propósito: mutaría la
+  contraseña real de staging y dejaría obsoletas las credenciales del Keychain,
+  rompiendo todas las corridas futuras. Sus reglas de formulario están cubiertas
+  por tests unitarios; el envío no se toca. Haría falta una cuenta desechable.
+
+Ya SÍ cubiertos, y por eso salen de esta lista: «Mi PIN de tablet»
+(`testMiPin`, sin dibujar la credencial) y el detalle del intento por el camino
+del instructor (`testResultados` toca una celda de la matriz y llega a la
+ficha).
 
 ### Detalle
 
