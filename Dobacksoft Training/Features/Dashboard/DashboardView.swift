@@ -74,7 +74,14 @@ private struct DashboardContent: View {
             // La app ya estaba abierta cuando llegó el toque.
             openPendingLink()
         }
-        .background(sectionShortcuts)
+        // En `overlay` y SIN hit testing.
+        //
+        // En `background` y con toques activos, estos botones invisibles
+        // interceptaban: el recorrido dejó de poder abrir «Perfil» desde la
+        // barra de pestañas. Un atajo de teclado no pasa por hit testing, así
+        // que apagarlo no le quita nada — y deja de haber controles fantasma
+        // por encima de la interfaz.
+        .overlay { sectionShortcuts.allowsHitTesting(false) }
     }
 
     /// ⌘1 … ⌘n para saltar de sección con teclado.

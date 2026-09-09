@@ -78,14 +78,14 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 34 | ✅ | minor | S | Share sheets use UI labels, not enum codes, and carry a SharePreview *(provisional)* | visual, native-craft |
 | 35 | ✅ | minor | S | One noun for the person: «aspirante» (drop «candidatos» / «alumno» in STUDENT-facing copy) *(provisional)* | visual |
 | 36 | ✅ | minor | S | Show the route code next to its name in attempt rows and detail *(provisional)* | visual |
-| 37 | — | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
-| 38 | — | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
+| 37 | ✅ | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
+| 38 | ✅ | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
 | 39 | ✅ | minor | M | Semantic numeric roles in Theme+Typography (metricValue / metricValueLarge / scoreHero) *(provisional)* | visual |
 | 40 | ◐ | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
 | 41 | ✅ | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
 | 42 | ✅ | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
 | 43 | ✅ | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
-| 44 | — | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
+| 44 | ✅ | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
 | 45 | ✅ | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
 | 46 | ✅ | minor | S | Launch and Login use Theme tokens (themed text field style, muted caption, scaled icon) | visual |
 | 47 | ✅ | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 52 · parciales: 2 · abiertos: 3.**
+**Cerrados: 55 · parciales: 2 · abiertos: 0.**
 
 Los parciales, con lo que falta de cada uno:
 

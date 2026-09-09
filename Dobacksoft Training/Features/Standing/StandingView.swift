@@ -670,6 +670,7 @@ struct MyConvocatoriaContentView: View {
                     standing: standing,
                     finality: GradeFinality(convocatoriaStatus: convocatoriaStatus)
                 )
+                attemptHighlights
                 refreshFooter
             }
         case .cached(let cache, let capturedAt):
@@ -736,6 +737,39 @@ struct MyConvocatoriaContentView: View {
     /// Va aquí y no encima de la tarjeta a propósito. Un aviso sobre la
     /// tarjeta se lee como «esto de abajo está mal»; el dato no está mal,
     /// está fechado. Lo que se le debe al aspirante es la fecha, no una alarma.
+    /// La fecha de la última vuelta y en qué recorrido va mejor y peor.
+    ///
+    /// Sale de los intentos que ya están cargados: ni una petición más. El
+    /// portal los da y la tarjeta enseñaba solo la nota y la cuenta de
+    /// intentos, teniéndolo todo en la mano.
+    @ViewBuilder
+    private var attemptHighlights: some View {
+        if case .loaded(let attempts) = attemptsVM.state {
+            let ultima = APIDate.shortDate(AttemptHighlights.lastAttemptDate(attempts))
+            let extremos = AttemptHighlights.bestAndWorst(attempts)
+
+            if ultima != nil || extremos != nil {
+                VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
+                    if let ultima {
+                        Text("Última vuelta: \(ultima)")
+                    }
+                    if let extremos {
+                        // En neutro: señalar en rojo el recorrido «a mejorar»
+                        // lo presentaría como un suspenso, y esto es dónde
+                        // queda margen, no un veredicto.
+                        Text("Mejor recorrido: \(extremos.best.code) (\(ScoreFormat.attempt(extremos.best.score)))"
+                             + " · A mejorar: \(extremos.worst.code) (\(ScoreFormat.attempt(extremos.worst.score)))")
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .font(.metaCaption)
+                .foregroundStyle(Color.muted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("standing.highlights")
+            }
+        }
+    }
+
     @ViewBuilder
     private var refreshFooter: some View {
         if let refreshError = standingVM.refreshError {
@@ -846,6 +880,19 @@ struct MyConvocatoriaContentView: View {
                                 AttemptSummaryRow(attempt: attempt)
                             }
                             .buttonStyle(.card)
+                            // Mantener pulsado no hacía nada en ninguna parte
+                            // de la app. Compartir un intento es lo que un
+                            // aspirante hace con él, y estaba a dos toques
+                            // dentro de la ficha.
+                            .contextMenu {
+                                ShareLink(item: AttemptShareText.build(
+                                    candidateName: nil,
+                                    routeLabel: attempt.route?.displayName,
+                                    score: attempt.score,
+                                    quality: attempt.quality,
+                                    createdAt: attempt.createdAt
+                                ))
+                            }
                             // Identidad estable para el recorrido automatizado:
                             // buscar la fila por su texto acabó tocando el menú
                             // de filtros, que también es un botón.

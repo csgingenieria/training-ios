@@ -57,10 +57,7 @@ struct ConvocatoriaDetailView: View {
     }
 
     private var shareText: String {
-        var lines: [String] = ["Convocatoria Training · CMadrid", convocatoria.name]
-        if let s = convocatoria.status { lines.append("Estado: \(s)") }
-        lines.append("Aspirantes: \(convocatoria.totalCandidates)")
-        return lines.joined(separator: "\n")
+        ConvocatoriaShareText.build(convocatoria)
     }
 
     @ViewBuilder

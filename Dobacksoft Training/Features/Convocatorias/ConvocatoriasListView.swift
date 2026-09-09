@@ -199,14 +199,20 @@ struct ConvocatoriasListView: View {
 
     @ViewBuilder
     private var loadingView: some View {
-        VStack(spacing: Theme.spacing.md.value) {
-            ProgressView()
-                .tint(Color.brand)
-            Text("Cargando convocatorias…")
-                .font(.metaCaption)
-                .foregroundStyle(Color.muted)
+        // Tres filas con la forma de las que van a venir, en vez de un
+        // indicador en medio: la pantalla no salta al llegar los datos.
+        ScrollView {
+            LoadingSkeleton {
+                VStack(spacing: Theme.spacing.md.value) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        ConvocatoriaRow(conv: .placeholder)
+                    }
+                }
+            }
+            .readableWidth()
+            .padding(.horizontal, Theme.spacing.base.value)
+            .padding(.vertical, Theme.spacing.base.value)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .pageBackground()
     }
 
@@ -270,6 +276,9 @@ struct ConvocatoriasListView: View {
                     // Identidad estable para el recorrido automatizado: el
                     // nombre de la convocatoria depende de los datos.
                     .accessibilityIdentifier("convocatorias.row")
+                    .contextMenu {
+                        ShareLink(item: ConvocatoriaShareText.build(conv))
+                    }
                 }
 
                 refreshFooter
