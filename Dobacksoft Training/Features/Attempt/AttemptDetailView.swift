@@ -12,19 +12,49 @@ final class AttemptDetailViewModel {
 
     var state: State = .loading
 
+    /// Refresco en curso SOBRE datos ya visibles.
+    var isRefreshing = false
+
+    /// El fallo del último refresco, cuando había datos que conservar.
+    var refreshError: String?
+
+    private let api: TrainingAPI
+
+    /// La costura que el resto de los view models ya tenía. Sin ella este
+    /// arreglo no se podía probar, que es la razón por la que fue el último en
+    /// hacerse.
+    init(api: TrainingAPI = APIClient.shared) {
+        self.api = api
+    }
+
     func load(attemptId: String, auth: AuthSession) async {
-        state = .loading
+        // La última pantalla que seguía vaciándose a un spinner en cada
+        // recarga. Se llega a ella y se tira hacia abajo para ver si ya llegó
+        // la nota: con cobertura mala, el intento que se estaba leyendo
+        // desaparecía y volvía como error.
+        let teniaDatos: Bool
+        if case .loaded = state { teniaDatos = true } else { teniaDatos = false }
+
+        if teniaDatos { isRefreshing = true } else { state = .loading }
+        defer { isRefreshing = false }
+
         do {
-            let attempt = try await auth.authorized { token in
-                try await APIClient.shared.attempt(id: attemptId, accessToken: token)
+            let attempt = try await auth.authorized { [api] token in
+                try await api.attempt(id: attemptId, accessToken: token)
             }
             state = .loaded(attempt)
+            refreshError = nil
         } catch let error as APIError where error.notFoundReason != nil {
+            // Una respuesta, no una ausencia: si el intento ya no consta, no
+            // se conserva el que había.
             state = .notFound
-        } catch let err as APIError {
-            state = .error(err.userMessage)
         } catch {
-            state = .error(error.localizedDescription)
+            let mensaje = (error as? APIError)?.userMessage ?? error.localizedDescription
+            if teniaDatos {
+                refreshError = "\(mensaje) Se muestra el último dato consultado."
+            } else {
+                state = .error(mensaje)
+            }
         }
     }
 }
@@ -81,7 +111,9 @@ struct AttemptDetailView: View {
                     finality: finality,
                     convocatoriaClosedAt: convocatoriaClosedAt,
                     createdAt: createdAt,
-                    attempt: attempt
+                    attempt: attempt,
+                    refreshError: viewModel.refreshError,
+                    onRetry: { Task { await load() } }
                 )
             case .error(let msg):
                 ContentUnavailableView {
@@ -148,6 +180,12 @@ private struct AttemptDetailContent: View {
 
     let attempt: AttemptDetailDTO
 
+    /// Por qué lo que se ve puede no ser lo último. Conservar el dato en
+    /// silencio sería peor que vaciar la pantalla: quien no sabe que su
+    /// refresco falló cree que está mirando lo de ahora.
+    var refreshError: String?
+    var onRetry: () -> Void = {}
+
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.spacing.lg.value) {
@@ -193,6 +231,7 @@ private struct AttemptDetailContent: View {
                     eventsCard
                 }
 
+                refreshFooter
                 legalFooter
             }
             .readableWidth()
@@ -205,6 +244,30 @@ private struct AttemptDetailContent: View {
         }
         .navigationDestination(for: AttemptMapRoute.self) { route in
             AttemptMapView(attemptId: route.attemptId)
+        }
+    }
+
+    @ViewBuilder
+    private var refreshFooter: some View {
+        if let refreshError {
+            HStack(alignment: .top, spacing: Theme.spacing.sm.value) {
+                Image(systemName: "wifi.exclamationmark")
+                    .foregroundStyle(Color.warning)
+                    .accessibilityHidden(true)
+                Text(refreshError)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button("Reintentar", action: onRetry)
+                    .font(.metaCaption)
+                    .foregroundStyle(Color.brand)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("attempt.retryRefresh")
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(refreshError)
         }
     }
 

@@ -44,9 +44,9 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 |---|------|------|------|------|--------|
 | 1 | ✅ | blocker | S | «Mi posición» tab: reset errorMessage on load so Reintentar/pull-to-refresh can recover *(provisional)* | states |
 | 2 | ✅ | blocker | S | Purge forbidden-root UI strings («asignación de plaza», «tolerancia admitida») and add a UI-copy freeze test *(provisional)* | states, ipad, native-craft, visual |
-| 3 | ◐ | important | M | Keep the last good data on refresh: no blanking to a spinner, no error replacing loaded content *(provisional)* | states, native-craft |
+| 3 | ✅ | important | M | Keep the last good data on refresh: no blanking to a spinner, no error replacing loaded content *(provisional)* | states, native-craft |
 | 4 | ✅ | important | S | Embedded standing/attempts error cards get a heading, an icon and a per-section «Reintentar» *(provisional)* | states, accessibility |
-| 5 | ◐ | important | S | Empty states («Sin convocatorias», «Todavía no está inscrito») are refreshable and offer «Actualizar» *(provisional)* | native-craft |
+| 5 | ✅ | important | S | Empty states («Sin convocatorias», «Todavía no está inscrito») are refreshable and offer «Actualizar» *(provisional)* | native-craft |
 | 6 | ✅ | important | M | Offline or slow launch: tell the candidate their session is intact instead of dropping them on the login form | states |
 | 7 | ✅ | important | S | Forced logout explains itself: «Su sesión ha caducado por seguridad» | states |
 | 8 | ✅ | important | S | Login form: focus chain, submit-on-return, and VoiceOver announcement of the error | accessibility, ipad, native-craft |
@@ -114,12 +114,10 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 26 · parciales: 4 · abiertos: 27.**
+**Cerrados: 28 · parciales: 2 · abiertos: 27.**
 
 Los parciales, con lo que falta de cada uno:
 
-- **#3** — hecho en standing/progreso/convocatorias; el detalle del intento sigue vaciándose
-- **#5** — hecho en convocatorias; falta el vacío de «Mi posición»
 - **#34** — rótulos sí (fdb368a); falta el SharePreview
 - **#26** — hechas las animaciones LOCALES: la cifra del puesto con
   `contentTransition(.numericText())`, la selección de convocatoria con su

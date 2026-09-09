@@ -378,16 +378,30 @@ struct MyStandingTabView: View {
 
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: Theme.spacing.lg.value) {
-            greetingCard
-            ContentUnavailableView(
-                "Sin convocatorias",
-                systemImage: "tray.fill",
-                description: Text("Todavía no está inscrito en ninguna convocatoria.")
-            )
+        // Dentro de un `ScrollView`: el `.refreshable` del cuerpo solo funciona
+        // en un contenedor con scroll, y este vacío era un `VStack`. A quien
+        // inscriben después de abrir la app se le quedaba esta pantalla puesta
+        // y el gesto de tirar hacia abajo no hacía nada.
+        ScrollView {
+            VStack(spacing: Theme.spacing.lg.value) {
+                greetingCard
+                ContentUnavailableView {
+                    Label("Sin convocatorias", systemImage: "tray.fill")
+                } description: {
+                    Text("Todavía no está inscrito en ninguna convocatoria.")
+                } actions: {
+                    // Y con botón, porque descubrir el gesto no puede ser el
+                    // único camino: quien usa VoiceOver o Switch Control no lo
+                    // tiene.
+                    Button("Actualizar") { Task { await load() } }
+                        .buttonStyle(.brandPrimary(fullWidth: false))
+                        .accessibilityIdentifier("standing.refresh")
+                }
+            }
+            .padding(.horizontal, Theme.spacing.base.value)
+            .padding(.top, Theme.spacing.base.value)
+            .containerRelativeFrame(.vertical, alignment: .top)
         }
-        .padding(.horizontal, Theme.spacing.base.value)
-        .padding(.top, Theme.spacing.base.value)
         .pageBackground()
     }
 

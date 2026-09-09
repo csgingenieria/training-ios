@@ -24,6 +24,7 @@ actor FakeTrainingAPI: TrainingAPI {
     var gpsResults: [Result<GpsPayloadDTO, Error>] = []
     var pinResults: [Result<PinDTO, Error>] = []
     var routeResults: [Result<RouteDetailDTO, Error>] = []
+    var attemptResults: [Result<AttemptDetailDTO, Error>] = []
 
     /// Las dos listas de convocatorias van por colas SEPARADAS a propósito:
     /// `/me/convocatorias` y `/convocatorias` son endpoints distintos con
@@ -56,6 +57,7 @@ actor FakeTrainingAPI: TrainingAPI {
     func setGpsResults(_ results: [Result<GpsPayloadDTO, Error>]) { gpsResults = results }
     func setPinResults(_ results: [Result<PinDTO, Error>]) { pinResults = results }
     func setRouteResults(_ results: [Result<RouteDetailDTO, Error>]) { routeResults = results }
+    func setAttemptResults(_ results: [Result<AttemptDetailDTO, Error>]) { attemptResults = results }
     func setMyConvocatoriasResults(_ results: [Result<[ConvocatoriaSummaryDTO], Error>]) {
         myConvocatoriasResults = results
     }
@@ -146,7 +148,7 @@ actor FakeTrainingAPI: TrainingAPI {
         throw APIError.notFound(.resourceMissing)
     }
     func attempt(id: String, accessToken: String) async throws -> AttemptDetailDTO {
-        throw APIError.notFound(.resourceMissing)
+        try next(&attemptResults)
     }
     func managerDashboard(accessToken: String) async throws -> ManagerDashboardDTO {
         throw APIError.notFound(.resourceMissing)

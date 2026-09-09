@@ -201,42 +201,6 @@ struct LastGoodStoreTests {
         #expect(store.write(cache(), key: .convocatorias, userId: "   ", at: t0) == false)
     }
 
-    /// **Signing out takes the cache with it.**
-    ///
-    /// Wired now, before anything writes to the store. A cache that outlives
-    /// its session is a silent defect: nobody sees it until another person on
-    /// the same device reads it, and by then it has been there for weeks. If the
-    /// hook is added after the writing, the window exists.
-    ///
-    /// Note the order this pins: the clear happens BEFORE `user` is set to nil,
-    /// because the user's own id is the key it is stored under. The other way
-    /// round there would be nobody to clear.
-    @MainActor
-    @Test func signingOutClearsTheCache() async throws {
-        try? TokenStore.clearAll()
-        let directory = temporaryDirectory()
-        let store = store(directory)
-
-        let api = FakeTrainingAPI()
-        await api.setLoginResult(.success(.stub(access: "acc", refresh: "ref")))
-        let session = AuthSession(api: api, lastGood: store)
-        try await session.login(email: "a@b.example", password: "x")
-
-        let userId = try #require(session.user?.id)
-        #expect(store.write(cache(), key: .standing, userId: userId, at: t0))
-        guard case .presente = store.read(StandingCache.self, key: .standing, userId: userId, now: t0) else {
-            Issue.record("la caché no llegó a escribirse, así que este test no prueba el borrado")
-            return
-        }
-
-        await session.logout(reason: .userInitiated)
-
-        #expect(
-            store.read(StandingCache.self, key: .standing, userId: userId, now: t0) == .ausente,
-            "la caché sobrevivió al cierre de sesión"
-        )
-    }
-
     /// A user id that looks like a path cannot escape the directory. It comes
     /// from the backend, and a store that concatenates it into a filename
     /// would let a crafted id write outside its own folder.
@@ -244,5 +208,75 @@ struct LastGoodStoreTests {
         let store = store()
         #expect(store.write(cache(), key: .convocatorias, userId: "../../fuera", at: t0) == false)
         #expect(store.write(cache(), key: .convocatorias, userId: "a/b", at: t0) == false)
+    }
+}
+
+/// El único de estos que toca el Keychain real, y por eso vive aparte.
+///
+/// `KeychainBacked` existe porque `TokenStore` direcciona un solo par
+/// servicio/cuenta: todos los tests que lo usan comparten un recurso global y
+/// tienen que ir de uno en uno. Este test se quedó fuera del envoltorio y
+/// pasaba corriéndose solo; en la tanda completa, otro test limpiaba el
+/// Keychain a media sesión y el login fallaba con `.notFound`.
+///
+/// Tercera vez en esta sesión con un test que solo falla acompañado, y la
+/// primera en la que el que lo escribió mal fui yo teniendo la doctrina
+/// delante, escrita en el propio archivo del envoltorio.
+extension KeychainBacked {
+    @MainActor
+    struct LastGoodStoreLogoutTests {
+        private func temporaryDirectory() -> URL {
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent("lastgood-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+            return url
+        }
+
+        private func store() -> LastGoodStore { LastGoodStore(directory: temporaryDirectory()) }
+
+        private func cache() -> StandingCache {
+            StandingCache(
+                convocatoriaName: "Oposición 2026", position: 12,
+                totalParticipants: 256, score: 8.5, finality: .provisional
+            )
+        }
+
+        /// **Signing out takes the cache with it.**
+        ///
+        /// Wired now, before anything writes to the store. A cache that outlives
+        /// its session is a silent defect: nobody sees it until another person on
+        /// the same device reads it, and by then it has been there for weeks. If the
+        /// hook is added after the writing, the window exists.
+        ///
+        /// Note the order this pins: the clear happens BEFORE `user` is set to nil,
+        /// because the user's own id is the key it is stored under. The other way
+        /// round there would be nobody to clear.
+        @Test func signingOutClearsTheCache() async throws {
+            try? TokenStore.clearAll()
+            let almacen = store()
+
+            let api = FakeTrainingAPI()
+            await api.setLoginResult(.success(.stub(access: "acc", refresh: "ref")))
+            let session = AuthSession(api: api, lastGood: almacen)
+            try await session.login(email: "a@b.example", password: "x")
+
+            let userId = try #require(session.user?.id)
+            #expect(almacen.write(cache(), key: LastGoodStore.Key.standing, userId: userId, at: t0))
+
+            let escrita: LastGoodStore.Result<StandingCache> = almacen.read(
+                StandingCache.self, key: .standing, userId: userId, now: t0
+            )
+            guard case .presente = escrita else {
+                Issue.record("la caché no llegó a escribirse, así que este test no prueba el borrado")
+                return
+            }
+
+            await session.logout(reason: LogoutReason.userInitiated)
+
+            let despues: LastGoodStore.Result<StandingCache> = almacen.read(
+                StandingCache.self, key: .standing, userId: userId, now: t0
+            )
+            #expect(despues == .ausente, "la caché sobrevivió al cierre de sesión")
+        }
     }
 }
