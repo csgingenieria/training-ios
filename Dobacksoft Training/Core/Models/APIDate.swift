@@ -37,6 +37,7 @@ enum APIDate {
     private static let shortDateTimeFormatter = formatter("dd/MM/yyyy HH:mm")
     private static let shortDateFormatter = formatter("dd/MM/yyyy")
     private static let longDateTimeFormatter = formatter("d 'de' MMMM 'a las' HH:mm")
+    private static let longDateFormatter = formatter("d 'de' MMMM 'de' yyyy")
     private static let timeFormatter = formatter("HH:mm")
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
@@ -81,6 +82,15 @@ enum APIDate {
     }
 
     /// `3 de septiembre a las 16:22`
+    /// `12 de octubre de 2026`. Para lo que se OYE.
+    ///
+    /// `shortDate` da «12/10/2026», que VoiceOver lee «doce barra diez barra dos
+    /// mil veintiséis». En una frase hablada la fecha larga es la legible; en
+    /// una celda de tabla es la corta. Son dos usos distintos, no un gusto.
+    static func longDate(_ value: String?) -> String? {
+        parse(value).map { longDateFormatter.string(from: $0) }
+    }
+
     static func longDateTime(_ date: Date) -> String {
         longDateTimeFormatter.string(from: date)
     }

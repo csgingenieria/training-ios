@@ -71,7 +71,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 27 | ✅ | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
 | 28 | — | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
 | 29 | — | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
-| 30 | — | minor | S | Convocatoria chips: 44 pt height, isSelected trait, animated selection, selected chip scrolled into view *(provisional)* | accessibility, native-craft |
+| 30 | ✅ | minor | S | Convocatoria chips: 44 pt height, isSelected trait, animated selection, selected chip scrolled into view *(provisional)* | accessibility, native-craft |
 | 31 | — | minor | S | CardButtonStyle with press highlight and iPad pointer hover for every NavigationLink card/row *(provisional)* | ipad |
 | 32 | — | minor | S | Haptics on login result and chip selection via .sensoryFeedback *(provisional)* | native-craft |
 | 33 | — | minor | S | Per-row progress bar in the score breakdown (web parity), guarded by max > 0 | visual |
@@ -88,15 +88,15 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 44 | — | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
 | 45 | — | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
 | 46 | — | minor | S | Launch and Login use Theme tokens (themed text field style, muted caption, scaled icon) | visual |
-| 47 | — | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
-| 48 | — | minor | M | Metric rows stack vertically at accessibility text sizes (AnyLayout), no fixed-height dividers *(provisional)* | accessibility |
+| 47 | ✅ | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
+| 48 | ✅ | minor | M | Metric rows stack vertically at accessibility text sizes (AnyLayout), no fixed-height dividers *(provisional)* | accessibility |
 | 49 | — | minor | S | Widget uses the app's Fraunces/Inter via shared font factories | visual |
 | 50 | — | minor | S | DisclosureChevron component and a 2 pt spacing token (chevron/spacing literals) *(provisional)* | visual |
 | 51 | — | minor | S | Convocatorias in regular width: adaptive two-column grid of cards | ipad |
 | 52 | — | minor | S | App Shortcut «Ver mi posición» once the deep link exists | native-craft |
 | 53 | — | minor | L | Republish the widget snapshot on any app foreground (BGAppRefresh optional later) | native-craft |
 | 54 | ✅ | important | M | MANAGER · Resultados table: scale column widths with Dynamic Type and grow the name column into the iPad pane | accessibility, ipad |
-| 55 | — | minor | S | MANAGER · Resultados VoiceOver: hide duplicate position cell, label «#» as «Puesto», hide «·» separators, «sin dato» for «—» | accessibility |
+| 55 | ✅ | minor | S | MANAGER · Resultados VoiceOver: hide duplicate position cell, label «#» as «Puesto», hide «·» separators, «sin dato» for «—» | accessibility |
 | 56 | — | minor | S | MANAGER · Panel polish: adaptive KPI grid, 44 pt search-clear button, hide «Ver todas» in regular width | ipad, accessibility |
 | 57 | ✅ | minor | S | Project hygiene: remove Apple Watch (device family 4) from the four test configurations | ipad |
 
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 30 · parciales: 1 · abiertos: 26.**
+**Cerrados: 34 · parciales: 1 · abiertos: 22.**
 
 Los parciales, con lo que falta de cada uno:
 

@@ -237,10 +237,12 @@ struct ResultadosView: View {
             }
             HStack(spacing: Theme.spacing.sm.value) {
                 Text("\(data.totalCandidates) aspirantes")
-                Text("·")
+                // Los separadores son decorativos: VoiceOver los leía como
+                // «punto medio» entre cada cifra.
+                Text("·").accessibilityHidden(true)
                 Text("\(data.realCircuitCount) recorridos")
                 if !data.notPresented.isEmpty {
-                    Text("·")
+                    Text("·").accessibilityHidden(true)
                     Text("\(data.notPresented.count) sin conducir")
                 }
             }
@@ -260,6 +262,8 @@ struct ResultadosView: View {
                 .font(.body(size: 12, weight: .semibold, relativeTo: .caption))
                 .foregroundStyle(Color.muted)
                 .frame(width: positionColumnWidth, alignment: .center)
+                // VoiceOver leía «almohadilla». La columna es el puesto.
+                .accessibilityLabel("Puesto")
 
             Text("Aspirante")
                 .font(.body(size: 12, weight: .semibold, relativeTo: .caption))
@@ -305,6 +309,10 @@ struct ResultadosView: View {
                 .font(.body(size: 14, weight: .bold, relativeTo: .subheadline))
                 .foregroundStyle(row.hasNotDriven ? Color.muted : Color.ink)
                 .frame(width: positionColumnWidth, alignment: .center)
+                // Oculta: `accessibilityRowLabel` ya empieza por «Puesto N», y
+                // sin esto cada fila se leía el puesto DOS veces —una la celda
+                // y otra la etiqueta— con un número suelto por delante.
+                .accessibilityHidden(true)
 
             nameCell(row, circuitCount: circuits.count)
 
@@ -409,7 +417,10 @@ struct ResultadosView: View {
                 content
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(candidateName), \(circuitLabel), nota \(cell?.score.map(ScoreFormat.attempt) ?? "—")")
+            .accessibilityLabel(
+                "\(candidateName), \(circuitLabel), "
+                + (cell?.score.map { "nota \(ScoreFormat.spoken($0, decimals: 1))" } ?? "sin dato")
+            )
             // Identidad estable para el recorrido automatizado. Esta vista no
             // tenía ninguna, así que el camino del INSTRUCTOR hasta un intento
             // —matriz, celda, detalle— no se podía ejercitar: es el único

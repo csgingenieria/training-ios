@@ -483,8 +483,28 @@ struct MyStandingTabView: View {
                     }
                 }
                 .padding(.horizontal, Theme.spacing.xs.value)
+                .scrollTargetLayout()
             }
+            // La elegida se trae a la vista. Con muchas convocatorias, la
+            // seleccionada podía quedar fuera del scroll y la fila parecía no
+            // tener ninguna puesta.
+            .scrollPosition(id: selectedChipId, anchor: .center)
+            // Una sola parada de VoiceOver para la fila, con su nombre: sin
+            // ella se recorre chip a chip sin saber qué son.
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Convocatoria")
         }
+    }
+
+    /// El id para `scrollPosition`, que pide un `Binding` opcional.
+    private var selectedChipId: Binding<String?> {
+        Binding(
+            get: { viewModel.selectedId },
+            // No escribe: el scroll no elige convocatoria. Dejar que lo hiciera
+            // cambiaría la selección al arrastrar la fila, que es una acción
+            // que la persona no ha pedido.
+            set: { _ in }
+        )
     }
 
     @ViewBuilder
@@ -500,17 +520,26 @@ struct MyStandingTabView: View {
         } label: {
             Text(conv.name)
                 .font(.body(size: 13, weight: .semibold, relativeTo: .footnote))
-                .foregroundStyle(isSelected ? .white : Color.ink)
+                // `Color.onBrand` y no `.white`: ese token se creó justamente
+                // para lo que va encima de `Color.brand`, y en modo oscuro el
+                // blanco fijo no garantiza el contraste que él sí garantiza.
+                // El chip se había quedado sin adoptarlo.
+                .foregroundStyle(isSelected ? Color.onBrand : Color.ink)
                 .padding(.horizontal, Theme.spacing.base.value)
                 .padding(.vertical, Theme.spacing.sm.value)
+                .frame(minHeight: 44)
                 .background(
                     Capsule(style: .continuous)
                         .fill(isSelected ? Color.brand : Color.paperElevated)
                 )
+                .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(conv.name)
-        .accessibilityValue(isSelected ? "seleccionada" : "no seleccionada")
+        // El RASGO nativo, no un valor de texto. VoiceOver dice «seleccionado»
+        // en el idioma del sistema y con su entonación; «no seleccionada» como
+        // valor obligaba además a oír la negación en cada chip que no lo está.
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
     }
 
     private func load() async {

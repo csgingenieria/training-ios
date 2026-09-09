@@ -11,6 +11,7 @@ struct ProgresoView: View {
     var convocatoriaId: String?
 
     @Environment(AuthSession.self) private var auth
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
     /// pantalla no puede caerse por faltarle el motivo para recargar.
@@ -188,9 +189,13 @@ struct ProgresoView: View {
     /// cierto, y no pintarlos es decisión del cliente.
     @ViewBuilder
     private func extremesCard(_ progreso: ProgressDTO) -> some View {
-        HStack(alignment: .top, spacing: Theme.spacing.base.value) {
+        // Igual que las métricas del perfil: en columna con la letra grande.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.spacing.md.value))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: Theme.spacing.base.value))
+        layout {
             extreme("Mejor recorrido", progreso.bestRoute, symbol: "arrow.up.circle.fill")
-            Divider().frame(maxHeight: 44)
+            Divider()
             extreme("A mejorar", progreso.worstRoute, symbol: "arrow.down.circle.fill")
         }
         .cardStyle()

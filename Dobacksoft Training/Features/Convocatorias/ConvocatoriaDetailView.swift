@@ -3,6 +3,7 @@ import SwiftUI
 struct ConvocatoriaDetailView: View {
     let convocatoria: ConvocatoriaSummaryDTO
     @Environment(AuthSession.self) private var auth
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         ScrollView {
@@ -69,7 +70,11 @@ struct ConvocatoriaDetailView: View {
                 Text(convocatoria.name)
                     .font(.sectionTitle)
                     .foregroundStyle(Color.ink)
-                    .lineLimit(3)
+                    // Sin recorte con los tamaños de accesibilidad: tres
+                    // líneas de `sectionTitle` a tamaño AX5 no llegan para el
+                    // nombre de una convocatoria, y lo que se corta es
+                    // justamente lo que la distingue de otra.
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
                 Spacer()
                 if let status = convocatoria.status {
                     let estado = StatusVocabulary.convocatoria(status)
@@ -99,7 +104,19 @@ struct ConvocatoriaDetailView: View {
             }
         }
         .cardStyle()
-        .accessibilityElement(children: .combine)
+        // `ignore` y una frase propia, no `combine`.
+        //
+        // Con `combine` salía «Oposición 2026, Abierta, 120, Aspirantes, Cierre
+        // punto medio 12/10/2026…»: la cifra antes de su rótulo y los
+        // separadores decorativos leídos como «punto medio».
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(ConvocatoriaHeaderCopy.accessibilityLabel(
+            name: convocatoria.name,
+            statusLabel: convocatoria.status.map { StatusVocabulary.convocatoria($0).label },
+            totalCandidates: convocatoria.totalCandidates,
+            closedAt: convocatoria.closedAt,
+            updatedAt: convocatoria.updatedAt
+        ))
     }
 
     private func metricBlock(value: String, label: String) -> some View {

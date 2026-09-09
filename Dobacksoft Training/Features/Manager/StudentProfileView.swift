@@ -44,6 +44,7 @@ final class StudentProfileViewModel {
 ///   - standings por convocatoria
 ///   - lista de intentos cerrados
 struct StudentProfileView: View {
+
     let studentId: String
     @Environment(AuthSession.self) private var auth
     @State private var viewModel = StudentProfileViewModel()
@@ -196,6 +197,8 @@ struct StudentProfileView: View {
 }
 
 private struct ProfileStandingRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let standing: ProfileStandingDTO
 
     var body: some View {
@@ -215,13 +218,27 @@ private struct ProfileStandingRow: View {
                 StatusBadge(text: estado.label, kind: estado.kind)
             }
 
-            HStack(spacing: Theme.spacing.lg.value) {
+            // Se apilan con los tamaños de accesibilidad.
+            //
+            // Tres métricas en una fila con divisores de 28 pt de alto: con la
+            // letra grande, «Nota pendiente de confirmación» se parte en cinco
+            // o seis líneas dentro de una columna estrecha, y el divisor fijo
+            // se queda colgando a media altura del texto.
+            //
+            // `AnyLayout` cambia la disposición sin recrear las vistas, así que
+            // no se pierde nada al girar el ajuste.
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.spacing.md.value))
+                : AnyLayout(HStackLayout(spacing: Theme.spacing.lg.value))
+            layout {
                 metric(label: "Puesto", value: "\(standing.position)/\(standing.totalCandidates)")
-                Divider().frame(height: 28)
+                // Sin altura fija: en vertical un divisor de 28 pt es una raya
+                // suelta, y en horizontal `Divider()` ya se ajusta a la fila.
+                Divider()
                 metric(label: "Nota", value: ScoreFormat.aggregate(standing.score))
-                Divider().frame(height: 28)
+                Divider()
                 metric(label: "Intentos", value: "\(standing.attemptsTotal)")
-                Spacer()
+                if !dynamicTypeSize.isAccessibilitySize { Spacer() }
             }
 
             // De qué está hecha esa nota.
