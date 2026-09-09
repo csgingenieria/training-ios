@@ -98,7 +98,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 54 | ✅ | important | M | MANAGER · Resultados table: scale column widths with Dynamic Type and grow the name column into the iPad pane | accessibility, ipad |
 | 55 | — | minor | S | MANAGER · Resultados VoiceOver: hide duplicate position cell, label «#» as «Puesto», hide «·» separators, «sin dato» for «—» | accessibility |
 | 56 | — | minor | S | MANAGER · Panel polish: adaptive KPI grid, 44 pt search-clear button, hide «Ver todas» in regular width | ipad, accessibility |
-| 57 | — | minor | S | Project hygiene: remove Apple Watch (device family 4) from the four test configurations | ipad |
+| 57 | ✅ | minor | S | Project hygiene: remove Apple Watch (device family 4) from the four test configurations | ipad |
 
 
 ### Estado (verificado el 2026-09-08)
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 29 · parciales: 1 · abiertos: 27.**
+**Cerrados: 30 · parciales: 1 · abiertos: 26.**
 
 Los parciales, con lo que falta de cada uno:
 
@@ -131,7 +131,15 @@ Los parciales, con lo que falta de cada uno:
   que el acceso no llegaba a tiempo. Si se quiere ese fundido, hay que
   averiguar primero por qué cuesta tanto.
 
-**No queda ningún *important* abierto.** El resto son los 27 menores.
+**No queda ningún *important* abierto.** Los 26 restantes son menores.
+
+**Reclasificación del 2026-09-08.** El #57 figuraba como *minor* «project
+hygiene» y no lo era: cuatro configuraciones de test declaraban
+`TARGETED_DEVICE_FAMILY = "1,2,4"`, y el 4 es Apple Watch. `CLAUDE.md` dice
+«iPhone + iPad, más la extensión de widget. **Nada más.** Si Xcode regenera
+`pbxproj` y mete macOS, xrOS o watchOS, sacarlos», y `D-IOS-003` retiró el
+reloj del proyecto. Una regla firme incumplida no es pulido pendiente. Sacado y
+verificado: los 630 tests y el recorrido de UI siguen corriendo.
 
 **Corrección del 2026-09-08.** El #15 figuraba abierto por un error de este
 mismo repaso: se comprobó `sensorSeverity` —la etiqueta del sensor— cuando el
