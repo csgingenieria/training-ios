@@ -131,7 +131,21 @@ struct AttemptDetailView: View {
         .toolbar {
             if case .loaded(let attempt) = viewModel.state {
                 ToolbarItem(placement: .topBarTrailing) {
-                    ShareLink(item: shareText(attempt)) {
+                    ShareLink(
+                        item: shareText(attempt),
+                        // Con vista previa: la hoja de compartir enseñaba «Texto»
+                        // y las primeras palabras del cuerpo, así que quien
+                        // manda dos intentos seguidos por WhatsApp no distingue
+                        // uno de otro antes de enviarlo. Va la fecha y el
+                        // recorrido, que es lo que los separa.
+                        preview: SharePreview(
+                            AttemptShareText.previewTitle(
+                                routeLabel: attempt.route?.label ?? attempt.route?.name,
+                                createdAt: createdAt
+                            ),
+                            image: Image(systemName: "steeringwheel")
+                        )
+                    ) {
                         Image(systemName: "square.and.arrow.up")
                             .foregroundStyle(Color.brand)
                     }

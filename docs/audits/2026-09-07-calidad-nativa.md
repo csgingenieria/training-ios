@@ -75,7 +75,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 31 | — | minor | S | CardButtonStyle with press highlight and iPad pointer hover for every NavigationLink card/row *(provisional)* | ipad |
 | 32 | — | minor | S | Haptics on login result and chip selection via .sensoryFeedback *(provisional)* | native-craft |
 | 33 | — | minor | S | Per-row progress bar in the score breakdown (web parity), guarded by max > 0 | visual |
-| 34 | ◐ | minor | S | Share sheets use UI labels, not enum codes, and carry a SharePreview *(provisional)* | visual, native-craft |
+| 34 | ✅ | minor | S | Share sheets use UI labels, not enum codes, and carry a SharePreview *(provisional)* | visual, native-craft |
 | 35 | ✅ | minor | S | One noun for the person: «aspirante» (drop «candidatos» / «alumno» in STUDENT-facing copy) *(provisional)* | visual |
 | 36 | — | minor | S | Show the route code next to its name in attempt rows and detail *(provisional)* | visual |
 | 37 | — | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
@@ -114,11 +114,10 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 28 · parciales: 2 · abiertos: 27.**
+**Cerrados: 29 · parciales: 1 · abiertos: 27.**
 
 Los parciales, con lo que falta de cada uno:
 
-- **#34** — rótulos sí (fdb368a); falta el SharePreview
 - **#26** — hechas las animaciones LOCALES: la cifra del puesto con
   `contentTransition(.numericText())`, la selección de convocatoria con su
   curva, y la lista al reordenar o filtrar. Todas respetan «Reducir

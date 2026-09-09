@@ -40,7 +40,13 @@ struct ConvocatoriaDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: shareText) {
+                ShareLink(
+                    item: shareText,
+                    preview: SharePreview(
+                        convocatoria.name,
+                        image: Image(systemName: "list.bullet.rectangle")
+                    )
+                ) {
                     Image(systemName: "square.and.arrow.up")
                         .foregroundStyle(Color.brand)
                 }

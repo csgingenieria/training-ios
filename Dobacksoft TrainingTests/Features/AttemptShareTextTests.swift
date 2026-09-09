@@ -136,4 +136,40 @@ struct AttemptShareTextTests {
             #expect(!texto.contains(banned), "«\(banned)» aparece en: \(texto)")
         }
     }
+
+    // MARK: - La vista previa de la hoja
+
+    /// The share sheet showed «Texto» and the first words of the body, so two
+    /// laps sent one after another looked identical before sending. What tells
+    /// them apart is the date and the route.
+    @Test func thePreviewTitleNamesWhatTellsTwoLapsApart() throws {
+        let esperada = try #require(APIDate.shortDateTime(fecha))
+        let titulo = AttemptShareText.previewTitle(routeLabel: "R-04 Centro", createdAt: fecha)
+        #expect(titulo == "Intento · \(esperada) · R-04 Centro")
+    }
+
+    /// With only one of the two it still says which one it has.
+    @Test func withHalfTheDataItStillDistinguishes() throws {
+        let esperada = try #require(APIDate.shortDateTime(fecha))
+        #expect(AttemptShareText.previewTitle(routeLabel: nil, createdAt: fecha) == "Intento · \(esperada)")
+        #expect(AttemptShareText.previewTitle(routeLabel: "R-04", createdAt: nil) == "Intento · R-04")
+    }
+
+    /// **It is never empty.** A preview with no title leaves the sheet saying
+    /// «Texto», which is where this started.
+    @Test func thePreviewTitleIsNeverEmpty() {
+        #expect(AttemptShareText.previewTitle(routeLabel: nil, createdAt: nil) == "Intento")
+    }
+
+    /// And never a dangling separator.
+    ///
+    /// The first version of this test asserted `"Intento · "` as correct — a
+    /// trailing «·» that reads as something still loading. Writing the test
+    /// after the code is how a defect gets pinned as intended behaviour.
+    @Test func aBlankLabelIsNotHalfATitle() {
+        #expect(AttemptShareText.previewTitle(routeLabel: "", createdAt: nil) == "Intento")
+        #expect(AttemptShareText.previewTitle(routeLabel: "   ", createdAt: nil) == "Intento")
+        #expect(AttemptShareText.previewTitle(routeLabel: "", createdAt: "no es una fecha") == "Intento")
+        #expect(!AttemptShareText.previewTitle(routeLabel: nil, createdAt: nil).hasSuffix("· "))
+    }
 }

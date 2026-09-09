@@ -7,6 +7,27 @@ import Foundation
 /// recorrido y la nota pero no CUÁNDO fue el intento, así que dos vueltas al
 /// mismo recorrido se compartían como el mismo mensaje.
 nonisolated enum AttemptShareText {
+    /// El título de la vista previa de la hoja de compartir.
+    ///
+    /// La hoja enseñaba «Texto» y las primeras palabras del cuerpo, así que dos
+    /// intentos seguidos se veían iguales antes de enviarlos. Lo que los separa
+    /// es la fecha y el recorrido, en ese orden — la fecha primero por lo mismo
+    /// que encabeza el mensaje.
+    ///
+    /// Nunca queda vacío: una vista previa sin título deja la hoja diciendo
+    /// «Texto», que es de donde venimos.
+    static func previewTitle(routeLabel: String?, createdAt: String?) -> String {
+        // Se descartan las cadenas en blanco, no solo los `nil`: un rótulo
+        // vacío dejaba «Intento · » con el separador colgando, que se lee como
+        // que falta algo por cargar.
+        let partes = [APIDate.shortDateTime(createdAt), routeLabel]
+            .compactMap { $0 }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !partes.isEmpty else { return "Intento" }
+        return "Intento · \(partes.joined(separator: " · "))"
+    }
+
     static func build(
         candidateName: String?,
         routeLabel: String?,
