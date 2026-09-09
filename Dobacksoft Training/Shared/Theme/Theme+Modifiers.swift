@@ -121,3 +121,31 @@ extension ButtonStyle where Self == BrandPrimaryButtonStyle {
         BrandPrimaryButtonStyle(fullWidth: fullWidth)
     }
 }
+
+/// Una tarjeta o fila que se puede pulsar, y lo demuestra.
+///
+/// Todos los `NavigationLink` de tarjeta usaban `.buttonStyle(.plain)`, que es
+/// exactamente «sin ninguna señal»: la tarjeta no se hundía, no se aclaraba, no
+/// hacía nada al tocarla, y en un iPad con ratón o trackpad tampoco reaccionaba
+/// al pasar por encima. Se toca y no parece que se haya tocado, así que se toca
+/// otra vez.
+struct CardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .overlay {
+                RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                    .fill(Color.brand.opacity(configuration.isPressed ? 0.08 : 0))
+            }
+            // Un velo tenue y no una escala: escalar una tarjeta con cifras
+            // dentro las mueve, y aquí lo que se toca es un dato.
+            .animation(Theme.motion.fast, value: configuration.isPressed)
+            // En iPad con puntero: `.highlight` es el efecto que el sistema usa
+            // para lo que se puede activar.
+            .hoverEffect(.highlight)
+            .contentShape(RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous))
+    }
+}
+
+extension ButtonStyle where Self == CardButtonStyle {
+    static var card: CardButtonStyle { CardButtonStyle() }
+}

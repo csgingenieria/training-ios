@@ -68,7 +68,7 @@ struct DrivingBlocksSection: View {
             }
 
             ForEach(narrativa.points) { punto in
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                     HStack(spacing: Theme.spacing.sm.value) {
                         Text(punto.title ?? "—")
                             .font(.bodyEmphasis)

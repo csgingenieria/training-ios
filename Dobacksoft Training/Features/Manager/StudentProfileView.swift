@@ -127,7 +127,7 @@ struct StudentProfileView: View {
             .frame(width: 56, height: 56)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                 Text(user.name)
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
@@ -204,7 +204,7 @@ private struct ProfileStandingRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                     Text(standing.name)
                         .font(.cardTitle)
                         .foregroundStyle(Color.ink)
@@ -294,7 +294,7 @@ private struct ProfileStandingRow: View {
     }
 
     private func metric(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
             Text(value)
                 .font(.body(size: 16, weight: .semibold, relativeTo: .headline))
                 .foregroundStyle(Color.ink)

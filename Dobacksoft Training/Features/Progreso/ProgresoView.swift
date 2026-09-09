@@ -283,7 +283,7 @@ struct ProgresoView: View {
         Group {
             if let destino {
                 NavigationLink(value: destino) { rowContent(entrada) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.card)
             } else {
                 rowContent(entrada)
             }
@@ -296,7 +296,7 @@ struct ProgresoView: View {
     @ViewBuilder
     private func rowContent(_ entrada: ProgressEvolutionDTO) -> some View {
         HStack(spacing: Theme.spacing.md.value) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                 Text(entrada.label ?? entrada.routeCode ?? "Recorrido")
                     .font(.bodyEmphasis)
                     .foregroundStyle(Color.ink)

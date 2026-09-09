@@ -71,4 +71,43 @@ struct AttemptDetailDTOTests {
         #expect(event.confidence == "HIGH")
         #expect(event.source == "DOBACK_ELITE")
     }
+
+    // MARK: - El código del recorrido
+
+    /// The code goes in front of the name, because that is what the route is
+    /// called at the station: «el 2B3», not «Bajada Navacerrada a Collado
+    /// Villalba». The sheet showed only the long name.
+    @Test func theCodeIsShownWhenItAddsSomething() throws {
+        let route = try JSONDecoder().decode(AttemptRouteDTO.self, from: Data("""
+        { "id": "R-1", "label": "2B3", "name": "Bajada Navacerrada" }
+        """.utf8))
+        #expect(route.codeIfDistinct == "2B3")
+    }
+
+    /// **And not when the name already IS the code.** A route with no assigned
+    /// name falls back to its code, and repeating it would give «2B3 · 2B3».
+    @Test func theCodeIsNotRepeatedWhenItIsTheName() throws {
+        let route = try JSONDecoder().decode(AttemptRouteDTO.self, from: Data("""
+        { "id": "2B3", "label": "2B3" }
+        """.utf8))
+        #expect(route.displayName == "2B3")
+        #expect(route.codeIfDistinct == nil)
+    }
+
+    /// Case differences are the same code: «2b3» and «2B3» would otherwise
+    /// print twice.
+    @Test func caseDoesNotMakeItADifferentCode() throws {
+        let route = try JSONDecoder().decode(AttemptRouteDTO.self, from: Data("""
+        { "id": "2b3", "label": "2B3", "name": "2b3" }
+        """.utf8))
+        #expect(route.codeIfDistinct == nil)
+    }
+
+    /// The sentinel is not a code.
+    @Test func theSentinelIsNotACode() throws {
+        let route = try JSONDecoder().decode(AttemptRouteDTO.self, from: Data("""
+        { "id": "—", "label": "", "name": "Bajada Navacerrada" }
+        """.utf8))
+        #expect(route.codeIfDistinct == nil)
+    }
 }

@@ -87,7 +87,7 @@ struct ConvocatoriaDetailView: View {
                 Spacer()
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                 // La fecha de cierre marca hasta cuándo puede cambiar la nota.
                 // El portal web la pone en cabecera; aquí no se mostraba nunca,
                 // pese a llegar en el contrato desde el principio.
@@ -120,7 +120,7 @@ struct ConvocatoriaDetailView: View {
     }
 
     private func metricBlock(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
             Text(value)
                 .font(.display(size: 28, weight: .bold, italic: false, relativeTo: .title))
                 .foregroundStyle(Color.ink)
@@ -207,10 +207,7 @@ struct ConvocatoriaDetailView: View {
                     .font(.bodyEmphasis)
                     .foregroundStyle(Color.ink)
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.muted)
-                    .accessibilityHidden(true)
+                DisclosureChevron()
             }
             .padding(.horizontal, Theme.spacing.base.value)
             .padding(.vertical, Theme.spacing.md.value)

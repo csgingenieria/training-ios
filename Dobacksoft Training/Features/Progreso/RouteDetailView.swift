@@ -228,7 +228,7 @@ struct RouteDetailView: View {
                         )) {
                             AttemptSummaryRow(attempt: intento)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.card)
                         // Identidad estable para el recorrido automatizado: el
                         // nombre de la vuelta depende de los datos.
                         .accessibilityIdentifier("recorrido.vuelta")

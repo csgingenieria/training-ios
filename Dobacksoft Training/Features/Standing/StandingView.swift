@@ -475,7 +475,7 @@ struct MyStandingTabView: View {
             .frame(width: 48, height: 48)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                 Text("Hola, \(auth.user?.name.components(separatedBy: " ").first ?? "")")
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
@@ -841,7 +841,7 @@ struct MyConvocatoriaContentView: View {
                             )) {
                                 AttemptSummaryRow(attempt: attempt)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.card)
                             // Identidad estable para el recorrido automatizado:
                             // buscar la fila por su texto acabó tocando el menú
                             // de filtros, que también es un botón.
@@ -990,10 +990,18 @@ final class MyAttemptsViewModel {
 struct AttemptSummaryRow: View {
     let attempt: AttemptSummaryDTO
 
+    /// El código delante del nombre, que es como se llama al recorrido en el
+    /// parque. Sin recorrido, «Intento» — nunca una cadena vacía.
+    private var routeTitle: String {
+        let partes = [attempt.route?.codeIfDistinct, attempt.route?.displayName]
+            .compactMap { $0 }
+        return partes.isEmpty ? "Intento" : partes.joined(separator: " · ")
+    }
+
     var body: some View {
         HStack(spacing: Theme.spacing.md.value) {
             VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
-                Text(attempt.route?.displayName ?? "Intento")
+                Text(routeTitle)
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
                 HStack(spacing: Theme.spacing.sm.value) {
@@ -1025,10 +1033,7 @@ struct AttemptSummaryRow: View {
             }
             Spacer()
             scoreView
-            Image(systemName: "chevron.right")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(Color.muted)
-                .accessibilityHidden(true)
+            DisclosureChevron()
         }
         .padding(.horizontal, Theme.spacing.base.value)
         .padding(.vertical, Theme.spacing.md.value)

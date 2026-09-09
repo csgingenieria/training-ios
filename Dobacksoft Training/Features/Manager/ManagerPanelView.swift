@@ -309,7 +309,7 @@ struct ManagerPanelView: View {
             .frame(width: 48, height: 48)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                 Text("Hola, \(auth.user?.name.components(separatedBy: " ").first ?? "")")
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
@@ -417,7 +417,7 @@ struct ManagerPanelView: View {
                     .font(.body(size: 18, weight: .semibold))
                     .foregroundStyle(Color.brand)
                     .frame(width: 28)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                     Text("Última sincronización Webfleet")
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
@@ -536,7 +536,7 @@ struct ManagerPanelView: View {
             ForEach(Array(items.enumerated()), id: \.offset) { index, aspirante in
                 NavigationLink(value: PanelStudentRoute(studentId: aspirante.studentId)) {
                     HStack(spacing: Theme.spacing.md.value) {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                             Text(aspirante.name)
                                 .font(.bodyEmphasis)
                                 .foregroundStyle(Color.ink)
@@ -551,10 +551,7 @@ struct ManagerPanelView: View {
                             .foregroundStyle(Color.muted)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(Color.muted)
-                            .accessibilityHidden(true)
+                        DisclosureChevron()
                     }
                     .padding(.horizontal, Theme.spacing.base.value)
                     .padding(.vertical, Theme.spacing.md.value)
@@ -614,7 +611,7 @@ struct ManagerPanelView: View {
                     .font(.body(size: 18, weight: .semibold))
                     .foregroundStyle(lowQuality > 0 ? Color.danger : Color.brand)
                     .frame(width: 28)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                     Text("Alertas Webfleet")
                         .font(.bodyEmphasis)
                         .foregroundStyle(Color.ink)
@@ -623,10 +620,7 @@ struct ManagerPanelView: View {
                         .foregroundStyle(Color.muted)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.muted)
-                    .accessibilityHidden(true)
+                DisclosureChevron()
             }
             .cardStyle()
         }
@@ -665,7 +659,7 @@ struct ManagerPanelView: View {
                         NavigationLink(value: conv) {
                             ConvocatoriaRow(conv: conv)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.card)
                         // Identificador PROPIO, distinto del de la lista de
                         // convocatorias. Compartirlo parecía elegante —es la
                         // misma convocatoria por otro camino— y volvía la

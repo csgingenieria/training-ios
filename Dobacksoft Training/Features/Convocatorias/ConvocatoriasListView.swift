@@ -266,7 +266,7 @@ struct ConvocatoriasListView: View {
                     NavigationLink(value: conv) {
                         ConvocatoriaRow(conv: conv)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.card)
                     // Identidad estable para el recorrido automatizado: el
                     // nombre de la convocatoria depende de los datos.
                     .accessibilityIdentifier("convocatorias.row")
@@ -314,10 +314,7 @@ struct ConvocatoriaRow: View {
             HStack(spacing: Theme.spacing.base.value) {
                 metric(icon: "person.3.fill", text: "\(conv.totalCandidates) aspirantes")
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.muted)
-                    .accessibilityHidden(true)
+                DisclosureChevron()
             }
         }
         .cardStyle()

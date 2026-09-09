@@ -221,14 +221,12 @@ private struct AttemptDetailContent: View {
                             .font(.bodyEmphasis)
                             .foregroundStyle(Color.ink)
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(Color.muted)
+                        DisclosureChevron()
                     }
                     .padding(Theme.spacing.base.value)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.card)
                 .background(
                     RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
                         .fill(Color.paperElevated)
@@ -385,7 +383,14 @@ private struct AttemptDetailContent: View {
                     }
                 }
                 if let route = attempt.route {
-                    summaryRow(label: "Recorrido", value: route.displayName ?? "—")
+                    summaryRow(
+                        label: "Recorrido",
+                        // Con el código delante: es como se llama al recorrido
+                        // en el parque, y la ficha solo daba el nombre largo.
+                        value: [route.codeIfDistinct, route.displayName]
+                            .compactMap { $0 }
+                            .joined(separator: " · ")
+                    )
                     if route.isPractice == true {
                         summaryRow(label: "Tipo", value: "Prácticas")
                     }
@@ -425,10 +430,7 @@ private struct AttemptDetailContent: View {
                 .foregroundStyle(Color.ink)
                 .multilineTextAlignment(.trailing)
             if showsDisclosure {
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.muted)
-                    .accessibilityHidden(true)
+                DisclosureChevron()
             }
         }
         .contentShape(Rectangle())
@@ -486,6 +488,7 @@ private struct AttemptDetailContent: View {
 
     @ViewBuilder
     private func breakdownRow(_ item: AttemptScoreFamilyDTO) -> some View {
+        VStack(alignment: .leading, spacing: Theme.spacing.xs.value) {
         HStack {
             Text(item.family ?? "—")
                 .font(.bodyText)
@@ -499,7 +502,7 @@ private struct AttemptDetailContent: View {
             case .notMeasured, .missingData:
                 // Sin números —«— / 0» se leía como un cero que el aspirante no
                 // sacó— y ahora con el motivo, que el contrato ya envía.
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: Theme.spacing.xxs.value) {
                     Text(item.presentation.label)
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
@@ -512,6 +515,24 @@ private struct AttemptDetailContent: View {
                     }
                 }
             }
+        }
+
+        // La barra, solo con un máximo real.
+        //
+        // «4,2 / 5,0» pide una división mental por cada familia, y son cuatro o
+        // cinco. La barra dice de un vistazo dónde está el margen — que es la
+        // pregunta que trae al aspirante a esta pantalla.
+        //
+        // `max > 0` no es una precaución teórica: una familia no medida llega
+        // con máximo 0, y `ProgressView(value:total:)` con total 0 pinta una
+        // barra llena. Un margen inexistente presentado como perfecto.
+        if case let .measured(obtained, max) = item.presentation, max > 0 {
+            ProgressView(value: min(obtained, max), total: max)
+                .tint(Color.brand)
+                // La cifra de arriba ya la dice, y la etiqueta de la fila la
+                // incluye: leerla otra vez como porcentaje es ruido.
+                .accessibilityHidden(true)
+        }
         }
         .padding(.vertical, Theme.spacing.sm.value)
         .accessibilityElement(children: .combine)

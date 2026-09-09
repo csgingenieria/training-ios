@@ -114,7 +114,7 @@ struct WebfletAlertsView: View {
     }
 
     private func metric(label: String, value: String, kind: BadgeKind) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
             Text(value)
                 .font(.body(size: 22, weight: .semibold, relativeTo: .title2))
                 .foregroundStyle(kind.foreground)
@@ -170,10 +170,7 @@ private struct WebfletAlertRow: View {
                             .foregroundStyle(Color.muted)
                     }
                     Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(Color.muted)
-                        .accessibilityHidden(true)
+                    DisclosureChevron()
                 }
             }
         }

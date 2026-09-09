@@ -68,6 +68,21 @@ struct AttemptRouteDTO: Hashable, Sendable {
         name ?? label ?? id
     }
 
+    /// El código, **solo si aporta algo que el nombre no dice**.
+    ///
+    /// El aspirante y el instructor hablan del recorrido por su código —«el
+    /// 2B3»— y la ficha enseñaba solo «Bajada Navacerrada a Collado Villalba».
+    /// Con el código delante, lo que se ve en pantalla y lo que se dice en el
+    /// parque son lo mismo.
+    ///
+    /// `nil` cuando el nombre YA es el código, que es el caso de los recorridos
+    /// sin nombre asignado: repetirlo daría «2B3 · 2B3».
+    var codeIfDistinct: String? {
+        guard let codigo = APISentinel.text(label) ?? APISentinel.text(id) else { return nil }
+        guard let mostrado = displayName else { return nil }
+        return codigo.caseInsensitiveCompare(mostrado) == .orderedSame ? nil : codigo
+    }
+
     /// `true` si es un recorrido de prácticas.
     ///
     /// Importa porque **un intento de prácticas no mueve la nota oficial**: se

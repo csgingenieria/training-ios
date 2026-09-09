@@ -21,10 +21,14 @@ import SwiftUI
 enum Theme {
 
     enum spacing {
-        case xs, sm, md, base, lg, xl, xxl, xxxl
+        /// `xxs` son los 2 pt que estaban repartidos como literal por seis
+        /// sitios —el hueco entre una cifra y su rótulo— y que nadie podía
+        /// cambiar de una vez.
+        case xxs, xs, sm, md, base, lg, xl, xxl, xxxl
 
         var value: CGFloat {
             switch self {
+            case .xxs:  return 2
             case .xs:   return 4
             case .sm:   return 8
             case .md:   return 12

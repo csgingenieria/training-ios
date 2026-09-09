@@ -397,7 +397,7 @@ struct ProfileView: View {
             .frame(width: 56, height: 56)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
                 Text(user.name)
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
