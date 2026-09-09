@@ -84,15 +84,15 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 40 | — | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
 | 41 | ✅ | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
 | 42 | ✅ | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
-| 43 | — | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
+| 43 | ✅ | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
 | 44 | — | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
-| 45 | — | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
+| 45 | ✅ | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
 | 46 | — | minor | S | Launch and Login use Theme tokens (themed text field style, muted caption, scaled icon) | visual |
 | 47 | ✅ | minor | S | Convocatoria header card: explicit VoiceOver sentence and no lineLimit at accessibility sizes *(provisional)* | accessibility |
 | 48 | ✅ | minor | M | Metric rows stack vertically at accessibility text sizes (AnyLayout), no fixed-height dividers *(provisional)* | accessibility |
 | 49 | — | minor | S | Widget uses the app's Fraunces/Inter via shared font factories | visual |
 | 50 | — | minor | S | DisclosureChevron component and a 2 pt spacing token (chevron/spacing literals) *(provisional)* | visual |
-| 51 | — | minor | S | Convocatorias in regular width: adaptive two-column grid of cards | ipad |
+| 51 | ✅ | minor | S | Convocatorias in regular width: adaptive two-column grid of cards | ipad |
 | 52 | — | minor | S | App Shortcut «Ver mi posición» once the deep link exists | native-craft |
 | 53 | — | minor | L | Republish the widget snapshot on any app foreground (BGAppRefresh optional later) | native-craft |
 | 54 | ✅ | important | M | MANAGER · Resultados table: scale column widths with Dynamic Type and grow the name column into the iPad pane | accessibility, ipad |
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 38 · parciales: 1 · abiertos: 18.**
+**Cerrados: 41 · parciales: 1 · abiertos: 15.**
 
 Los parciales, con lo que falta de cada uno:
 

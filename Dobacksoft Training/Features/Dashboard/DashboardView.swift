@@ -74,6 +74,31 @@ private struct DashboardContent: View {
             // La app ya estaba abierta cuando llegó el toque.
             openPendingLink()
         }
+        .background(sectionShortcuts)
+    }
+
+    /// ⌘1 … ⌘n para saltar de sección con teclado.
+    ///
+    /// Botones invisibles y de tamaño cero: un `keyboardShortcut` necesita
+    /// colgar de un control, y no hay uno visible al que colgarlo sin inventar
+    /// una fila de botones que nadie ha pedido. Van tras `.accessibilityHidden`
+    /// porque un botón sin rótulo en el recorrido de VoiceOver es ruido.
+    ///
+    /// Se numeran sobre las secciones DEL ROL: para un aspirante ⌘1 es
+    /// Convocatorias y para un instructor es el Panel, igual que el orden que
+    /// ve en pantalla. Numerar sobre la lista completa daría atajos a huecos.
+    @ViewBuilder
+    private var sectionShortcuts: some View {
+        ForEach(Array(sections.prefix(9).enumerated()), id: \.element) { indice, section in
+            Button("") { router.select(section) }
+                .keyboardShortcut(
+                    KeyEquivalent(Character("\(indice + 1)")),
+                    modifiers: .command
+                )
+                .frame(width: 0, height: 0)
+                .opacity(0)
+                .accessibilityHidden(true)
+        }
     }
 
     /// Atiende el enlace que estuviera esperando.
@@ -325,6 +350,23 @@ struct ProfileView: View {
                     .font(.bodyEmphasis)
                 }
                 .accessibilityLabel("Cerrar sesión")
+                // El diálogo cuelga del BOTÓN, no de la pantalla.
+                //
+                // En iPad se presenta como popover y apunta a lo que lo lanzó:
+                // colgado del `Form` aparecía en el centro, sin flecha a nada,
+                // y no se sabía qué acción se estaba confirmando.
+                .confirmationDialog(
+                    "¿Cerrar sesión?",
+                    isPresented: $showLogoutConfirmation,
+                    titleVisibility: .visible
+                ) {
+                    Button("Cerrar sesión", role: .destructive) {
+                        Task { await auth.logout(reason: .userInitiated) }
+                    }
+                    Button("Cancelar", role: .cancel) {}
+                } message: {
+                    Text("Saldrá de la aplicación y tendrá que iniciar sesión de nuevo.")
+                }
             }
         }
         .task { await checkHealth() }
@@ -340,18 +382,6 @@ struct ProfileView: View {
             }
         }
         .navigationTitle("Perfil")
-        .confirmationDialog(
-            "¿Cerrar sesión?",
-            isPresented: $showLogoutConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Cerrar sesión", role: .destructive) {
-                Task { await auth.logout(reason: .userInitiated) }
-            }
-            Button("Cancelar", role: .cancel) {}
-        } message: {
-            Text("Saldrá de la aplicación y tendrá que iniciar sesión de nuevo.")
-        }
     }
 
     @ViewBuilder

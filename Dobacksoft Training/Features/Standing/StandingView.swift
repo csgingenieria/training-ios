@@ -359,6 +359,16 @@ struct MyStandingTabView: View {
             }
         }
         .navigationTitle("Mi posición")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Actualizar", systemImage: "arrow.clockwise") {
+                    Task { await load() }
+                }
+                .keyboardShortcut("r", modifiers: .command)
+                .tint(Color.brand)
+                .accessibilityIdentifier("standing.reload")
+            }
+        }
         // El destino vive en la RAÍZ, fuera del switch.
         //
         // Estaba dentro de `content(selectedId:)`, o sea dentro de la rama

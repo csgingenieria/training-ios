@@ -154,6 +154,17 @@ struct ConvocatoriasListView: View {
         .searchable(text: $searchText, prompt: "Buscar convocatoria")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                // ⌘R, que es lo que un instructor con teclado y funda va a
+                // pulsar. Y el botón visible sirve además a quien no puede
+                // hacer el gesto de tirar hacia abajo.
+                Button("Actualizar", systemImage: "arrow.clockwise") {
+                    Task { await load() }
+                }
+                .keyboardShortcut("r", modifiers: .command)
+                .tint(Color.brand)
+                .accessibilityIdentifier("convocatorias.reload")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 // Un Picker(.menu) suelto en el toolbar se estira hasta ocupar
                 // todo el ancho disponible: tres palabras cortas quedaban dentro
                 // de una cápsula de media pantalla, con el texto pegado al borde
@@ -243,7 +254,14 @@ struct ConvocatoriasListView: View {
     @ViewBuilder
     private func loadedList(_ items: [ConvocatoriaSummaryDTO]) -> some View {
         ScrollView {
-            LazyVStack(spacing: Theme.spacing.md.value) {
+            // Rejilla adaptativa: en un iPad en horizontal la lista era una
+            // columna de tarjetas anchísimas con medio panel en blanco al lado.
+            // `.adaptive` decide cuántas caben, así que en compacto sigue
+            // siendo una sola columna sin ramificar el código.
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 320, maximum: 480), spacing: Theme.spacing.md.value)],
+                spacing: Theme.spacing.md.value
+            ) {
                 ForEach(items) { conv in
                     NavigationLink(value: conv) {
                         ConvocatoriaRow(conv: conv)
