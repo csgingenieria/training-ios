@@ -122,7 +122,7 @@ struct ConvocatoriaDetailView: View {
     private func metricBlock(value: String, label: String) -> some View {
         VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
             Text(value)
-                .font(.display(size: 28, weight: .bold, italic: false, relativeTo: .title))
+                .font(.metricValueLarge)
                 .foregroundStyle(Color.ink)
             Text(label)
                 .font(.metaCaption)

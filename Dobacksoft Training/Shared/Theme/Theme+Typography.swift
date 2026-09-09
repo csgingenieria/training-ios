@@ -28,6 +28,26 @@ extension Font {
     static var appTitle: Font {
         .display(size: 44, weight: .bold, italic: true, relativeTo: .largeTitle)
     }
+    /// Una cifra en una fila de métricas. Inter, porque va con su rótulo.
+    static var metricValue: Font {
+        .body(size: 20, weight: .semibold, relativeTo: .title3)
+    }
+
+    /// Una cifra que es el dato principal de su tarjeta.
+    static var metricValueLarge: Font {
+        .display(size: 28, weight: .bold, italic: false, relativeTo: .title)
+    }
+
+    /// La nota, cuando es lo único que se mira.
+    ///
+    /// Los tres existen porque las cifras estaban escritas con `size:` a mano
+    /// en cada sitio —18, 20, 22, 28, 44— y no había forma de saber si dos que
+    /// coincidían era a propósito o por casualidad. Un rol dice qué ES la
+    /// cifra; un tamaño solo dice cuánto mide.
+    static var scoreHero: Font {
+        .display(size: 56, weight: .bold, italic: false, relativeTo: .largeTitle)
+    }
+
     static var heroNumber: Font {
         .display(size: 80, weight: .bold, italic: false, relativeTo: .largeTitle)
     }

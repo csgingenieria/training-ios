@@ -313,7 +313,7 @@ struct ProgresoView: View {
             }
             if let nota = entrada.score {
                 Text(ScoreFormat.attempt(nota))
-                    .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
+                    .font(.metricValue)
                     .foregroundStyle(Color.ink)
             } else {
                 Text("Sin nota")

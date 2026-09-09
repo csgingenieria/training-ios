@@ -118,13 +118,22 @@ extension RootView {
 private struct LaunchView: View {
     var body: some View {
         VStack(spacing: 16) {
+            // El escudo, como en el acceso: la pantalla de arranque era un
+            // indicador del sistema sobre fondo blanco, sin nada del producto,
+            // y es lo primero que se ve al abrir.
+            Image(systemName: "shield.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(Color.brand)
+                .accessibilityHidden(true)
             ProgressView()
                 .controlSize(.large)
+                .tint(Color.brand)
             Text(SessionCopy.restoring)
                 .font(.metaCaption)
                 .foregroundStyle(Color.muted)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .pageBackground()
     }
 }
 

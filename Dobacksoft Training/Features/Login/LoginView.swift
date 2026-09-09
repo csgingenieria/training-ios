@@ -66,6 +66,13 @@ struct LoginView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .pageBackground()
+        // Un golpe cuando el acceso falla.
+        //
+        // Es la única pantalla donde el resultado importa antes de leer nada:
+        // quien teclea la contraseña con guantes, en un parque, con el
+        // teléfono en una mano, se enteraba de que había fallado solo mirando.
+        // El acierto NO vibra: la pantalla cambia entera, que ya es la señal.
+        .sensoryFeedback(.error, trigger: errorMessage) { _, nuevo in nuevo != nil }
         // El foco arranca en el email: es lo que deja la pantalla lista para
         // teclear en cuanto aparece. Salvo cuando hay aviso de sesión — ahí el
         // teclado taparía el «Reintentar», que es justamente la salida que se
@@ -107,7 +114,7 @@ struct LoginView: View {
     private var form: some View {
         VStack(spacing: Theme.spacing.md.value) {
             TextField("Email", text: $email)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.themed)
                 .font(.bodyText)
                 .keyboardType(.emailAddress)
                 .textContentType(.emailAddress)
@@ -120,7 +127,7 @@ struct LoginView: View {
                 .accessibilityIdentifier("login.email")
 
             SecureField("Contraseña", text: $password)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.themed)
                 .font(.bodyText)
                 .textContentType(.password)
                 .focused($focus, equals: .password)

@@ -24,7 +24,7 @@ struct CachedStandingCard: View {
 
             if let position = cache.position, let total = cache.totalParticipants {
                 Text("Puesto \(position) de \(total)")
-                    .font(.display(size: 28, weight: .bold, italic: false, relativeTo: .title))
+                    .font(.metricValueLarge)
                     .foregroundStyle(Color.ink)
                     .accessibilityLabel("Puesto \(position) de \(total)")
             }
@@ -35,7 +35,7 @@ struct CachedStandingCard: View {
                         .font(.metaCaption)
                         .foregroundStyle(Color.muted)
                     Text(ScoreFormat.aggregate(score))
-                        .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
+                        .font(.metricValue)
                         .foregroundStyle(Color.ink)
                     Text("sobre 10")
                         .font(.metaCaption)

@@ -512,6 +512,10 @@ struct MyStandingTabView: View {
             // seleccionada podía quedar fuera del scroll y la fila parecía no
             // tener ninguna puesta.
             .scrollPosition(id: selectedChipId, anchor: .center)
+            // Un toque al cambiar de convocatoria: cambia TODA la pantalla de
+            // abajo, y el chip recoloreándose es una señal pequeña para algo
+            // tan grande.
+            .sensoryFeedback(.selection, trigger: viewModel.selectedId)
             // Una sola parada de VoiceOver para la fila, con su nombre: sin
             // ella se recorre chip a chip sin saber qué son.
             .accessibilityElement(children: .contain)

@@ -209,6 +209,7 @@ final class ManagerPanelViewModel {
 
 struct ManagerPanelView: View {
     @Environment(AuthSession.self) private var auth
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
     /// pantalla no puede caerse por faltarle el motivo para recargar.
@@ -336,10 +337,14 @@ struct ManagerPanelView: View {
 
     @ViewBuilder
     private func primaryKPIs(dashboard: ManagerDashboardDTO) -> some View {
+        // Adaptativa, no tres columnas fijas.
+        //
+        // Tres KPI forzados a tres columnas en un iPhone dejan cada cifra en
+        // 100 pt con su rótulo partido en tres líneas; en un iPad, tres
+        // tarjetas anchísimas con medio panel vacío. `.adaptive` decide cuántas
+        // caben con el ancho que hay.
         let columns: [GridItem] = [
-            GridItem(.flexible(), spacing: Theme.spacing.md.value),
-            GridItem(.flexible(), spacing: Theme.spacing.md.value),
-            GridItem(.flexible(), spacing: Theme.spacing.md.value),
+            GridItem(.adaptive(minimum: 150, maximum: 240), spacing: Theme.spacing.md.value)
         ]
         LazyVGrid(columns: columns, spacing: Theme.spacing.md.value) {
             KPICell(
@@ -375,10 +380,14 @@ struct ManagerPanelView: View {
 
     @ViewBuilder
     private func activityKPIs(dashboard: ManagerDashboardDTO) -> some View {
+        // Adaptativa, no tres columnas fijas.
+        //
+        // Tres KPI forzados a tres columnas en un iPhone dejan cada cifra en
+        // 100 pt con su rótulo partido en tres líneas; en un iPad, tres
+        // tarjetas anchísimas con medio panel vacío. `.adaptive` decide cuántas
+        // caben con el ancho que hay.
         let columns: [GridItem] = [
-            GridItem(.flexible(), spacing: Theme.spacing.md.value),
-            GridItem(.flexible(), spacing: Theme.spacing.md.value),
-            GridItem(.flexible(), spacing: Theme.spacing.md.value),
+            GridItem(.adaptive(minimum: 150, maximum: 240), spacing: Theme.spacing.md.value)
         ]
         VStack(alignment: .leading, spacing: Theme.spacing.sm.value) {
             Text("Actividad")
@@ -637,12 +646,18 @@ struct ManagerPanelView: View {
                     .font(.sectionTitle)
                     .foregroundStyle(Color.ink)
                 Spacer()
-                if !convocatorias.isEmpty {
+                // «Ver todas» solo en compacto: en ancho regular la lista de
+                // convocatorias ya está en el sidebar, a un toque, y el enlace
+                // ofrece un segundo camino a lo mismo desde la misma pantalla.
+                if !convocatorias.isEmpty, sizeClass != .regular {
                     NavigationLink(value: PanelRoute.convocatorias) {
                         Text("Ver todas")
                             .font(.metaCaption)
                             .foregroundStyle(Color.brand)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityIdentifier("panel.verTodas")
                 }
             }
             .padding(.horizontal, Theme.spacing.xs.value)
@@ -699,7 +714,7 @@ private struct KPICell: View {
                 Spacer()
             }
             Text(value)
-                .font(.display(size: 28, weight: .bold, italic: false, relativeTo: .title))
+                .font(.metricValueLarge)
                 .foregroundStyle(Color.ink)
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)

@@ -149,3 +149,30 @@ struct CardButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == CardButtonStyle {
     static var card: CardButtonStyle { CardButtonStyle() }
 }
+
+/// El campo de texto del producto.
+///
+/// `.roundedBorder` es el de UIKit: no conoce `Color.paperElevated`, no conoce
+/// el radio del design system y en modo oscuro no sigue la misma paleta que
+/// todo lo que tiene al lado. La pantalla de acceso —la primera que ve cada
+/// aspirante— era la única con controles del sistema en una app que tiene sus
+/// tokens definidos.
+struct ThemedTextFieldStyle: TextFieldStyle {
+    // swiftlint:disable:next identifier_name
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(Theme.spacing.base.value)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                    .fill(Color.paperElevated)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.radius.medium.value, style: .continuous)
+                    .stroke(Color.rule, lineWidth: 1)
+            )
+    }
+}
+
+extension TextFieldStyle where Self == ThemedTextFieldStyle {
+    static var themed: ThemedTextFieldStyle { ThemedTextFieldStyle() }
+}

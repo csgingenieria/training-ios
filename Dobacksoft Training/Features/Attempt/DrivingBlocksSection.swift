@@ -50,7 +50,7 @@ struct DrivingBlocksSection: View {
                 Spacer()
                 if let sobreDiez = narrativa.outOfTen {
                     Text(ScoreFormat.attempt(sobreDiez))
-                        .font(.body(size: 20, weight: .semibold, relativeTo: .title3))
+                        .font(.metricValue)
                         .foregroundStyle(Color.ink)
                         .accessibilityLabel(
                             "Su conducción: \(ScoreFormat.spoken(sobreDiez, decimals: 1))"
