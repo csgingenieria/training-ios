@@ -30,11 +30,26 @@ enum APIError: Error, Sendable {
         case .rateLimited(let retryAfter):
             if let s = retryAfter { return "Demasiadas peticiones. Inténtelo de nuevo en \(s) s." }
             return "Demasiadas peticiones. Inténtelo de nuevo más tarde."
-        case .validation(let m, _): return m
-        case .server(let m, _): return m
-        case .decoding: return "La respuesta del servidor no tiene el formato esperado."
-        case .transport: return "No se ha podido conectar. Compruebe su conexión a la red."
-        case .unexpected(let s, _): return "Se ha producido un error inesperado (\(s))."
+        case .validation:
+            // Frase fija, no el mensaje del backend. Un 422 puede traer texto
+            // pensado para un desarrollador o para el portal web, y el
+            // aspirante necesita saber qué HACER.
+            return "No se ha podido procesar la petición. Inténtelo de nuevo."
+        case .server:
+            // Un 502 de nginx daba el fragmento «Error del servidor» bajo un
+            // título «Error», y nada decía si esperar o reintentar. Esto sí, y
+            // nombra la salida que existe: avisar al instructor.
+            return "El servidor no está disponible en este momento. "
+                + "Inténtelo de nuevo en unos minutos; si el problema continúa, avise a su instructor."
+        case .decoding:
+            return "La respuesta del servidor no tiene el formato esperado."
+        case .transport:
+            return "No se ha podido conectar. Compruebe su conexión a la red."
+        case .unexpected:
+            // **Sin el código HTTP.** Un «(418)» no le dice nada a un bombero y
+            // le pide leer un número que no puede usar. El estado y el cuerpo
+            // se registran por `AppLog.api`, que es donde sirven.
+            return "Se ha producido un error inesperado. Inténtelo de nuevo."
         case .configuration: return "La aplicación no está configurada correctamente. Avise al soporte técnico."
         }
     }

@@ -206,7 +206,7 @@ struct ProfileView: View {
     @Environment(AuthSession.self) private var auth
     @State private var showLogoutConfirmation = false
     @State private var quickViewEnabled = SnapshotPublisher.shared.isQuickViewEnabled
-    @State private var serverHealth: String?
+    @State private var serverHealth: ServerHealthPresentation = .checking
 
     var body: some View {
         Form {
@@ -264,13 +264,48 @@ struct ProfileView: View {
                 Text("El widget muestra su puesto y su nota en la pantalla de inicio, donde puede verlos cualquier persona que mire el dispositivo. Viene desactivado.")
             }
 
-            Section("API") {
+            Section {
                 row("Base URL", value: AppEnvironment.baseURLHost ?? "sin configurar")
                 row("Cliente", value: AppEnvironment.clientVersion)
-                // El endpoint de salud existía en el contrato y en el cliente,
-                // y no lo llamaba nadie. Aquí sirve para lo que sirve: saber si
-                // el problema es del servidor antes de llamar a soporte.
-                row("Estado del servidor", value: serverHealth ?? "comprobando…")
+                // El endpoint de salud existía en el contrato y no lo llamaba
+                // nadie. Aquí sirve para lo que sirve: saber si el problema es
+                // del servidor antes de llamar a soporte.
+                //
+                // Es un BOTÓN: `checkHealth()` corría una vez por aparición y
+                // no había forma de volver a preguntar, que es justo lo que se
+                // quiere hacer con un servidor que estaba caído hace un minuto.
+                Button {
+                    Task { await checkHealth() }
+                } label: {
+                    LabeledContent {
+                        HStack(spacing: Theme.spacing.xs.value) {
+                            if serverHealth == .checking {
+                                ProgressView().controlSize(.mini)
+                            }
+                            Text(serverHealth.value)
+                                .font(.bodyText)
+                                .foregroundStyle(Color.inkSecondary)
+                        }
+                    } label: {
+                        Text("Estado del servidor")
+                            .font(.bodyText)
+                            .foregroundStyle(Color.muted)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!serverHealth.canRecheck)
+                .accessibilityIdentifier("profile.health")
+                .accessibilityHint("Tocar para volver a comprobar")
+            } header: {
+                Text("API")
+            } footer: {
+                // La frase va aquí, no en la columna de valor. Antes «No se ha
+                // podido conectar. Compruebe su conexión a la red.» se metía en
+                // el hueco donde cabe «Disponible» y se comía la fila.
+                if let detalle = serverHealth.footer {
+                    Text(detalle)
+                }
             }
 
             Section("Acerca de") {
@@ -365,15 +400,11 @@ struct ProfileView: View {
     /// No es autenticado y no toca `authorized`: si la sesión estuviera rota,
     /// esta comprobación es justo la que dice si el problema es del servidor.
     private func checkHealth() async {
+        serverHealth = .checking
         do {
-            let health = try await APIClient.shared.health()
-            serverHealth = [health.status, health.version]
-                .compactMap { $0 }
-                .joined(separator: " · ")
-        } catch let error as APIError {
-            serverHealth = error.userMessage
+            serverHealth = .from(.success(try await APIClient.shared.health()))
         } catch {
-            serverHealth = "No disponible"
+            serverHealth = .from(.failure(error))
         }
     }
 

@@ -29,15 +29,24 @@ struct APIErrorTests {
         #expect(error.userMessage == "Demasiadas peticiones. Inténtelo de nuevo más tarde.")
     }
 
-    /// Validation and server errors surface the backend's own message.
-    @Test func validationMessage() {
-        let error = APIError.validation(message: "El correo no es válido", details: nil)
-        #expect(error.userMessage == "El correo no es válido")
+    /// **Validation and server errors do NOT surface the backend's message.**
+    ///
+    /// They used to, and that is the defect: a 502 from nginx yielded the
+    /// fragment «Error del servidor» under a title «Error», and a 422 can carry
+    /// text written for a developer or for the web portal. What the candidate
+    /// needs is what to DO, and only the client knows how to say that in the
+    /// register this app uses.
+    @Test func validationSaysWhatToDoAndNotWhatTheBackendSaid() {
+        let error = APIError.validation(message: "invalid payload: field 'x'", details: nil)
+        #expect(error.userMessage == "No se ha podido procesar la petición. Inténtelo de nuevo.")
+        #expect(!error.userMessage.contains("payload"))
     }
 
-    @Test func serverErrorMessage() {
-        let error = APIError.server(message: "Error interno", status: 500)
-        #expect(error.userMessage == "Error interno")
+    @Test func aServerErrorSaysWhenToRetryAndWhoToTell() {
+        let error = APIError.server(message: "502 Bad Gateway", status: 502)
+        #expect(error.userMessage.contains("unos minutos"))
+        #expect(error.userMessage.contains("instructor"), "hay una salida y se nombra")
+        #expect(!error.userMessage.contains("502"))
     }
 
     @Test func decodingMessage() {
@@ -50,9 +59,36 @@ struct APIErrorTests {
         #expect(error.userMessage == "No se ha podido conectar. Compruebe su conexión a la red.")
     }
 
-    @Test func unexpectedMessage() {
+    /// **The HTTP status does not reach the screen.** A «(418)» tells a
+    /// firefighter nothing and asks them to read a number they cannot use. The
+    /// status and body go to `AppLog.api`, which is where they help.
+    @Test func theHTTPStatusNeverReachesTheScreen() {
         let error = APIError.unexpected(status: 418, body: "teapot")
-        #expect(error.userMessage == "Se ha producido un error inesperado (418).")
+        #expect(error.userMessage == "Se ha producido un error inesperado. Inténtelo de nuevo.")
+        #expect(!error.userMessage.contains("418"))
+        #expect(!error.userMessage.contains("teapot"))
+    }
+
+    /// Every message says what to do, or names who decides. A sentence that
+    /// only states the fault leaves the person holding a dead screen.
+    @Test func everyMessageOffersAWayOut() {
+        let salidas = ["Inténtelo", "Vuelva", "Compruebe", "avise", "Avise", "instructor", "soporte"]
+        let errores: [APIError] = [
+            .unauthenticated,
+            .rateLimited(retryAfter: 60),
+            .validation(message: "x", details: nil),
+            .server(message: "x", status: 500),
+            .transport(URLError(.notConnectedToInternet)),
+            .unexpected(status: 418, body: nil),
+            .configuration("BASE_URL ausente")
+        ]
+        for error in errores {
+            let mensaje = error.userMessage
+            #expect(
+                salidas.contains(where: mensaje.contains),
+                "«\(mensaje)» dice qué ha pasado y no qué hacer"
+            )
+        }
     }
 
     /// A build without a usable BASE_URL is not a network fault: the user is

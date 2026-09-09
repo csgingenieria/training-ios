@@ -19,11 +19,20 @@ struct LoginView: View {
     /// Qué campo tiene el teclado. Es lo que permite que Return avance.
     @FocusState private var focus: LoginFormRules.Field?
 
+    /// Hasta cuándo el servidor no acepta más intentos.
+    ///
+    /// El mensaje decía «Inténtelo de nuevo en 60 s» con el botón habilitado,
+    /// invitando a un reintento que falla y que reinicia la ventana.
+    @State private var retryUntil: Date?
+
     /// Si la pantalla es baja: iPhone en horizontal, o con el teclado fuera.
     private var isShort: Bool { verticalSizeClass == .compact }
 
-    private var canSubmit: Bool {
-        LoginFormRules.canSubmit(email: email, password: password)
+    private func canSubmit(now: Date) -> Bool {
+        LoginFormRules.canSubmit(
+            email: email, password: password,
+            retryUntil: retryUntil, now: now
+        )
     }
 
     /// Si hay algo que explicar antes del formulario.
@@ -135,28 +144,38 @@ struct LoginView: View {
                     .accessibilityIdentifier("login.error")
             }
 
-            Button {
-                submit()
-            } label: {
-                if isLoading {
-                    ProgressView()
-                        // El indicador ocupa el sitio del rótulo del botón,
-                        // así que sigue el mismo color que él.
-                        .tint(Color.onBrand)
-                } else {
-                    Text("Iniciar sesión")
+            // `TimelineView` para que la cuenta atrás corra sola: sin ella el
+            // rótulo se quedaría en los segundos que había al pintarse.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let ahora = context.date
+                let restan = LoginFormRules.secondsRemaining(until: retryUntil, now: ahora)
+
+                Button {
+                    submit()
+                } label: {
+                    if isLoading {
+                        ProgressView()
+                            // El indicador ocupa el sitio del rótulo del botón,
+                            // así que sigue el mismo color que él.
+                            .tint(Color.onBrand)
+                    } else if let restan {
+                        Text(LoginFormRules.waitLabel(secondsRemaining: restan))
+                    } else {
+                        Text("Iniciar sesión")
+                    }
                 }
+                .buttonStyle(.brandPrimary)
+                // `canSubmit` y no `isEmpty`: un campo con solo espacios estaba
+                // habilitando el botón y gastando uno de los cinco intentos por
+                // minuto en una petición que no podía funcionar.
+                .disabled(isLoading || !canSubmit(now: ahora))
+                .accessibilityLabel(
+                    isLoading ? "Iniciando sesión"
+                        : restan.map(LoginFormRules.waitLabel) ?? "Iniciar sesión"
+                )
+                .accessibilityIdentifier("login.submit")
             }
-            .buttonStyle(.brandPrimary)
-            // `canSubmit` y no `isEmpty`: un campo con solo espacios estaba
-            // habilitando el botón y gastando uno de los cinco intentos por
-            // minuto en una petición que no podía funcionar.
-            .disabled(isLoading || !canSubmit)
-            // Con teclado físico —cualquier iPad con funda— Return envía
-            // también cuando el foco no está en ningún campo.
             .keyboardShortcut(.defaultAction)
-            .accessibilityLabel(isLoading ? "Iniciando sesión" : "Iniciar sesión")
-            .accessibilityIdentifier("login.submit")
         }
     }
 
@@ -251,7 +270,8 @@ struct LoginView: View {
             focus = next
             return
         }
-        guard LoginFormRules.submitsOnReturn(from: field, email: email, password: password) else {
+        guard LoginFormRules.submitsOnReturn(from: field, email: email, password: password),
+              canSubmit(now: Date()) else {
             // Formulario incompleto: se deja el foco donde está en lugar de
             // gastar un intento en una petición que va a fallar.
             return
@@ -260,7 +280,7 @@ struct LoginView: View {
     }
 
     private func submit() {
-        guard !isLoading, canSubmit else { return }
+        guard !isLoading, canSubmit(now: Date()) else { return }
         // Se cierra el teclado antes de pedir: con el teclado fuera, el
         // indicador de carga del botón queda tapado y parece que no pasa nada.
         focus = nil
@@ -278,6 +298,11 @@ struct LoginView: View {
                 password: LoginFormRules.password(from: password)
             )
         } catch let err as APIError {
+            // Si el servidor dice cuánto esperar, se le cree y se bloquea el
+            // botón: un reintento antes de tiempo reinicia su ventana.
+            if case .rateLimited(let retryAfter) = err {
+                retryUntil = Date().addingTimeInterval(TimeInterval(retryAfter ?? 60))
+            }
             fail(with: err.userMessage)
         } catch {
             fail(with: "Error inesperado: \(error.localizedDescription)")

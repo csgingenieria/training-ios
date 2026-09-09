@@ -184,5 +184,58 @@ extension KeychainBacked {
 
             #expect(vm.lastUpdated == t0, "la hora es la del dato, no la del intento de refrescarlo")
         }
+
+        // MARK: - Una cancelación no es un fallo
+
+        /// **Cambiar de convocatoria a media carga no pinta un error de red.**
+        ///
+        /// Cancela la petición anterior, y envuelta como `.transport` la
+        /// pantalla decía «No se ha podido conectar. Compruebe su conexión a la
+        /// red» con la red perfecta: culpando al aspirante de algo que hizo la
+        /// app.
+        @Test func aCancelledLoadDoesNotShowANetworkError() async throws {
+            let api = FakeTrainingAPI()
+            await api.setStandingResults([.failure(CancellationError())])
+            let auth = try await session(api)
+            let vm = viewModel(api)
+
+            await vm.load(convocatoriaId: "conv-1", auth: auth)
+
+            if case .error = vm.state {
+                Issue.record("una cancelación se ha presentado como fallo de red")
+            }
+        }
+
+        /// La otra forma en que llega: `URLSession` cancelada con la petición en
+        /// vuelo. Tratar solo una de las dos deja el defecto a medias.
+        @Test func aCancelledURLRequestDoesNotShowANetworkError() async throws {
+            let api = FakeTrainingAPI()
+            await api.setStandingResults([.failure(URLError(.cancelled))])
+            let auth = try await session(api)
+            let vm = viewModel(api)
+
+            await vm.load(convocatoriaId: "conv-1", auth: auth)
+
+            if case .error = vm.state {
+                Issue.record("una petición cancelada se ha presentado como fallo de red")
+            }
+        }
+
+        /// El control: un fallo de red DE VERDAD sí se cuenta. Sin él, los dos
+        /// tests de arriba pasarían para un view model que se traga todos los
+        /// errores y deja la pantalla girando para siempre.
+        @Test func arealNetworkFailureIsStillReported() async throws {
+            let api = FakeTrainingAPI()
+            await api.setStandingResults([.failure(URLError(.notConnectedToInternet))])
+            let auth = try await session(api)
+            let vm = viewModel(api)
+
+            await vm.load(convocatoriaId: "conv-1", auth: auth)
+
+            guard case .error = vm.state else {
+                Issue.record("un fallo de red real tiene que verse: \(vm.state)")
+                return
+            }
+        }
     }
 }

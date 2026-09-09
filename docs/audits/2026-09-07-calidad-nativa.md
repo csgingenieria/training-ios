@@ -69,8 +69,8 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 25 | ✅ | important | S | Widget palette follows dark mode: colorsets in the widget catalog instead of light-only hex literals | native-craft, accessibility, visual |
 | 26 | ◐ | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
 | 27 | ✅ | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
-| 28 | — | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
-| 29 | — | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
+| 28 | ✅ | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
+| 29 | ✅ | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
 | 30 | ✅ | minor | S | Convocatoria chips: 44 pt height, isSelected trait, animated selection, selected chip scrolled into view *(provisional)* | accessibility, native-craft |
 | 31 | — | minor | S | CardButtonStyle with press highlight and iPad pointer hover for every NavigationLink card/row *(provisional)* | ipad |
 | 32 | — | minor | S | Haptics on login result and chip selection via .sensoryFeedback *(provisional)* | native-craft |
@@ -82,8 +82,8 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 38 | — | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
 | 39 | — | minor | M | Semantic numeric roles in Theme+Typography (metricValue / metricValueLarge / scoreHero) *(provisional)* | visual |
 | 40 | — | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
-| 41 | — | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
-| 42 | — | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
+| 41 | ✅ | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
+| 42 | ✅ | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
 | 43 | — | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
 | 44 | — | minor | S | Context menus on convocatoria and attempt rows (share, open «Mi posición») *(provisional)* | native-craft |
 | 45 | — | minor | S | Anchor the logout confirmationDialog to the button so the iPad popover points at it | ipad |
@@ -114,7 +114,7 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 34 · parciales: 1 · abiertos: 22.**
+**Cerrados: 38 · parciales: 1 · abiertos: 18.**
 
 Los parciales, con lo que falta de cada uno:
 

@@ -62,6 +62,10 @@ final class ConvocatoriasListViewModel {
             refreshError = nil
             lastUpdated = now()
         } catch {
+            // Una cancelación no es un fallo que contar: cambiar de
+            // convocatoria a media carga cancela la anterior, y pintar su error
+            // culparía al aspirante de algo que hizo la app.
+            guard !Task.isCancelled, !error.isCancellation else { return }
             let mensaje = (error as? APIError)?.userMessage ?? error.localizedDescription
             if teniaDatos {
                 // La hora NO se mueve: es la del dato que se está viendo.

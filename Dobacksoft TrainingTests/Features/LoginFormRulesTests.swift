@@ -81,4 +81,71 @@ struct LoginFormRulesTests {
         #expect(LoginFormRules.submitsOnReturn(from: .email, email: "a@b.example", password: "x") == false,
                 "desde el email se avanza, no se envía")
     }
+
+    // MARK: - El límite de peticiones
+
+    private var t0: Date { Date(timeIntervalSince1970: 1_757_000_000) }
+
+    /// **While the window is open the form cannot be submitted.**
+    ///
+    /// The message said «Inténtelo de nuevo en 60 s» with the button still
+    /// enabled, so it invited a retry that would fail — and a failed retry
+    /// restarts the window. It bit me twice inside this very working session.
+    @Test func duringTheRateLimitTheFormCannotBeSubmitted() {
+        #expect(LoginFormRules.canSubmit(
+            email: "a@b.example", password: "x",
+            retryUntil: t0.addingTimeInterval(30), now: t0
+        ) == false)
+    }
+
+    @Test func onceTheWindowPassesItCanBeSubmittedAgain() {
+        #expect(LoginFormRules.canSubmit(
+            email: "a@b.example", password: "x",
+            retryUntil: t0.addingTimeInterval(30), now: t0.addingTimeInterval(31)
+        ))
+    }
+
+    /// The boundary is inclusive: at the exact instant the server said, it is
+    /// allowed. Waiting one more second than asked is a worse answer than
+    /// trusting the number the server gave.
+    @Test func theBoundaryIsTheInstantTheServerGave() {
+        let hasta = t0.addingTimeInterval(30)
+        #expect(LoginFormRules.canSubmit(email: "a@b.example", password: "x", retryUntil: hasta, now: hasta))
+    }
+
+    /// With no limit in force nothing changes: an incomplete form is still
+    /// unsubmittable, and a complete one still works.
+    @Test func withoutALimitTheOrdinaryRulesHold() {
+        #expect(LoginFormRules.canSubmit(email: "a@b.example", password: "x", retryUntil: nil, now: t0))
+        #expect(LoginFormRules.canSubmit(email: "", password: "x", retryUntil: nil, now: t0) == false)
+    }
+
+    /// **The limit never unblocks an incomplete form.** Both conditions have to
+    /// hold, and checking only the clock would enable the button on an empty
+    /// form the moment the window expired.
+    @Test func anExpiredLimitDoesNotExcuseAnEmptyForm() {
+        #expect(LoginFormRules.canSubmit(
+            email: "", password: "",
+            retryUntil: t0, now: t0.addingTimeInterval(60)
+        ) == false)
+    }
+
+    /// The remaining seconds round UP: with 0.4 s left, saying «0 s» while
+    /// refusing the tap is worse than saying «1 s».
+    @Test func theRemainingSecondsRoundUp() {
+        #expect(LoginFormRules.secondsRemaining(until: t0.addingTimeInterval(0.4), now: t0) == 1)
+        #expect(LoginFormRules.secondsRemaining(until: t0.addingTimeInterval(30), now: t0) == 30)
+    }
+
+    @Test func withNothingToWaitForThereAreNoSeconds() {
+        #expect(LoginFormRules.secondsRemaining(until: nil, now: t0) == nil)
+        #expect(LoginFormRules.secondsRemaining(until: t0, now: t0) == nil)
+        #expect(LoginFormRules.secondsRemaining(until: t0, now: t0.addingTimeInterval(5)) == nil)
+    }
+
+    /// Singular and plural. «Espere 1 segundos» reads as a bug.
+    @Test func theWaitLabelAgreesInNumber() {
+        #expect(LoginFormRules.waitLabel(secondsRemaining: 1) == "Espere 1 segundo")
+        #expect(LoginFormRules.waitLabel(secondsRemaining: 2) == "Espere 2 segundos")
+    }
 }

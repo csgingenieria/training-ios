@@ -226,6 +226,16 @@ actor APIClient {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
+            // Una cancelación NO es un fallo de red y no se disfraza de uno.
+            //
+            // Cambiar de chip de convocatoria a media carga cancela la anterior,
+            // y envuelta como `.transport` la pantalla enseñaba «No se ha podido
+            // conectar. Compruebe su conexión a la red» con la red perfecta —
+            // culpando al aspirante de algo que hizo la app.
+            //
+            // Se relanza tal cual para que quien la pidió pueda distinguirla:
+            // `Task.isCancelled` en el view model.
+            if error.isCancellation { throw error }
             throw APIError.transport(error)
         }
         guard let http = response as? HTTPURLResponse else {
