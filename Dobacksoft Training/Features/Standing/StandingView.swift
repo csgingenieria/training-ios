@@ -3,6 +3,12 @@ import SwiftUI
 @MainActor
 @Observable
 final class StandingViewModel {
+    /// Deliberadamente **sin `Equatable`**.
+    ///
+    /// La auditoría proponía hacerlo para poder animar con
+    /// `.animation(_:value:)`, y eso habría arrastrado a `StandingDTO` y de ahí
+    /// a media capa de modelos: trabajo real en tipos que no lo necesitan para
+    /// nada más. Se anima sobre `phase`, que no lleva el dato dentro.
     enum State {
         case loading
         case loaded(StandingDTO)
@@ -21,6 +27,17 @@ final class StandingViewModel {
     }
 
     var state: State = .loading
+
+    /// La fase, para animar el cambio sin animar cada cifra. Ver `ScreenPhase`.
+    var phase: ScreenPhase {
+        switch state {
+        case .loading:  .loading
+        case .loaded:   .loaded
+        case .cached:   .cached
+        case .notFound: .empty
+        case .error:    .error
+        }
+    }
 
     /// Hay un refresco en curso SOBRE datos ya visibles.
     ///
@@ -176,6 +193,11 @@ struct StandingCard: View {
                     .foregroundStyle(Color.muted)
                 Text("\(standing.position)")
                     .font(.heroNumber)
+                    // La cifra saltaba de golpe al refrescar. `numericText`
+                    // rueda los dígitos que cambian y deja quietos los demás,
+                    // que es lo que hace legible un cambio de puesto en vez de
+                    // un parpadeo.
+                    .contentTransition(.numericText())
                     .foregroundStyle(Color.brand)
                     .accessibilityLabel("Puesto \(standing.position) de \(standing.totalCandidates)")
                 Text("de \(standing.totalCandidates)")
@@ -293,6 +315,10 @@ private struct StudentAttemptRoute: Hashable {
 /// + standing + lista de intentos. Si tiene una sola, va directo a ella.
 struct MyStandingTabView: View {
     @Environment(AuthSession.self) private var auth
+
+    /// `withAnimation` explícito no lee el entorno por su cuenta —el
+    /// modificador `animatedState` sí—, así que aquí hace falta a mano.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Opcional a propósito: las previsualizaciones no lo inyectan, y una
     /// pantalla no puede caerse por faltarle el motivo para recargar.
@@ -451,7 +477,12 @@ struct MyStandingTabView: View {
     private func convocatoriaChip(_ conv: ConvocatoriaSummaryDTO) -> some View {
         let isSelected = conv.id == viewModel.selectedId
         Button {
-            viewModel.selectedId = conv.id
+            // Con curva: el chip recoloreaba de golpe y el cambio de
+            // convocatoria —que cambia TODA la pantalla de abajo— no tenía
+            // ninguna señal de que hubiera pasado algo.
+            withAnimation(Motion.animation(Theme.motion.outStrong, reduceMotion: reduceMotion)) {
+                viewModel.selectedId = conv.id
+            }
         } label: {
             Text(conv.name)
                 .font(.body(size: 13, weight: .semibold, relativeTo: .footnote))
@@ -759,6 +790,11 @@ struct MyConvocatoriaContentView: View {
                             .fill(Color.paperElevated)
                     )
                     .themedShadow(.small)
+                    // Reordenar o filtrar movía las filas de golpe y la lista
+                    // parecía otra que aparece de la nada. Se anima la LLAVE
+                    // del orden, no los datos: llegar un intento nuevo del
+                    // servidor no tiene que reacomodar la pantalla entera.
+                    .animatedState(listOrderKey)
                 }
             case .empty:
                 // Con «Actualizar»: un aspirante que acaba de conducir abre la
@@ -830,6 +866,12 @@ struct MyConvocatoriaContentView: View {
         // vueltas sin manera de enterarse de que estaba filtrada — y podía
         // concluir que había conducido menos de las que condujo.
         .accessibilityValue(AttemptFilterCopy.spokenState(quality: qualityFilter, score: scoreFilter))
+    }
+
+    /// Lo que hace que reordenar o filtrar se lea como un movimiento y no como
+    /// una lista distinta que aparece de golpe.
+    private var listOrderKey: String {
+        "\(sortMode.rawValue)-\(qualityFilter.rawValue)-\(scoreFilter.rawValue)"
     }
 
     private func applyFiltersAndSort(_ items: [AttemptSummaryDTO]) -> [AttemptSummaryDTO] {

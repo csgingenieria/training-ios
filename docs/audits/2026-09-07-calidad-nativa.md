@@ -67,7 +67,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 23 | ✅ | important | M | Readable-width cap (680 pt) for every ScrollView content column on iPad *(provisional)* | ipad |
 | 24 | ✅ | important | S | Widget: text styles instead of fixed 34/22/9 pt, and freshness note in the VoiceOver label | accessibility |
 | 25 | ✅ | important | S | Widget palette follows dark mode: colorsets in the widget catalog instead of light-only hex literals | native-craft, accessibility, visual |
-| 26 | — | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
+| 26 | ◐ | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
 | 27 | ✅ | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
 | 28 | — | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
 | 29 | — | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
@@ -114,16 +114,27 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 26 · parciales: 3 · abiertos: 28.**
+**Cerrados: 26 · parciales: 4 · abiertos: 27.**
 
 Los parciales, con lo que falta de cada uno:
 
 - **#3** — hecho en standing/progreso/convocatorias; el detalle del intento sigue vaciándose
 - **#5** — hecho en convocatorias; falta el vacío de «Mi posición»
 - **#34** — rótulos sí (fdb368a); falta el SharePreview
+- **#26** — hechas las animaciones LOCALES: la cifra del puesto con
+  `contentTransition(.numericText())`, la selección de convocatoria con su
+  curva, y la lista al reordenar o filtrar. Todas respetan «Reducir
+  movimiento», que el punto no pedía y hace falta.
+  **Descartado a propósito el fundido de pantalla completa** que el punto
+  proponía (`.animation(_:value:)` sobre el `Group` que conmuta más
+  `.transition(.opacity)`). Medido con el recorrido de staging:
+  sin animaciones 139 s · solo locales 136 s · **con el fundido 304 s.**
+  Duplicar el tiempo de render de una pantalla no es pulido, es una regresión —
+  y en el lote provocaba «No session after 30 s» porque la app iba tan lenta
+  que el acceso no llegaba a tiempo. Si se quiere ese fundido, hay que
+  averiguar primero por qué cuesta tanto.
 
-Abierto de severidad *important*: **#26** (animaciones con los tokens de
-`Theme.motion`). El resto son los 27 menores.
+**No queda ningún *important* abierto.** El resto son los 27 menores.
 
 **Corrección del 2026-09-08.** El #15 figuraba abierto por un error de este
 mismo repaso: se comprobó `sensorSeverity` —la etiqueta del sensor— cuando el

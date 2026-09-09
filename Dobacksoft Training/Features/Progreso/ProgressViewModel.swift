@@ -20,6 +20,21 @@ final class ProgressViewModel {
 
     var state: State = .loading
 
+    /// En qué fase está la pantalla, sin el dato dentro.
+    ///
+    /// Animar sobre el estado entero pediría `Equatable` en DTO grandes —y
+    /// volvería a animar cuando cambia solo una cifra dentro de `.loaded`, que
+    /// es cosa de `contentTransition`, no de una transición de pantalla—. Lo
+    /// que se anima es el paso de una fase a otra.
+    var phase: ScreenPhase {
+        switch state {
+        case .loading:  .loading
+        case .loaded:   .loaded
+        case .notFound: .empty
+        case .error:    .error
+        }
+    }
+
     /// Refresco en curso SOBRE datos ya visibles.
     var isRefreshing = false
 
