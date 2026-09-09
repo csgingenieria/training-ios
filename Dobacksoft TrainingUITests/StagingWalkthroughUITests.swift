@@ -846,7 +846,17 @@ final class StagingWalkthroughUITests: XCTestCase {
         )
         guard XCTWaiter.wait(for: [gone], timeout: 30) == .completed else {
             capture(app, named: "00-login-fallido")
-            return XCTFail("No session after 30 s. See the attached screenshot for what the screen said.")
+            // El mensaje que la pantalla está dando, no «mira la captura».
+            //
+            // «No session after 30 s» describe el síntoma y calla la causa, así
+            // que las tres veces que ha salido hoy lo he atribuido a contención
+            // de la máquina —que es lo que era dos de ellas— sin poder
+            // distinguirlo de un límite de intentos, unas credenciales
+            // caducadas o el backend caído. El error lo pone la app en pantalla
+            // con su identificador; leerlo cuesta una línea.
+            let dicho = element("login.error", in: app)
+            let motivo = dicho.exists ? dicho.label : "la pantalla no muestra ningún error"
+            return XCTFail("Sin sesión tras 30 s. La pantalla dice: «\(motivo)».")
         }
     }
 
