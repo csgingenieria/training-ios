@@ -98,7 +98,7 @@ struct AttemptMapView: View {
             ForEach(payload.pinnableEvents) { evento in
                 if let coordenada = evento.coordinate {
                     Annotation(
-                        evento.narrative ?? evento.type ?? "Incidencia",
+                        AttemptMapCopy.eventTitle(evento),
                         coordinate: coordenada.clLocation
                     ) {
                         Button {
@@ -197,6 +197,15 @@ private struct EventDetailSheet: View {
 
                     if let perdida = event.stabilityLossPercent {
                         Text("Pérdida de estabilidad: \(ScoreFormat.attempt(perdida)) %")
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.muted)
+                    }
+
+                    // La intensidad que la ficha ya decía de este mismo evento.
+                    // Llegaba en el contrato y se descartaba al decodificar, así
+                    // que la misma incidencia contaba menos abierta desde aquí.
+                    if let intensidad = event.intensity {
+                        Text(AttemptMapCopy.intensity(intensidad))
                             .font(.metaCaption)
                             .foregroundStyle(Color.muted)
                     }

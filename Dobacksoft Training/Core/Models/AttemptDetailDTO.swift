@@ -358,34 +358,18 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
 
     /// Las tres etiquetas reales que hay detrás de `severity`.
     ///
-    /// Se reconstruyen desde los cubos del backend (LEVE 0,3 · MODERADO 0,6 ·
-    /// CRÍTICO 0,95). Nunca presentar `severity` como escala continua: ver la
-    /// nota del campo.
-    enum SensorSeverity: String, Sendable {
-        case leve = "Leve"
-        case moderada = "Moderada"
-        case critica = "Crítica"
-    }
+    /// El nombre se conserva por los sitios que ya lo escriben; la regla vive
+    /// en `SensorIntensity`, compartida con el mapa.
+    typealias SensorSeverity = SensorIntensity
 
-    /// Intensidad, preferentemente desde la etiqueta que ahora envía el
-    /// contrato, y solo si hace falta reconstruida del número.
+    /// Intensidad, preferentemente desde la etiqueta que envía el contrato y
+    /// solo si hace falta reconstruida del número.
     ///
-    /// La etiqueta es mejor fuente: el número venía en cubos y con un centinela
-    /// 0,5 para «no se supo clasificar», que reconstruido caía en «moderada» —
-    /// una intensidad que nadie midió.
-    var intensity: SensorSeverity? {
-        switch (sensorSeverity ?? "").uppercased() {
-        case "LEVE":     return .leve
-        case "MODERADO": return .moderada
-        case "CRITICO":  return .critica
-        default: break
-        }
-        guard let severity, severity != 0.5 else { return nil }
-        switch severity {
-        case ..<0.45: return .leve
-        case ..<0.8:  return .moderada
-        default:      return .critica
-        }
+    /// **La misma regla que usa el mapa**, y a propósito: los dos endpoints
+    /// describen los mismos eventos, y una derivación por DTO es cómo la misma
+    /// incidencia acaba leyéndose distinta según por dónde se abra.
+    var intensity: SensorIntensity? {
+        SensorIntensity.derived(label: sensorSeverity, number: severity)
     }
 
     /// `true` cuando este evento restó de verdad.

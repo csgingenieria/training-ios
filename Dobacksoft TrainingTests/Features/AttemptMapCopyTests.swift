@@ -117,7 +117,7 @@ struct AttemptMapCopyTests {
     /// it is known, where in the lap.
     @Test func theSpokenPinSaysWhatHappened() {
         let evento = GpsEventDTO(
-            id: "e-1", type: "EVT_01", severity: 0.9, source: "DOBACK_ELITE", timestamp: nil,
+            id: "e-1", type: "EVT_01", severity: 0.9, sensorSeverity: "CRITICO", source: "DOBACK_ELITE", timestamp: nil,
             lat: 40, lng: -3, penaltyPoints: 1, noPenaltyReason: nil, stabilityLossPercent: nil,
             narrative: "Frenada brusca.", advice: "Anticipe la frenada.",
             speedKmh: nil, limitKmh: nil, excessKmh: nil
@@ -133,7 +133,7 @@ struct AttemptMapCopyTests {
     /// out an internal code.
     @Test func aPinWithoutANarrativeStillSaysSomething() {
         let evento = GpsEventDTO(
-            id: "e-1", type: "EVT_01", severity: nil, source: nil, timestamp: nil,
+            id: "e-1", type: "EVT_01", severity: nil, sensorSeverity: nil, source: nil, timestamp: nil,
             lat: 40, lng: -3, penaltyPoints: nil, noPenaltyReason: nil, stabilityLossPercent: nil,
             narrative: nil, advice: nil, speedKmh: nil, limitKmh: nil, excessKmh: nil
         )

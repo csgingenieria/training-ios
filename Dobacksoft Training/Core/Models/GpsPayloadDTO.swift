@@ -143,7 +143,21 @@ struct GpsPointDTO: Sendable, Hashable {
     let lat: Double?
     let lng: Double?
     let speed: Double?
-    let confidence: String?
+
+    /// Cuánta confianza tiene el punto, de 0 a 1.
+    ///
+    /// **Estaba declarado `String?` y es un número.** No a veces: nunca llegó
+    /// como texto. En las once vueltas del aspirante de staging son 4.685
+    /// puntos con `null` y 381 con `0.9`, y ni uno con una cadena. Un
+    /// `decodeIfPresent(String.self)` sobre `0.9` lanza, y como el DTO se
+    /// decodificaba de forma estricta, un punto entre cinco mil **hundía el
+    /// mapa entero**: los once de once.
+    ///
+    /// Es el mismo campo y el mismo significado que `GpsTrackDTO.confidence`,
+    /// que sí estaba como `Double`. Dos declaraciones del mismo dato y solo
+    /// una correcta.
+    let confidence: Double?
+
     let source: String?
 
     var coordinate: GpsCoordinateDTO? {
@@ -152,7 +166,31 @@ struct GpsPointDTO: Sendable, Hashable {
     }
 }
 
-nonisolated extension GpsPointDTO: Decodable {}
+nonisolated extension GpsPointDTO: Decodable {
+    /// Lectura tolerante, por la misma razón que en los eventos.
+    ///
+    /// La regla ya estaba escrita para `GpsEventDTO` —«un tipo inesperado no
+    /// puede hundir la respuesta»— y `points` se quedó fuera. Ahí estuvo el
+    /// defecto: la disciplina existía, aplicada a un array de los cuatro.
+    ///
+    /// Las coordenadas también se leen tolerantes: sin ellas el punto no se
+    /// coloca, y un punto que no se coloca vale infinitamente más que un mapa
+    /// que no se dibuja.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            lat: c.lenientDouble(forKey: .lat),
+            lng: c.lenientDouble(forKey: .lng),
+            speed: c.lenientDouble(forKey: .speed),
+            confidence: c.lenientDouble(forKey: .confidence),
+            source: c.lenientString(forKey: .source)
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case lat, lng, speed, confidence, source
+    }
+}
 
 // MARK: - Eventos sobre el mapa
 
@@ -166,6 +204,19 @@ struct GpsEventDTO: Sendable, Hashable, Identifiable {
     let id: String?
     let type: String?
     let severity: Double?
+
+    /// La etiqueta del sensor (`LEVE`, `MODERADO`, `CRITICO`).
+    ///
+    /// Llegaba y se tiraba. El mapa mandaba **solo la etiqueta con el nombre
+    /// del número** —`severity: "CRITICO"`— y eso hundía el payload entero; al
+    /// arreglarlo, el backend pasó a mandar las dos con los mismos nombres que
+    /// la ficha, y el cliente se quedó decodificando una sola.
+    ///
+    /// Es el patrón que este repo repite: el campo llega, alguien lo arregla al
+    /// otro lado, y aquí sigue sin leerse. El defecto anterior era ruidoso —la
+    /// pantalla se caía—; este es silencioso.
+    let sensorSeverity: String?
+
     let source: String?
     let timestamp: String?
 
@@ -184,6 +235,15 @@ struct GpsEventDTO: Sendable, Hashable, Identifiable {
     let speedKmh: Double?
     let limitKmh: Double?
     let excessKmh: Double?
+
+    /// Con qué intensidad midió el sensor, por la MISMA regla que la ficha.
+    ///
+    /// Sin esto el mapa se callaba una intensidad que la ficha sí decía del
+    /// mismo evento, y quien abría la incidencia desde el mapa veía menos que
+    /// quien la abría desde el desglose.
+    var intensity: SensorIntensity? {
+        SensorIntensity.derived(label: sensorSeverity, number: severity)
+    }
 
     /// Dónde ocurrió, o `nil` si no consta.
     var coordinate: GpsCoordinateDTO? {
@@ -207,6 +267,7 @@ nonisolated extension GpsEventDTO: Decodable {
             id: APISentinel.text(c.lenientString(forKey: .id)),
             type: c.lenientString(forKey: .type),
             severity: c.lenientDouble(forKey: .severity),
+            sensorSeverity: c.lenientString(forKey: .sensorSeverity),
             source: c.lenientString(forKey: .source),
             timestamp: c.lenientString(forKey: .timestamp),
             lat: c.lenientDouble(forKey: .lat),
@@ -223,7 +284,7 @@ nonisolated extension GpsEventDTO: Decodable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, type, severity, source, timestamp, lat, lng
+        case id, type, severity, sensorSeverity, source, timestamp, lat, lng
         case penaltyPoints, noPenaltyReason, stabilityLossPercent
         case narrative, advice, speedKmh, limitKmh, excessKmh
     }

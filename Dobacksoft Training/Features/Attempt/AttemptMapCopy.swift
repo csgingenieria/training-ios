@@ -53,15 +53,49 @@ nonisolated enum AttemptMapCopy {
         return "Límite de la vía: \(ScoreFormat.attempt(limit)) km/h. Exceso: \(ScoreFormat.attempt(excess)) km/h.\(medida)"
     }
 
+    /// Cómo se nombra un pin en la propia superficie del mapa.
+    ///
+    /// **Nunca el código del detector.** `EVT_01` no significa nada para nadie,
+    /// y el rótulo del pin lo usaba de respaldo mientras el de VoiceOver lo
+    /// evitaba con este mismo argumento escrito al lado: quien ve la pantalla
+    /// leía un código que a quien la escucha se le ocultaba.
+    static func eventTitle(_ event: GpsEventDTO) -> String {
+        event.narrative ?? "Incidencia"
+    }
+
+    /// La intensidad con la que el SENSOR midió la incidencia.
+    ///
+    /// No «gravedad de la penalización»: este endpoint no recibe el campo que
+    /// dice si el evento restó, así que esa frase iría firmada por un dato que
+    /// el mapa no tiene. Lo que se afirma es lo que midió el detector, y dónde
+    /// mirar la deducción ya lo dice `deductionLivesInTheSheet`.
+    static func intensity(_ intensity: SensorIntensity) -> String {
+        "Intensidad medida por el sensor: \(intensity.spoken)."
+    }
+
     /// Lo que VoiceOver dice de un pin.
     ///
     /// Sin el código del detector: `EVT_01` no significa nada para quien
     /// escucha la pantalla, y leerlo en voz alta es ruido con aspecto de dato.
+    ///
+    /// La intensidad se añade cuando consta, porque es lo único que distingue
+    /// un pin de otro: todos se dibujan con el mismo círculo rojo, así que sin
+    /// decirla, escuchar el mapa da menos que verlo.
     static func eventLabel(_ event: GpsEventDTO) -> String {
-        if let narrativa = event.narrative { return narrativa }
-        if let exceso = event.excessKmh {
-            return "Exceso de velocidad de \(ScoreFormat.attempt(exceso)) kilómetros por hora"
+        var partes: [String] = []
+
+        if let narrativa = event.narrative {
+            partes.append(narrativa)
+        } else if let exceso = event.excessKmh {
+            partes.append("Exceso de velocidad de \(ScoreFormat.attempt(exceso)) kilómetros por hora")
+        } else {
+            partes.append("Incidencia registrada en el recorrido")
         }
-        return "Incidencia registrada en el recorrido"
+
+        if let intensidad = event.intensity {
+            partes.append("intensidad \(intensidad.spoken)")
+        }
+
+        return partes.joined(separator: ", ")
     }
 }
