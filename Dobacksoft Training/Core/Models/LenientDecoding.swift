@@ -47,6 +47,27 @@ nonisolated extension KeyedDecodingContainer {
         return nil
     }
 
+    /// Una etiqueta de un conjunto CERRADO: solo texto, nunca un número.
+    ///
+    /// **El espejo de `lenientDouble`.** Aquel se niega a inventar una cifra a
+    /// partir de «MODERADO»; este se niega a inventar una etiqueta a partir de
+    /// `0.9`. `lenientString` sí lo hace —devuelve `"0.9"`— y para un texto
+    /// libre está bien: una descripción o un `source` con un número dentro no
+    /// engaña a nadie.
+    ///
+    /// Pero `confidence` vale `"HIGH"` o `"LOW"`, y `"0.9"` no es ninguna de
+    /// las dos. Sería una etiqueta que el detector no puso, guardada y
+    /// posiblemente enseñada con la misma cara que una de verdad. Un campo que
+    /// no se entiende es un campo que no consta, y eso las pantallas ya lo
+    /// saben decir.
+    ///
+    /// El caso no es teórico: el mismo nombre `confidence` es número en dos
+    /// sitios del mapa y texto en la ficha. Tres campos que comparten nombre
+    /// son tres oportunidades de que llegue la forma del vecino.
+    func lenientLabel(forKey key: Key) -> String? {
+        try? decodeIfPresent(String.self, forKey: key)
+    }
+
     /// Un booleano que puede llegar como booleano, como 0/1 o como «true».
     func lenientBool(forKey key: Key) -> Bool? {
         if let value = try? decodeIfPresent(Bool.self, forKey: key) { return value }

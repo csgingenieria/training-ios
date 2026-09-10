@@ -109,16 +109,25 @@ nonisolated extension GpsTrackDTO: Decodable {
         // Los segmentos llegan como pares `[lat, lng]`. Un par roto se descarta
         // en vez de tumbar la traza: perder un punto es recuperable, perder la
         // vuelta entera por un punto no.
-        let crudos = try c.decodeIfPresent([[[Double]]].self, forKey: .segments) ?? []
+        //
+        // Y con `try?`: si la FORMA entera del array sorprende —una coordenada
+        // como texto, un nivel de anidamiento de más—, se pierde la traza
+        // ajustada y el mapa cae a los puntos crudos, que es el respaldo que ya
+        // tiene diseñado. Con `try` a secas se perdía el payload completo: ni
+        // traza, ni puntos, ni eventos, ni recorrido.
+        let crudos = (try? c.decodeIfPresent([[[Double]]].self, forKey: .segments)) ?? []
         self.init(
-            segments: crudos.map { segmento in
+            segments: (crudos ?? []).map { segmento in
                 segmento.compactMap { par in
                     par.count == 2 ? GpsCoordinateDTO(lat: par[0], lng: par[1]) : nil
                 }
             },
-            matched: try c.decodeIfPresent(Bool.self, forKey: .matched),
-            confidence: try c.decodeIfPresent(Double.self, forKey: .confidence),
-            source: try c.decodeIfPresent(String.self, forKey: .source)
+            // Tolerantes por lo mismo que en el punto y en el evento: ninguna
+            // de estas tres cifras vale el mapa entero. `confidence` fue
+            // justamente el campo que resultó tener otro tipo del declarado.
+            matched: c.lenientBool(forKey: .matched),
+            confidence: c.lenientDouble(forKey: .confidence),
+            source: c.lenientString(forKey: .source)
         )
     }
 
@@ -153,9 +162,18 @@ struct GpsPointDTO: Sendable, Hashable {
     /// decodificaba de forma estricta, un punto entre cinco mil **hundía el
     /// mapa entero**: los once de once.
     ///
-    /// Es el mismo campo y el mismo significado que `GpsTrackDTO.confidence`,
-    /// que sí estaba como `Double`. Dos declaraciones del mismo dato y solo
-    /// una correcta.
+    /// **Se decodifica, y no se usa para decidir nada.** Medido contra la base
+    /// del VPS sobre 23.644 puntos de intentos cerrados: 23.209 nulos y 435 con
+    /// valor, y ese valor es `0.9` **siempre** —un único valor distinto—. No es
+    /// una medida de confianza: es una constante que alguien puso. Pintarla, o
+    /// filtrar puntos por ella, sería presentar un adorno como un dato.
+    ///
+    /// Opcional, y por eso no muerde: si fuera `Double` a secas fallaría en el
+    /// 98,2 % de los puntos, no en un caso raro.
+    ///
+    /// Comparte nombre con `GpsTrackDTO.confidence` (número, de verdad medido)
+    /// y con `AttemptEventDTO.confidence` (texto, `"HIGH"`/`"LOW"`). Los tres
+    /// se llaman igual y no son lo mismo.
     let confidence: Double?
 
     let source: String?
@@ -267,7 +285,7 @@ nonisolated extension GpsEventDTO: Decodable {
             id: APISentinel.text(c.lenientString(forKey: .id)),
             type: c.lenientString(forKey: .type),
             severity: c.lenientDouble(forKey: .severity),
-            sensorSeverity: c.lenientString(forKey: .sensorSeverity),
+            sensorSeverity: c.lenientLabel(forKey: .sensorSeverity),
             source: c.lenientString(forKey: .source),
             timestamp: c.lenientString(forKey: .timestamp),
             lat: c.lenientDouble(forKey: .lat),

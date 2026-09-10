@@ -274,7 +274,15 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     /// backend y hoy se descartan en su remap.
     let severity: Double?
 
-    let confidence: String? // "HIGH" / "LOW"
+    /// La confianza del DETECTOR sobre este evento: `"HIGH"` / `"LOW"`.
+    ///
+    /// **Texto, y comparte nombre con dos campos numéricos de otro endpoint.**
+    /// `points[].confidence` y `track.confidence` del mapa son números; este es
+    /// una etiqueta. No son el mismo campo con dos formas: son tres campos que
+    /// comparten nombre en objetos distintos. Un DTO compartido o un
+    /// decodificador genérico los junta, y ahí es donde nace el defecto —
+    /// `ConfidenceIsThreeFieldsTests` lo fija.
+    let confidence: String?
     let description: String?
     let timestamp: String?
     let source: String?
@@ -453,23 +461,39 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
 }
 
 nonisolated extension AttemptEventDTO: Decodable {
+    /// Lectura tolerante, como en el mapa.
+    ///
+    /// **El cuarto array del contrato al que le faltaba la regla.** «Un tipo
+    /// inesperado no puede hundir la respuesta» estaba escrita y probada en
+    /// `GpsEventDTO`, se aplicó a `GpsPointDTO` cuando `confidence` resultó ser
+    /// un número, y aquí seguían once `decodeIfPresent` estrictos: una sorpresa
+    /// en cualquiera de ellos tiraba la ficha ENTERA, que es la pantalla donde
+    /// un aspirante entiende una deducción y la nombra si quiere revisarla.
+    ///
+    /// No es una hipótesis: `severity` ya llegó como texto por este mismo
+    /// endpoint una vez, y `points[].confidence` era un número declarado como
+    /// cadena. Tres veces el mismo agujero en dos días, y las tres con la regla
+    /// ya escrita en el archivo de al lado.
+    ///
+    /// `backendId` mantiene su `APISentinel` porque la identidad SÍ es
+    /// estructural: sin ella no hay cruce con el mapa.
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             // Por `APISentinel`: una cadena vacía no es una identidad, y
             // dejarla pasar haría colisionar en "" a todos los eventos sin id.
-            backendId: APISentinel.text(try c.decodeIfPresent(String.self, forKey: .id)),
-            type: try c.decodeIfPresent(String.self, forKey: .type),
-            severity: try c.decodeIfPresent(Double.self, forKey: .severity),
-            confidence: try c.decodeIfPresent(String.self, forKey: .confidence),
-            description: try c.decodeIfPresent(String.self, forKey: .description),
-            timestamp: try c.decodeIfPresent(String.self, forKey: .timestamp),
-            source: try c.decodeIfPresent(String.self, forKey: .source),
-            penaltyPoints: try c.decodeIfPresent(Double.self, forKey: .penaltyPoints),
-            categoria: try c.decodeIfPresent(String.self, forKey: .categoria),
-            affectsScore: try c.decodeIfPresent(Bool.self, forKey: .affectsScore),
-            noPenaltyReason: try c.decodeIfPresent(String.self, forKey: .noPenaltyReason),
-            sensorSeverity: try c.decodeIfPresent(String.self, forKey: .sensorSeverity)
+            backendId: APISentinel.text(c.lenientString(forKey: .id)),
+            type: c.lenientString(forKey: .type),
+            severity: c.lenientDouble(forKey: .severity),
+            confidence: c.lenientLabel(forKey: .confidence),
+            description: c.lenientString(forKey: .description),
+            timestamp: c.lenientString(forKey: .timestamp),
+            source: c.lenientString(forKey: .source),
+            penaltyPoints: c.lenientDouble(forKey: .penaltyPoints),
+            categoria: c.lenientLabel(forKey: .categoria),
+            affectsScore: c.lenientBool(forKey: .affectsScore),
+            noPenaltyReason: c.lenientString(forKey: .noPenaltyReason),
+            sensorSeverity: c.lenientLabel(forKey: .sensorSeverity)
         )
     }
 
