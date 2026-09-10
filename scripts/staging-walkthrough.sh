@@ -47,6 +47,31 @@ case "$ROL" in
 esac
 shift
 
+# Contra QUÉ host corre esto, dicho en voz alta y comprobado.
+#
+# El script se llama «staging» y la configuración que lleva ese nombre
+# —`Config/Staging.xcconfig`— apunta a `staging.cmadrid-training.com`, un host
+# que NO resuelve y que ningún esquema usa. El esquema compila en Debug, así
+# que el recorrido corre contra el host de Debug. Un verde de este script no
+# decía nada del host cuyo nombre lleva, y nadie lo habría notado hasta el día
+# en que alguien cambiara el esquema y la app apuntara a la nada.
+CONFIGURACION="${STAGING_CONFIGURATION:-Debug}"
+HOST=$(rg -N '^BASE_URL' "Config/$CONFIGURACION.xcconfig" 2>/dev/null \
+       | sd '\$\(\)' '' | sd '^.*//' '' | sd '/.*$' '')
+
+if [ -z "${HOST:-}" ]; then
+  echo "✗ No se pudo leer BASE_URL de Config/$CONFIGURACION.xcconfig."
+  exit 4
+fi
+
+if [ -z "$(dig +short "$HOST" 2>/dev/null)" ]; then
+  echo "✗ El host de la configuración «${CONFIGURACION}» no resuelve: ${HOST}"
+  echo
+  echo "  Un recorrido que no puede llegar al servidor no falla por la app."
+  echo "  Corregí el .xcconfig, o pasá STAGING_CONFIGURATION=<otra>."
+  exit 4
+fi
+
 SERVICIO="training-ios-staging-$ROL"
 
 EMAIL=$(security find-generic-password -s "$SERVICIO" 2>/dev/null \
@@ -93,6 +118,7 @@ DESTINO="${STAGING_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 xcrun simctl shutdown all >/dev/null 2>&1
 
 echo "▸ Rol: $ROL · destino: $DESTINO"
+echo "▸ Configuración: $CONFIGURACION · servidor: $HOST"
 echo "▸ STAGING_REQUIRED=1: sin credenciales esto FALLA, no se salta."
 echo
 

@@ -1,3 +1,20 @@
 // Dobacksoft Training — Staging Configuration
+//
+// ⚠ SIN CONECTAR Y SIN RESOLVER, comprobado el 2026-09-09.
+//
+// Este archivo no está asociado a ninguna configuración de compilación del
+// proyecto y ningún esquema lo selecciona: el esquema «Dobacksoft Training»
+// compila en Debug y en Release. Y el host que declara no resuelve.
+//
+// Importa porque el recorrido automatizado se llama
+// `scripts/staging-walkthrough.sh` y corre contra el host de **Debug**
+// (`dobacksoft-training.duckdns.org`), que es el VPS que se usa de verdad. Un
+// verde de ese script nunca dijo nada del host que este archivo nombra.
+//
+// El script ahora comprueba que el host de su configuración resuelva antes de
+// arrancar, así que seleccionar esta aborta con el motivo en pantalla en vez
+// de fallar dentro de la app. Para revivirla: poner el host real, asociarla a
+// una configuración de compilación y añadirla al esquema.
+//
 // `$()` evita que xcconfig interprete `//` como inicio de comentario y rompa el URL.
 BASE_URL = https:/$()/staging.cmadrid-training.com
