@@ -5,6 +5,21 @@ import Foundation
 /// (devuelve solo `{message}`) se tolera leyendo `message` siempre y `error` opcional.
 enum APIError: Error, Sendable {
     case unauthenticated
+
+    /// Un 401 que **no** es sobre la sesión.
+    ///
+    /// El backend usa 401 para dos cosas distintas: «tu token no vale» y «la
+    /// credencial que acabas de escribir en el cuerpo no vale». Confundirlas
+    /// costaba la sesión: escribir mal la contraseña actual daba 401,
+    /// `AuthSession.authorized` refrescaba el token, reintentaba, recibía el
+    /// mismo 401 —claro, la contraseña seguía siendo la misma— y cerraba la
+    /// sesión con «Su sesión ha caducado por seguridad».
+    ///
+    /// Un aspirante que se equivoca al teclear acababa fuera de la aplicación
+    /// con un mensaje que no describe lo que pasó. Encontrado ejecutando el
+    /// endpoint contra staging, no leyendo el código: desde dentro, un 401 es
+    /// un 401 en todas partes.
+    case credentialRejected(CredentialRejection)
     case forbidden
     /// Con el motivo, cuando el backend lo distingue. Ver `NotFoundReason`.
     case notFound(NotFoundReason)
@@ -25,6 +40,7 @@ enum APIError: Error, Sendable {
     var userMessage: String {
         switch self {
         case .unauthenticated: return "La sesión ha caducado. Vuelva a iniciar sesión."
+        case .credentialRejected(let rejection): return rejection.detail
         case .forbidden: return "No dispone de permisos para acceder a esta sección."
         case .notFound(let reason): return reason.detail
         case .rateLimited(let retryAfter):
@@ -65,6 +81,59 @@ extension APIError {
 
 /// Shape genérica del cuerpo de error del backend. Todos los campos opcionales
 /// para tolerar la divergencia conocida entre handlers del blueprint y `@require_role`.
+/// Por qué el servidor rechazó una credencial del cuerpo, no la sesión.
+///
+/// La frase la escribe el cliente, como en `NotFoundReason`: el `message` del
+/// backend puede estar pensado para el portal web o para quien lo programó, y
+/// aquí lo lee un bombero.
+nonisolated enum CredentialRejection: Sendable, Equatable {
+    /// `wrong_current_password` — comprobado contra staging el 2026-09-10:
+    /// `PATCH /api/v1/me/password` responde 401 con ese código.
+    case wrongCurrentPassword
+
+    /// El código del cuerpo, o `nil` si no es uno de los que conocemos.
+    ///
+    /// **Solo escapan los códigos conocidos**, y es deliberado: un 401 sin
+    /// código, o con uno que nombra el token, sigue cerrando la sesión como
+    /// siempre. Invertir el criterio dejaría a alguien con la sesión caducada
+    /// mirando un error en vez de volver a entrar.
+    init?(apiCode: String?) {
+        switch apiCode {
+        case "wrong_current_password": self = .wrongCurrentPassword
+        default: return nil
+        }
+    }
+
+    /// El rechazo que corresponde a esta respuesta, **sin mirar el estado**
+    /// más allá de que sea un 4xx.
+    ///
+    /// Deliberadamente independiente del código HTTP. El backend devuelve hoy
+    /// `401` para `wrong_current_password` por herencia de un endpoint anterior
+    /// al API móvil, y va a pasar a `422`, que es lo coherente: las otras
+    /// cuatro validaciones del cuerpo del mismo endpoint ya son 422 o 400, y
+    /// un 403 diría «no tiene permiso» cuando el permiso lo tiene —el JWT es
+    /// válido y es el dueño— y lo que no vale es un campo.
+    ///
+    /// Ramificar por estado obligaría a coordinar los dos despliegues. Leyendo
+    /// la clave, el cambio del servidor es seguro en cualquier orden y sin
+    /// avisar.
+    ///
+    /// Solo 4xx: un 500 con un cuerpo raro no es una credencial rechazada.
+    static func forResponse(status: Int, body: APIErrorBody?) -> CredentialRejection? {
+        guard (400...499).contains(status) else { return nil }
+        return CredentialRejection(apiCode: body?.error)
+    }
+
+    var detail: String {
+        switch self {
+        case .wrongCurrentPassword:
+            // Y dice que NO ha cambiado nada: sin esa mitad, alguien puede
+            // quedarse sin saber con cuál de las dos entrar la próxima vez.
+            return "La contraseña actual no es correcta. No se ha cambiado nada."
+        }
+    }
+}
+
 struct APIErrorBody: Sendable {
     let error: String?
     let message: String?

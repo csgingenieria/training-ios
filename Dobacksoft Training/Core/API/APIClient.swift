@@ -241,6 +241,26 @@ actor APIClient {
         guard let http = response as? HTTPURLResponse else {
             throw APIError.unexpected(status: -1, body: nil)
         }
+        // Una credencial rechazada se reconoce por la CLAVE, no por el estado.
+        //
+        // El backend manda hoy `401 wrong_current_password` —heredado de un
+        // endpoint anterior al API móvil— y va a pasar a `422`. Con la lectura
+        // colgada del estado, el cambio de servidor habría que coordinarlo con
+        // un despliegue de la app; colgada de la clave, funciona en cualquier
+        // orden y sin avisar.
+        // El estado se mira ANTES de decodificar, y no como argumento.
+        //
+        // Swift evalúa los argumentos antes de entrar en la función, así que
+        // pasar el cuerpo ya decodificado hacía que TODA respuesta correcta
+        // —incluido el mapa, con sus ciento y pico eventos— intentara leerse
+        // como un cuerpo de error para nada, en el camino caliente.
+        if (400...499).contains(http.statusCode) {
+            let body = try? decoder.decode(APIErrorBody.self, from: data)
+            if let rejection = CredentialRejection.forResponse(status: http.statusCode, body: body) {
+                throw APIError.credentialRejected(rejection)
+            }
+        }
+
         switch http.statusCode {
         case 200...299:
             do {
@@ -256,6 +276,8 @@ actor APIClient {
                 throw APIError.decoding(error)
             }
         case 401:
+            // Los rechazos de credencial ya se han ido arriba, por clave. Lo
+            // que llega aquí es la sesión: token ausente, inválido o caducado.
             throw APIError.unauthenticated
         case 403:
             throw APIError.forbidden

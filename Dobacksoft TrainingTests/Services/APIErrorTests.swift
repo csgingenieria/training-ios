@@ -135,3 +135,112 @@ struct APIErrorTests {
         }
     }
 }
+
+/// The two different things a 401 means, and why telling them apart matters.
+///
+/// **Found by running the endpoint, not by reading the code.** From inside,
+/// a 401 is a 401 everywhere: the client mapped every one of them to
+/// `unauthenticated`, `AuthSession.authorized` refreshed the token, retried,
+/// got the same 401 — of course, the typed password had not changed — and
+/// signed the candidate out with «Su sesión ha caducado por seguridad».
+///
+/// A firefighter who mistypes their own password was thrown out of the app,
+/// with a message describing something that never happened.
+struct CredentialRejectionTests {
+    /// The exact body staging returns, captured on 2026-09-10 from
+    /// `PATCH /api/v1/me/password` with a deliberately wrong current password.
+    @Test func theWrongCurrentPasswordCodeIsRecognised() {
+        #expect(CredentialRejection(apiCode: "wrong_current_password") == .wrongCurrentPassword)
+    }
+
+    /// **Only known codes escape**, and that direction is deliberate: a bare
+    /// 401, or one naming the token, must keep signing the session out.
+    /// Inverting it would leave someone with a genuinely expired session
+    /// staring at an error instead of being asked to sign in again.
+    @Test func everythingElseIsStillASessionProblem() {
+        // `no_token` y `token_invalid` son los códigos REALES, pedidos al
+        // Gunicorn de staging el 2026-09-10 tras el despliegue db037caa: sin
+        // cabecera responde `no_token`, con un token corrupto `token_invalid`.
+        // La lista anterior los tenía imaginados —el catálogo del blueprint
+        // declara `unauthenticated`, que es lo que el errorhandler emitiría si
+        // se disparara— y ninguno de los dos que llegan de verdad estaba.
+        for code in [nil, "", "no_token", "token_invalid", "token_expired",
+                     "unauthenticated", "unauthorized", "algo_nuevo"] {
+            #expect(CredentialRejection(apiCode: code) == nil,
+                    "«\(code ?? "nil")» no puede escaparse del camino de sesión")
+        }
+    }
+
+    /// The sentence says both halves. Without the second, someone can be left
+    /// not knowing which of the two passwords to use next time.
+    @Test func theSentenceSaysNothingChanged() {
+        let texto = CredentialRejection.wrongCurrentPassword.detail
+        #expect(texto.contains("actual"))
+        #expect(texto.lowercased().contains("no se ha cambiado"))
+    }
+
+    /// And the error carries that sentence to the screen, rather than the
+    /// session-expiry one.
+    @Test func theScreenGetsTheRightSentenceAndNotTheExpiryOne() {
+        let error = APIError.credentialRejected(.wrongCurrentPassword)
+        #expect(error.userMessage == CredentialRejection.wrongCurrentPassword.detail)
+        #expect(error.userMessage.contains("caducado") == false,
+                "decir que la sesión caducó es justo lo que no pasó")
+    }
+
+    // MARK: - Por la clave, no por el estado
+
+    private func body(_ json: String) throws -> APIErrorBody {
+        try JSONDecoder().decode(APIErrorBody.self, from: Data(json.utf8))
+    }
+
+    /// **The same body is read the same way whatever 4xx carries it.**
+    ///
+    /// The backend sends `401` today, inherited from an endpoint older than
+    /// the mobile API, and is moving to `422` — which is the coherent one: the
+    /// other four body validations on that endpoint are already 422 or 400.
+    ///
+    /// Branching on the status would make that a coordinated deployment: the
+    /// server could not change until the app shipped. Reading the key, either
+    /// order works and nobody has to be told.
+    @Test func theRejectionIsReadFromTheKeyOnWhicheverStatusCarriesIt() throws {
+        let cuerpo = try body("""
+        {"error": "wrong_current_password", "message": "La contraseña actual es incorrecta."}
+        """)
+
+        for status in [400, 401, 403, 422] {
+            #expect(CredentialRejection.forResponse(status: status, body: cuerpo) == .wrongCurrentPassword,
+                    "un \(status) con esa clave sigue siendo la misma cosa")
+        }
+    }
+
+    /// A 5xx with an odd body is not a rejected credential: the server failed,
+    /// and dressing that as «your password is wrong» would blame the person
+    /// for an outage.
+    @Test func aServerFailureIsNeverACredentialRejection() throws {
+        let cuerpo = try body("""
+        {"error": "wrong_current_password", "message": "x"}
+        """)
+        for status in [500, 502, 503] {
+            #expect(CredentialRejection.forResponse(status: status, body: cuerpo) == nil)
+        }
+    }
+
+    /// A 401 with no body, or with the token's own code, still signs the
+    /// session out — the behaviour every other endpoint depends on.
+    @Test func aTokenProblemStillTakesTheSessionPath() throws {
+        #expect(CredentialRejection.forResponse(status: 401, body: nil) == nil)
+        let cuerpo = try body("""
+        {"error": "unauthenticated", "message": "Token ausente o inválido"}
+        """)
+        #expect(CredentialRejection.forResponse(status: 401, body: cuerpo) == nil)
+    }
+
+    /// **It is not `unauthenticated`.** That is the whole point: the case that
+    /// `AuthSession.authorized` reacts to by refreshing and signing out.
+    @Test func itIsNotTheCaseThatSignsPeopleOut() {
+        if case .unauthenticated = APIError.credentialRejected(.wrongCurrentPassword) {
+            Issue.record("un rechazo de credencial no puede ser el caso que cierra la sesión")
+        }
+    }
+}
