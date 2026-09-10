@@ -8,6 +8,11 @@ struct RootView: View {
     /// cambio de size class: es lo único que sabe que la persona se fue.
     @State private var ticker = RefreshTicker()
 
+    /// El bloqueo opcional, aquí por lo mismo que el ticker: es lo único que
+    /// sabe que la persona se fue, y tiene que sobrevivir a un cambio de size
+    /// class.
+    @State private var lock = AppLock()
+
     /// Y esto vive aquí porque un arranque en frío desde el widget entrega la
     /// URL mientras todavía está la pantalla de carga: el dashboard, que es
     /// quien puede atenderla, no existe todavía.
@@ -56,16 +61,50 @@ struct RootView: View {
                 .accessibilityHidden(true)
             }
         }
+        // El bloqueo va DEBAJO de la tapa de privacidad y encima de todo lo
+        // demás: mientras el diálogo del sistema está en pantalla la app queda
+        // `.inactive`, así que las dos capas se solapan y ese orden es el que
+        // deja la tapa arriba.
+        .overlay {
+            if lock.state != .open {
+                AppLockOverlay(
+                    onUnlock: { Task { await lock.authenticate() } },
+                    onSignOut: {
+                        lock.sessionEnded()
+                        Task { await auth.logout(reason: .userInitiated) }
+                    },
+                    isAsking: lock.state == .asking
+                )
+            }
+        }
+        .overlay { PublishedSnapshotProbe().allowsHitTesting(false) }
         .environment(ticker)
+        .environment(lock)
         .environment(deepLinks)
         .task {
             await auth.restoreFromKeychain()
+
+            // El arranque en frío, aquí y no en `onChange`.
+            //
+            // `onChange(of: scenePhase)` NO dispara con el valor inicial: la
+            // app abre ya `.active`, así que el bloqueo no se habría pedido
+            // nunca al abrir desde cero — exactamente el caso que más importa,
+            // y el que se habría visto en verde porque volver al frente sí
+            // funciona.
+            lock.sceneBecameActive(authenticated: auth.isAuthenticated)
         }
         .onOpenURL { url in
             deepLinks.receive(url)
         }
         .onChange(of: scenePhase) { _, phase in
             ticker.scenePhaseChanged(to: phase)
+
+            // `.background` y no `.inactive`: el sistema pasa por `.inactive`
+            // al bajar el centro de notificaciones sin que nadie salga de la
+            // app, y anotar eso como «se fue» arrancaría la gracia con la
+            // persona mirando la pantalla.
+            if phase == .background { lock.sceneLeftForeground() }
+            if phase == .active { lock.sceneBecameActive(authenticated: auth.isAuthenticated) }
             // Al volver al frente se refrescan las cifras del widget sin
             // obligar a nadie a entrar en «Mi posición», que hasta ahora era la
             // ÚNICA pantalla que las republicaba: el widget envejecía aunque la

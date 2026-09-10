@@ -236,6 +236,7 @@ private struct DashboardContent: View {
 
 struct ProfileView: View {
     @Environment(AuthSession.self) private var auth
+    @Environment(AppLock.self) private var lock
     @State private var showLogoutConfirmation = false
     @State private var quickViewEnabled = SnapshotPublisher.shared.isQuickViewEnabled
     @State private var serverHealth: ServerHealthPresentation = .checking
@@ -276,6 +277,28 @@ struct ProfileView: View {
                     }
                     NavigationLink("Cambiar la contraseña", value: ProfileRoute.password)
                         .accessibilityIdentifier("profile.password")
+
+                    // Opt-in, apagado de fábrica.
+                    //
+                    // El `Toggle` va contra `lock.setEnabled`, que puede
+                    // NEGARSE —un dispositivo sin código no puede evaluar la
+                    // política— y entonces el interruptor tiene que volverse
+                    // atrás: uno que se queda en «sí» miente sobre lo que
+                    // guarda la pantalla.
+                    Toggle("Bloquear con Face ID o código", isOn: Binding(
+                        get: { lock.isEnabled },
+                        set: { lock.setEnabled($0) }
+                    ))
+                    .tint(Color.brand)
+                    .accessibilityIdentifier("profile.applock")
+
+                    if let motivo = lock.enablementRefusal {
+                        Text(motivo)
+                            .font(.metaCaption)
+                            .foregroundStyle(Color.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("profile.applock.refusal")
+                    }
                 }
             }
 
