@@ -67,7 +67,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 23 | ✅ | important | M | Readable-width cap (680 pt) for every ScrollView content column on iPad *(provisional)* | ipad |
 | 24 | ✅ | important | S | Widget: text styles instead of fixed 34/22/9 pt, and freshness note in the VoiceOver label | accessibility |
 | 25 | ✅ | important | S | Widget palette follows dark mode: colorsets in the widget catalog instead of light-only hex literals | native-craft, accessibility, visual |
-| 26 | ◐ | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
+| 26 | ✅ | important | M | Animate state changes with the existing Theme.motion tokens *(provisional)* | native-craft |
 | 27 | ✅ | important | L | Last-known data store with data age for convocatorias, standing and attempts *(provisional)* | states |
 | 28 | ✅ | minor | S | Error copy that says what to do: fixed formal sentences for 5xx/422/decoding/unexpected and «No se ha podido cargar» titles *(provisional)* | states |
 | 29 | ✅ | minor | S | Cancelled requests are not «No se ha podido conectar»: rethrow cancellation and guard ViewModel state *(provisional)* | states |
@@ -81,7 +81,7 @@ The client is structurally sound and honest: typed loading/loaded/notFound/error
 | 37 | ✅ | minor | S | Web KPIs from data already loaded: «Último intento», «Mejor recorrido · A mejorar» *(provisional)* | visual |
 | 38 | ✅ | minor | M | Redacted skeletons instead of spinner + caption, with a slow-network hint after 4 s *(provisional)* | states, native-craft |
 | 39 | ✅ | minor | M | Semantic numeric roles in Theme+Typography (metricValue / metricValueLarge / scoreHero) *(provisional)* | visual |
-| 40 | ◐ | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
+| 40 | ✅ | minor | M | Redact content in the app switcher; optional Face ID lock toggle | native-craft |
 | 41 | ✅ | minor | S | Rate-limit countdown disables the login button until retryAfter elapses | states |
 | 42 | ✅ | minor | S | Perfil «Estado del servidor» row: short value, detail in footer, tappable to re-check | states |
 | 43 | ✅ | minor | S | Toolbar «Actualizar» (⌘R) on root screens and ⌘1-4 section shortcuts on iPad *(provisional)* | ipad |
@@ -137,12 +137,73 @@ Parciales:
 - **#26** — animaciones locales hechas; descartado por medición el fundido de
   pantalla completa (139 s sin animaciones · 136 s con las locales · 304 s con
   el fundido).
-- **#40** — hecha la parte (a), que era el defecto real: la app se tapa fuera
-  de foco, porque la miniatura del conmutador enseñaba la tarjeta con el puesto
-  y la nota. La parte (b) —bloqueo opcional con Face ID— queda sin hacer: es una
-  función nueva con su ajuste, su `NSFaceIDUsageDescription` y su decisión de
-  producto sobre cuándo volver a pedirlo, y la propia auditoría la marca como
-  mejora y no como defecto. Los 26 restantes son menores.
+- **#26** — cerrado. Ver abajo: el fundido no cuesta lo que decía la nota.
+
+**Cerrado el 2026-09-10.**
+
+- **#26** — el fundido de pantalla completa está puesto, y **la medición que lo
+  había descartado era el error**.
+
+  La nota decía «139 s sin animaciones · 136 s con las locales · 304 s con el
+  fundido» y concluía que duplicaba el render. Eran **tres corridas únicas del
+  recorrido entero**. El 2026-09-10, los mismos dos tests sobre código idéntico,
+  en la misma sesión y en orden:
+
+  | | corrida 1 | corrida 2 | corrida 3 |
+  |---|---|---|---|
+  | `testSignedInWalkthrough` | 65 s | 83 s | 135 s |
+  | `testWidgetSnapshot` | 39 s | 50 s | 75 s |
+
+  Monótono creciente, los dos tests, sin tocar una línea. Una corrida única del
+  recorrido mide el humor de la máquina tanto como la app, y con esa varianza
+  el 304 s no distingue un fundido caro de un simulador degradado — que es
+  justo lo que estuvo pasando hoy varias veces.
+
+  **Medido con el instrumento adecuado** (`ScreenTransitionBenchmark`,
+  `XCTClockMetric`, cinco iteraciones dentro de un mismo lanzamiento, con
+  desviación típica):
+
+  | | media | desviación relativa |
+  |---|---|---|
+  | sin fundido | 6,35 s · 7,55 s · 8,98 s | 5,2 % · 7,3 % · 40 % |
+  | **con fundido** | **6,67 s** | **5,6 %** |
+
+  Cae dentro del rango. Un 2,2× serían unos 15 s: excluido sin ambigüedad.
+  El 8,98 s lleva un valor descolgado de 16,19 s entre cuatro de ~7 s, y por eso
+  se repitió dos veces más.
+
+  Puesto sobre **`phase` y no sobre `state`**, que es lo que este repo ya había
+  decidido en `ScreenPhase`: animar el estado completo exigiría `Equatable` a
+  cada DTO y volvería a animar cuando cambia una cifra dentro de la fase
+  cargada, que es cosa de `contentTransition`. Se añadió `phase` a
+  `ConvocatoriasListViewModel`, `AttemptDetailViewModel` y
+  `MyStandingTabViewModel`.
+
+  El banco de pruebas se queda en el repo detrás de `BENCHMARK=1`: la próxima
+  vez que alguien quiera descartar algo «por medición», el instrumento ya está.
+
+- **#40(b)** — bloqueo opcional con Face ID o código, opt-in y apagado de
+  fábrica (`AppLock`, `AppLockRules`, `AppLockOverlay`, 23 tests).
+
+  Las tres decisiones que había que tomar, tomadas y defendidas en el código:
+
+  1. **La gracia es de 60 s**, y es un número propio. `RefreshTicker.staleAfter`
+     valía 300 s y estaba a mano, pero mide cuándo una cifra deja de ser fresca,
+     no cuándo el teléfono pudo cambiar de manos. Compartirla ataría dos
+     decisiones que no tienen nada que ver.
+  2. **El interruptor se niega a encenderse** en un dispositivo sin código, y
+     dice por qué y dónde se arregla. Uno que se enciende y no protege nada es
+     peor que no tenerlo: deja a alguien creyendo que su puesto y su nota están
+     detrás de una comprobación que no ocurre.
+  3. **Nunca encierra a nadie.** Si el código del dispositivo desaparece
+     después, el ajuste se apaga solo diciéndolo en vez de dejar una pantalla
+     tapada sin forma de destaparla; y la pantalla de bloqueo siempre ofrece
+     «Cerrar sesión» además de «Desbloquear». Es una conveniencia opt-in, y una
+     conveniencia no puede dejar a un aspirante fuera de su propia cuenta.
+
+  El arranque en frío se pide desde `.task` y no desde `onChange(of: scenePhase)`,
+  que **no dispara con el valor inicial**: el caso que más importa no se habría
+  pedido nunca, y habría salido verde porque volver al frente sí funciona.
 
 **Reclasificación del 2026-09-08.** El #57 figuraba como *minor* «project
 hygiene» y no lo era: cuatro configuraciones de test declaraban
