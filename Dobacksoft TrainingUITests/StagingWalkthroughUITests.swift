@@ -294,21 +294,45 @@ final class StagingWalkthroughUITests: XCTestCase {
         // about copy, and "everything tappable that is not a tab" picked the
         // sort menu — also a button — and reported the failure as the detail
         // screen not opening.
-        let attempt = element("standing.attempt", in: app)
-        guard attempt.waitForExistence(timeout: 5) else {
+        guard element("standing.attempt", in: app).waitForExistence(timeout: 5) else {
             throw XCTSkip("This account has no recorded attempt to open.")
         }
 
-        attempt.tap()
+        // Por `hittableRow`, como las filas del perfil.
+        //
+        // Esta se buscaba con `element` a secas después de dos `swipeUp` a
+        // ciegas: sin comprobar que quedara libre de la barra flotante y sin
+        // esperar a que el `List` dejara de moverse. En iPhone caía debajo de
+        // la barra y los cuatro reintentos tocaban cuatro veces el mismo sitio
+        // tragado. «Existe» nunca fue «se puede tocar», y aquí lo era menos.
+        guard let attempt = hittableRow("standing.attempt", in: app) else {
+            return XCTFail("«standing.attempt» existe pero no se puede tocar: algo lo tapa y no se destapa.")
+        }
+
         // La llegada se prueba por algo que es SOLO del detalle del intento.
         //
         // Antes era «apareció algún botón en la barra», y «Mi posición» tiene
         // su propia barra con el menú de orden: la aserción se cumplía en la
         // pantalla de origen tanto como en la de destino, y por eso este test
         // pasaba dos corridas y fallaba la tercera sin que cambiara nada.
+        //
+        // Y el toque se reintenta, como el del perfil: en iPad este paso
+        // fallaba con la fila visible y tocable. Mismo ocultador, misma
+        // inercia, mismo diagnóstico falso —«la app no empuja el detalle»—
+        // sobre un toque que nunca llegó.
+        let llegó = tapUntilArriving(
+            attempt,
+            at: element("attempt.openMap", in: app),
+            attempts: 3,
+            timeout: 15
+        )
         XCTAssertTrue(
-            element("attempt.openMap", in: app).waitForExistence(timeout: 20),
-            "Tapping «\(attempt.label)» did not push the attempt detail."
+            llegó,
+            // **Sin la etiqueta de la fila.** Llevaba el nombre del recorrido,
+            // la fecha y la nota de una persona a un log que puede acabar en un
+            // CI o pegado en un chat. El identificador dice lo mismo para
+            // depurar y no dice nada de nadie.
+            "«standing.attempt» no abrió el detalle del intento."
         )
         capture(app, named: "11-detalle-intento")
 
@@ -434,6 +458,208 @@ final class StagingWalkthroughUITests: XCTestCase {
         // dibujaría la credencial en una corrida que puede fallar y guardar la
         // captura. Se prefiere un control con un límite escrito a una garantía
         // comprada renderizando un PIN ajeno.
+    }
+
+    /// El cambio de contraseña, **sin cambiar ninguna**.
+    ///
+    /// Automatizar el cambio de verdad mutaría la contraseña de staging y
+    /// dejaría obsoletas las credenciales del Keychain, rompiendo todas las
+    /// corridas futuras. Eso pide una cuenta desechable y no se hace aquí.
+    ///
+    /// Pero descartar la pantalla entera por eso era ir demasiado lejos: hay
+    /// una vía que la ejercita de punta a punta **sin efecto alguno** — enviar
+    /// una contraseña actual EQUIVOCADA. El backend la rechaza, nada cambia, y
+    /// se comprueba lo que de verdad podía estar roto: que la pantalla llegue,
+    /// que el formulario se valide, que la petición salga y que el rechazo se
+    /// cuente en castellano en vez de dejar a alguien mirando un botón muerto.
+    ///
+    /// La contraseña nueva que se teclea nunca llega a aplicarse, porque la
+    /// actual no valida. Es deliberado: el orden de las comprobaciones del
+    /// backend es lo que hace segura esta prueba.
+    func testChangePasswordRejectsAWrongCurrentOne() throws {
+        let app = launchClean()
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        guard destinations(in: app).contains("Perfil") else {
+            return XCTFail("Sin «Perfil» no hay camino: la sesión no llegó a abrirse.")
+        }
+        XCTAssertTrue(navigate(to: "Perfil", in: app), "«Perfil» no llegó a abrirse.")
+
+        // La llegada se COMPRUEBA, no se cree.
+        //
+        // `navigate` devuelve un booleano y el test lo trataba como la llegada.
+        // Devolvió `true` con la app en «Convocatorias», y a partir de ahí todo
+        // lo demás —una fila «direccionable», un toque, una espera de veinte
+        // segundos— midió la pantalla equivocada y acusó a la app de no
+        // empujar una pantalla que nadie le había pedido.
+        XCTAssertTrue(
+            app.navigationBars["Perfil"].waitForExistence(timeout: 10),
+            "«navigate» dijo que sí y la pantalla abierta es otra."
+        )
+
+        guard let fila = hittableRow("profile.password", in: app) else {
+            return XCTFail("«Cambiar la contraseña» no está en el perfil.")
+        }
+        // Qué se está tocando, exactamente.
+        //
+        // «La fila existe y es tocable» no dice cuál de los elementos con ese
+        // identificador se resolvió —una fila de `Form` produce una celda Y un
+        // botón— ni dónde cae el toque. Sin esto, un toque en el sitio
+        // equivocado se lee como una pantalla que no se empuja.
+        let marco = fila.frame
+        let queSeToca = "tipo=\(fila.elementType.rawValue)"
+            + " botones=\(app.buttons.matching(identifier: "profile.password").count)"
+            + " celdas=\(app.cells.matching(identifier: "profile.password").count)"
+            + " marco=\(Int(marco.minX)),\(Int(marco.minY)) \(Int(marco.width))x\(Int(marco.height))"
+            + " pantalla=\(Int(app.frame.width))x\(Int(app.frame.height))"
+
+        // El toque se REPITE hasta que la pantalla cambia.
+        //
+        // Un toque que algo se traga no deja rastro: la app queda exactamente
+        // como estaba, así que repetirlo es seguro y empujar dos veces no puede
+        // pasar —en cuanto la barra de destino aparece, se para.
+        //
+        // Hace falta porque «la fila existe, es tocable, está quieta y libre de
+        // la barra» sigue sin garantizar que el toque llegue: XCUITest calcula
+        // la coordenada de un árbol que ya cambió. Sin esto el test pasaba unas
+        // veces y otras no, y las que no acusaban a la app de no empujar.
+        tapUntilPushed(fila, destination: "Contraseña", in: app)
+
+        // «¿Navegó?» con el título, que existe en todos los estados de la
+        // pantalla; «¿el campo es direccionable?» aparte. Confundirlas acusa en
+        // falso, que es la lección que ya costó dos investigaciones hoy.
+        // Se MUESTREA en vez de esperar.
+        //
+        // `waitForExistence` dice «no llegó» y calla la diferencia que importa:
+        // una pantalla que nunca se empujó y una que se empujó y volvió sola
+        // dan el mismo fallo y piden arreglos opuestos. Esto graba la secuencia
+        // y la pone en el mensaje.
+        let visita = sampleNavigationBar("Contraseña", in: app, seconds: 20)
+        XCTAssertTrue(
+            visita.everAppeared,
+            """
+            La fila del perfil no abrió la pantalla de cambio de contraseña.
+            Se tocó: \(queSeToca)
+            Barras vistas durante la espera: \(visita.barsSeen.joined(separator: " → "))
+            """
+        )
+        XCTAssertTrue(
+            visita.stillThere,
+            """
+            «Contraseña» se abrió y se cerró sola: la pantalla se empuja y algo la saca.
+            Secuencia: \(visita.barsSeen.joined(separator: " → "))
+            """
+        )
+
+        // `.secureTextFields` y no `.textFields`: un `SecureField` no aparece
+        // en la segunda colección, y buscarlo ahí da un elemento inexistente
+        // que se lee como una pantalla que no cargó.
+        let actual = app.secureTextFields["password.current"]
+        XCTAssertTrue(
+            actual.waitForExistence(timeout: 10),
+            "«Contraseña actual» no es direccionable en la pantalla que sí abrió."
+        )
+        assertNoDecodingFailureVisible(app, screen: "Cambiar la contraseña")
+
+        // El botón no se puede pulsar con el formulario a medias: sin esto, la
+        // pantalla invitaría a gastar una petición que no puede funcionar.
+        XCTAssertFalse(
+            element("password.submit", in: app).isEnabled,
+            "el formulario vacío deja enviar"
+        )
+
+        // Una actual deliberadamente equivocada, y una nueva que jamás se
+        // aplica porque la actual no valida.
+        try type("no-es-la-contrasena-de-nadie", into: actual, in: app)
+        try type("Rechazada-1234", into: app.secureTextFields["password.new"], in: app)
+        try type("Rechazada-1234", into: app.secureTextFields["password.confirm"], in: app)
+
+        // Por `hittableRow`, no por `element`.
+        //
+        // El botón vive en la última sección del formulario, que es justo donde
+        // el teclado y la barra de pestañas lo tapan después de escribir en los
+        // tres campos. `isEnabled` decía que sí y el toque se lo comía el
+        // teclado: el fallo llegaba veinte segundos después como «el backend
+        // rechazó la contraseña y la pantalla no lo dijo», acusando a una
+        // pantalla que nunca había recibido el toque.
+        guard let enviar = hittableRow("password.submit", in: app) else {
+            return XCTFail("«Cambiar la contraseña» no es pulsable: algo lo tapa y no se puede destapar.")
+        }
+        XCTAssertTrue(enviar.isEnabled, "con los tres campos puestos tiene que dejar enviar")
+        enviar.tap()
+
+        // Y el rechazo se CUENTA. Es lo que separa «no ha funcionado» de un
+        // botón que se pulsa y no pasa nada.
+        let error = element("password.error", in: app)
+        XCTAssertTrue(
+            error.waitForExistence(timeout: 20),
+            "el backend rechazó la contraseña y la pantalla no lo dijo"
+        )
+        XCTAssertFalse(error.label.isEmpty, "el error existe y está vacío")
+    }
+
+    /// Lo que el widget va a leer, comprobado contra datos reales.
+    ///
+    /// La pantalla de inicio del aspirante era lo único de todo el producto sin
+    /// una sola verificación contra staging, y es la superficie que **ven otras
+    /// personas**: el widget se instala en la pantalla de inicio y lo lee
+    /// cualquiera que mire el teléfono.
+    ///
+    /// XCUITest no alcanza la vista de una extensión desde el proceso de la
+    /// app, y eso es un límite real. Pero lo que puede estar mal no es la
+    /// vista: es la instantánea. `PublishedSnapshotProbe` la lee del App Group
+    /// —el runner no puede, es otro proceso— y la deja como etiqueta.
+    func testWidgetSnapshot() throws {
+        let app = launchClean()
+        try signIn(app)
+        dismissSystemSavePasswordSheet()
+
+        let probe = element("snapshot.published", in: app)
+        guard probe.waitForExistence(timeout: 15) else {
+            return XCTFail(
+                "La sonda de la instantánea no existe. Se expone solo con "
+                + "-uitest-redact-secrets, que `launchClean` pasa."
+            )
+        }
+
+        // **Recién entrado, con la vista rápida apagada por defecto.**
+        //
+        // Es el estado que el RGPD art. 25.2 exige y el que el proyecto eligió:
+        // el widget no enseña el puesto de nadie hasta que la persona lo pide.
+        // Si esto dijera «posicion:…» sin que nadie haya tocado el ajuste,
+        // sería una fuga en la superficie más visible del producto.
+        XCTAssertTrue(
+            probe.label == "desactivado" || probe.label == "ausente",
+            "recién iniciada la sesión el widget no puede llevar cifras, y lleva «\(probe.label)»"
+        )
+
+        // Y ahora la mitad que prueba que el conducto funciona: abrir «Mi
+        // posición» publica. Sin esto, lo de arriba pasaría también para una
+        // app que no publica nunca.
+        guard destinations(in: app).contains("Mi posición") else {
+            try skipUnlessTheRoleShouldHaveIt(
+                "Mi posición",
+                expected: \.hasOwnStanding,
+                detail: "Sin posición propia no hay instantánea que publicar."
+            )
+            return
+        }
+        XCTAssertTrue(navigate(to: "Mi posición", in: app), "«Mi posición» no llegó a abrirse.")
+
+        // Con la vista rápida apagada solo puede escribirse «desactivado»: el
+        // publicador lo respeta por diseño. Lo que se comprueba aquí es que
+        // ESCRIBE, no que enseñe cifras.
+        let despues = element("snapshot.published", in: app)
+        XCTAssertTrue(despues.waitForExistence(timeout: 20))
+        XCTAssertNotEqual(
+            despues.label, "ausente",
+            "abrir «Mi posición» no escribió nada en el App Group: el widget se quedaría en blanco para siempre"
+        )
+        XCTAssertFalse(
+            despues.label.hasPrefix("ilegible"),
+            "la instantánea no se puede leer: «\(despues.label)» — el widget mostraría «No hay datos disponibles»"
+        )
     }
 
     /// El sidebar del iPad: ¿se puede navegar por él o no?
@@ -793,15 +1019,182 @@ final class StagingWalkthroughUITests: XCTestCase {
 
     /// La primera fila de convocatoria que de verdad se puede tocar, subiendo
     /// el scroll si hace falta.
-    private func hittableRow(_ identifier: String, in app: XCUIApplication) -> XCUIElement? {
-        for attempt in 0..<3 {
-            let row = element(identifier, in: app)
-            if row.waitForExistence(timeout: attempt == 0 ? 8 : 2), row.isHittable {
-                return row
+    /// Lo que pasó con una barra de navegación durante una espera.
+    ///
+    /// Existe porque «no apareció» y «apareció y se fue» son dos defectos
+    /// distintos con arreglos opuestos, y una aserción sobre el estado final
+    /// los cuenta como el mismo.
+    private struct NavigationBarVisit {
+        var everAppeared = false
+        var stillThere = false
+        var barsSeen: [String] = []
+    }
+
+    /// Muestrea qué barra de navegación hay, en vez de esperar a una.
+    private func sampleNavigationBar(
+        _ title: String,
+        in app: XCUIApplication,
+        seconds: Int
+    ) -> NavigationBarVisit {
+        var visit = NavigationBarVisit()
+        var previous = ""
+
+        for _ in 0..<(seconds * 2) {
+            let bar = app.navigationBars[title]
+            // El TÍTULO, no el identificador.
+            //
+            // La primera versión leía `.identifier`, que en una barra de
+            // SwiftUI viene vacío salvo que alguien lo ponga: el muestreo
+            // informó «Convocatorias» —la única con identificador, de una
+            // pestaña montada— estando la app en Perfil, y esa lectura mandó
+            // la investigación a la pantalla equivocada.
+            let campos = app.secureTextFields.allElementsBoundByIndex
+                .map(\.identifier).filter { !$0.isEmpty }
+            let current = (app.navigationBars.allElementsBoundByIndex
+                .map { $0.identifier.isEmpty ? $0.label : $0.identifier }
+                .filter { !$0.isEmpty }
+                + campos.map { "campo:\($0)" })
+                .joined(separator: "+")
+
+            if current != previous {
+                visit.barsSeen.append(current.isEmpty ? "(ninguna)" : current)
+                previous = current
             }
+
+            if bar.exists {
+                visit.everAppeared = true
+                visit.stillThere = true
+            } else if visit.everAppeared {
+                visit.stillThere = false
+            }
+
+            // Una vez vista y estable medio segundo, no hace falta seguir.
+            if visit.everAppeared, visit.stillThere, visit.barsSeen.count > 1 { break }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+
+        return visit
+    }
+
+    private func hittableRow(_ identifier: String, in app: XCUIApplication) -> XCUIElement? {
+        for attempt in 0..<6 {
+            // TODAS las coincidencias, no `firstMatch`.
+            //
+            // Una lista de intentos tiene muchas filas con el mismo
+            // identificador, y `firstMatch` se queda con una sola: si esa cae
+            // debajo de la barra o encima del borde, seis gestos después
+            // seguía sin servir y el helper se rendía sobre una pantalla llena
+            // de filas perfectamente tocables. Vale cualquiera que se pueda
+            // tocar; lo que se prueba después es adónde lleva, no cuál era.
+            let filas = app.descendants(matching: .any).matching(identifier: identifier)
+
+            if filas.firstMatch.waitForExistence(timeout: attempt == 0 ? 8 : 2) {
+                for fila in filas.allElementsBoundByIndex {
+                    guard fila.isHittable, isClearOfTheBottomChrome(fila, in: app) else { continue }
+                    if hasStoppedMoving(fila) { return fila }
+                }
+            }
+
             app.swipeUp()
         }
         return nil
+    }
+
+    /// Toca la fila hasta que llega algo que solo existe en el destino.
+    ///
+    /// La llegada se pasa como elemento y no como título de barra: hay
+    /// pantallas cuyo título depende de los datos —el detalle de un intento— y
+    /// ahí lo único reconocible es un control propio suyo.
+    @discardableResult
+    private func tapUntilArriving(
+        _ row: XCUIElement,
+        at destination: XCUIElement,
+        attempts: Int = 4,
+        timeout: TimeInterval = 6
+    ) -> Bool {
+        for _ in 0..<attempts {
+            // Si ya se llegó, no se vuelve a tocar.
+            if destination.exists { return true }
+
+            // La fila que desaparece es señal de que el toque SÍ funcionó: se
+            // dejó de estar en la pantalla que la contenía. Rendirse aquí
+            // devolvía «no llegó» sobre un destino que todavía estaba
+            // cargando, que es acusar a la app de lo contrario de lo que pasó.
+            guard row.exists, row.isHittable else { break }
+
+            row.tap()
+            if destination.waitForExistence(timeout: timeout) { return true }
+        }
+
+        // Una última espera completa, por el caso de arriba.
+        return destination.waitForExistence(timeout: timeout)
+    }
+
+    /// El mismo reintento cuando la llegada SÍ es una barra con nombre fijo.
+    private func tapUntilPushed(
+        _ row: XCUIElement,
+        destination: String,
+        in app: XCUIApplication,
+        attempts: Int = 4
+    ) {
+        tapUntilArriving(row, at: app.navigationBars[destination], attempts: attempts)
+    }
+
+    /// Si la fila ha dejado de moverse.
+    ///
+    /// **`swipeUp` tiene inercia.** El `Form` sigue desplazándose después del
+    /// gesto, y `isHittable` y `frame` se leen en pleno vuelo: el toque se
+    /// calcula con la posición de hace un instante y aterriza donde la fila
+    /// **estaba**. No falla siempre, y ahí está lo peor — falla según cuántos
+    /// gestos hicieran falta, así que la fila de arriba pasa y la de abajo no,
+    /// y parece un defecto de esa pantalla en concreto.
+    ///
+    /// Dos lecturas iguales separadas por un respiro. No es una espera fija
+    /// disfrazada: si la vista ya está quieta, la primera comparación acierta.
+    private func hasStoppedMoving(_ element: XCUIElement) -> Bool {
+        var previous = element.frame
+
+        for _ in 0..<10 {
+            Thread.sleep(forTimeInterval: 0.15)
+            let current = element.frame
+            if current == previous { return true }
+            previous = current
+        }
+        return false
+    }
+
+    /// Si el centro del elemento queda por ENCIMA de lo que el sistema dibuja
+    /// abajo: la barra de pestañas y el teclado.
+    ///
+    /// **`isHittable` no lo dice.** Lo calcula del marco del propio elemento y
+    /// no de lo que hay dibujado encima, así que una fila tapada por la barra
+    /// flotante de iOS 26 se declara tocable, el toque se lo come la barra, y
+    /// el fallo aparece veinte segundos después como «la pantalla no se
+    /// empujó»: un defecto de la app que no existía.
+    ///
+    /// Costó una investigación entera. La fila de la contraseña medía
+    /// `y 785…837` en una pantalla de 874 —justo debajo de la barra— mientras
+    /// la del PIN, dos filas más arriba, pasaba. Mismo helper, mismo toque, y
+    /// el que fallaba era el de abajo.
+    ///
+    /// El teclado es el mismo problema con otro ocultador, y aparece justo
+    /// donde más duele: el botón de enviar vive al final del formulario, que es
+    /// exactamente donde el teclado lo tapa después de escribir.
+    ///
+    /// Es el patrón de siempre en este archivo: **existir no es poder
+    /// tocarse**, y ahora tampoco «ser tocable» lo es.
+    private func isClearOfTheBottomChrome(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        let center = element.frame.midY
+
+        for chrome in [app.tabBars.firstMatch, app.keyboards.firstMatch] where chrome.exists {
+            // Un marco vacío no tapa nada. XCUITest deja a veces un teclado
+            // «existente» de altura cero: tomado en serio, su `minY` es 0 y
+            // descarta TODAS las filas de la pantalla.
+            let frame = chrome.frame
+            guard frame.height > 1 else { continue }
+            if center >= frame.minY { return false }
+        }
+        return true
     }
 
     // MARK: - Steps
