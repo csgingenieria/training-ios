@@ -282,6 +282,19 @@ struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     /// comparten nombre en objetos distintos. Un DTO compartido o un
     /// decodificador genérico los junta, y ahí es donde nace el defecto —
     /// `ConfidenceIsThreeFieldsTests` lo fija.
+    ///
+    /// **La etiqueta la deriva el backend con un umbral suyo**
+    /// (`"HIGH" if conf_float >= 0.7 else "LOW"`, `attempt_detail.py`). Aquí no
+    /// se recalcula, y por eso `lenientLabel` devuelve `nil` en vez de traducir
+    /// un número que llegue por error: el umbral es de ellos y puede cambiar, y
+    /// aplicarlo desde aquí emitiría una etiqueta que el servidor no dijo,
+    /// calculada con una regla copiada en un momento dado. Es la misma razón
+    /// por la que `lenientDouble` no convierte «MODERADO» en una cifra.
+    ///
+    /// El barrido que vigila esta colisión del lado del contrato es
+    /// `tests/unit/test_un_nombre_no_significa_dos_formas.py` (repo training,
+    /// af5664f3): declara `confidence: {float, str}` como colisión conocida y
+    /// falla si aparece un nombre NUEVO con dos formas.
     let confidence: String?
     let description: String?
     let timestamp: String?
