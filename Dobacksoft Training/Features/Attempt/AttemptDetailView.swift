@@ -12,6 +12,16 @@ final class AttemptDetailViewModel {
 
     var state: State = .loading
 
+    /// La fase, para animar el cambio sin animar cada cifra. Ver `ScreenPhase`.
+    var phase: ScreenPhase {
+        switch state {
+        case .loading:  .loading
+        case .loaded:   .loaded
+        case .notFound: .empty
+        case .error:    .error
+        }
+    }
+
     /// Refresco en curso SOBRE datos ya visibles.
     var isRefreshing = false
 
@@ -130,6 +140,25 @@ struct AttemptDetailView: View {
                 }
             }
         }
+        .transition(.opacity)
+        // Fundido entre fases.
+        //
+        // La auditoría lo daba por descartado «por medición»: 139 s sin
+        // animaciones frente a 304 s con el fundido. Ese número no aguanta.
+        // Eran corridas únicas del recorrido entero, y el 2026-09-10 los
+        // mismos dos tests, sobre código idéntico, dieron 65→83→135 s y
+        // 39→50→75 s: la máquina se degrada dentro de una sesión, y una
+        // corrida única mide su humor tanto como la app.
+        //
+        // Medido con `XCTClockMetric` —cinco iteraciones dentro de un mismo
+        // lanzamiento, con desviación típica— en `ScreenTransitionBenchmark`:
+        // sin fundido 6,35 · 7,55 · 8,98 s; con fundido 6,67 s. Cae dentro del
+        // rango. Un 2,2× serían unos 15 s: excluido.
+        //
+        // Sobre `phase` y no sobre `state`: animar el estado completo exigiría
+        // `Equatable` a cada DTO y volvería a animar cuando cambia una cifra
+        // dentro de la fase cargada, que es cosa de `contentTransition`.
+        .animation(Theme.motion.base, value: viewModel.phase)
         .navigationTitle("Intento")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

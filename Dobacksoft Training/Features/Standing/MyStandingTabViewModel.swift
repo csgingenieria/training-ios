@@ -25,6 +25,16 @@ final class MyStandingTabViewModel {
 
     var state: State = .loading
 
+    /// La fase, para animar el cambio sin animar cada cifra. Ver `ScreenPhase`.
+    var phase: ScreenPhase {
+        switch state {
+        case .loading: .loading
+        case .loaded:  .loaded
+        case .empty:   .empty
+        case .error:   .error
+        }
+    }
+
     /// La convocatoria elegida. La toca la vista desde el selector.
     var selectedId: String?
 
