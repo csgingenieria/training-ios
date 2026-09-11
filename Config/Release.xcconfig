@@ -1,4 +1,17 @@
 // Dobacksoft Training — Release Configuration
-// Actualizar cuando el dominio de producción esté confirmado.
+//
+// El mismo VPS que Debug, y **no es provisional**: confirmado por Antonio el
+// 2026-09-11, no hay ni va a haber un servidor de producción aparte. Este es.
+//
+// Antes declaraba `training.dobacksoft.com`, un host que **no resuelve** y que
+// nunca resolvió: una build de producción apuntaba a la nada, y ningún test lo
+// detectaba porque los 755 unitarios y los seis recorridos corren en Debug.
+// Se descubrió al compilar en Release por primera vez.
+//
+// Consecuencia que conviene tener presente: Debug y Release hablan con el
+// MISMO servidor, así que una build de producción toca los mismos datos que
+// una de desarrollo. No hay una red de seguridad ahí; la disciplina de no
+// tocar datos reales es humana, no de configuración.
+//
 // `$()` evita que xcconfig interprete `//` como inicio de comentario y rompa el URL.
-BASE_URL = https:/$()/training.dobacksoft.com
+BASE_URL = https:/$()/dobacksoft-training.duckdns.org
