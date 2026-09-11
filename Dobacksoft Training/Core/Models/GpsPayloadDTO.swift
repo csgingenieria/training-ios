@@ -117,7 +117,7 @@ nonisolated extension GpsTrackDTO: Decodable {
         // traza, ni puntos, ni eventos, ni recorrido.
         let crudos = (try? c.decodeIfPresent([[[Double]]].self, forKey: .segments)) ?? []
         self.init(
-            segments: (crudos ?? []).map { segmento in
+            segments: crudos.map { segmento in
                 segmento.compactMap { par in
                     par.count == 2 ? GpsCoordinateDTO(lat: par[0], lng: par[1]) : nil
                 }
