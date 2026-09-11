@@ -10,9 +10,13 @@ import AppIntents
 /// búsqueda del dispositivo pueden leer. Un atajo que ABRE una pantalla no
 /// necesita eso.
 struct OpenStandingIntent: AppIntent {
-    static var title: LocalizedStringResource = "Ver mi posición"
+    // `let` y no `var`: `AppIntent` pide `{ get }`, y un `static var` es estado
+    // global mutable —cualquiera podría reescribir el título del atajo desde
+    // otro hilo—. Lo pilló el modo Swift 6, que lo trata como error, y tiene
+    // razón: nada tiene que poder cambiar esto en caliente.
+    static let title: LocalizedStringResource = "Ver mi posición"
 
-    static var description = IntentDescription(
+    static let description = IntentDescription(
         "Abre su puesto y su nota en la convocatoria seleccionada."
     )
 

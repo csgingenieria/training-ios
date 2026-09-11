@@ -10,7 +10,13 @@ import Security
 ///
 /// La ausencia sí es una respuesta válida: `load` devuelve `nil` ante
 /// `errSecItemNotFound`, y `delete` acepta borrar algo que no está.
-enum TokenStore {
+// `nonisolated`: el Keychain no es interfaz.
+//
+// El proyecto compila con `-default-isolation=MainActor`, así que todo lo que
+// no se marca cae en el actor principal — y esto son llamadas al sistema
+// bloqueantes. Atarlas al hilo que dibuja no era una decisión: era el valor
+// por defecto colándose en el sitio donde peor sienta.
+nonisolated enum TokenStore {
     private static let service = "Com.Dobacksoft-Training.tokens"
 
     enum Key: String, CaseIterable {

@@ -175,11 +175,11 @@ extension KeychainBacked {
             ])
             let auth = try await session(api)
             let despues = t0.addingTimeInterval(600)
-            var ahora = t0
-            let vm = StandingViewModel(api: api, now: { ahora })
+            let reloj = TestClock(t0)
+            let vm = StandingViewModel(api: api, now: reloj.now)
 
             await vm.load(convocatoriaId: "conv-1", auth: auth)
-            ahora = despues
+            reloj.advance(to: despues)
             await vm.load(convocatoriaId: "conv-1", auth: auth)
 
             #expect(vm.lastUpdated == t0, "la hora es la del dato, no la del intento de refrescarlo")

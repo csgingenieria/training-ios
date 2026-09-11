@@ -98,11 +98,11 @@ extension KeychainBacked {
                 .failure(APIError.transport(URLError(.timedOut))),
             ])
             let auth = try await session(api)
-            var ahora = t0
-            let vm = ProgressViewModel(api: api, now: { ahora })
+            let reloj = TestClock(t0)
+            let vm = ProgressViewModel(api: api, now: reloj.now)
 
             await vm.load(convocatoriaId: "c-1", auth: auth)
-            ahora = t0.addingTimeInterval(900)
+            reloj.advance(to: t0.addingTimeInterval(900))
             await vm.load(convocatoriaId: "c-1", auth: auth)
 
             #expect(vm.lastUpdated == t0, "la hora es la del dato, no la del intento")

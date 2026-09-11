@@ -18,7 +18,10 @@ final class RefreshTicker {
     /// Cinco minutos. Por debajo, volver es seguir leyendo: recargar tiraría
     /// una pantalla que la persona tenía a medias. Está fijado por un test
     /// para que moverlo sea un acto deliberado y no un ajuste de paso.
-    static let staleAfter: TimeInterval = 300
+    // `nonisolated`: es un número, no estado de pantalla, y lo leen sitios que
+    // no están en el actor principal —empezando por sus propios tests—. Estaba
+    // atrapado solo por vivir dentro de una clase `@Observable`.
+    nonisolated static let staleAfter: TimeInterval = 300
 
     /// Sube una vez por ausencia larga. Las pantallas la usan como llave.
     private(set) var generation = 0

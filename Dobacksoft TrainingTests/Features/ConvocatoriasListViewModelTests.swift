@@ -122,11 +122,11 @@ extension KeychainBacked {
                 .failure(APIError.transport(URLError(.timedOut)))
             ])
             let auth = try await session(api)
-            var clock = t0
-            let vm = ConvocatoriasListViewModel(api: api, now: { clock })
+            let reloj = TestClock(t0)
+            let vm = ConvocatoriasListViewModel(api: api, now: reloj.now)
 
             await vm.load(auth: auth, isStudent: true)
-            clock = t0.addingTimeInterval(3600)
+            reloj.advance(to: t0.addingTimeInterval(3600))
             await vm.load(auth: auth, isStudent: true)
 
             #expect(vm.lastUpdated == t0, "la hora es la del dato que se está viendo")
@@ -162,12 +162,12 @@ extension KeychainBacked {
                 .success([convocatoria(id: "c2", name: "Oposición 2027")])
             ])
             let auth = try await session(api)
-            var clock = t0
-            let vm = ConvocatoriasListViewModel(api: api, now: { clock })
+            let reloj = TestClock(t0)
+            let vm = ConvocatoriasListViewModel(api: api, now: reloj.now)
 
             await vm.load(auth: auth, isStudent: true)
             await vm.load(auth: auth, isStudent: true)
-            clock = t0.addingTimeInterval(7200)
+            reloj.advance(to: t0.addingTimeInterval(7200))
             await vm.load(auth: auth, isStudent: true)
 
             #expect(vm.refreshError == nil)
