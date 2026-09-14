@@ -129,14 +129,36 @@ TEST_RUNNER_STAGING_EMAIL="$EMAIL" \
 TEST_RUNNER_STAGING_PASSWORD="$PASSWORD" \
 TEST_RUNNER_STAGING_REQUIRED=1 \
 TEST_RUNNER_STAGING_ROLE="$ROL" \
+# La salida CRUDA se guarda siempre, y el filtro se aplica a la copia.
+#
+# El filtro existía sin red de seguridad, y se comió la causa de un fallo: una
+# corrida terminó con «TEST FAILED», cero tests ejecutados y nada más en
+# pantalla, porque el motivo real no encajaba en ninguno de los patrones. Un
+# envoltorio que esconde por qué falló es peor que no tenerlo: manda a quien lo
+# lee a buscar el defecto en la app, que es donde no está.
+CRUDO=$(mktemp -t staging-walkthrough)
+
 xcodebuild test \
   -project "Dobacksoft Training.xcodeproj" \
   -scheme "Dobacksoft Training" \
   -destination "$DESTINO" \
   -parallel-testing-enabled NO \
   "${@:--only-testing:Dobacksoft TrainingUITests/StagingWalkthroughUITests}" \
-  2>&1 | rg -v "CHHapticPattern" \
-       | rg "error:|XCTAssert|XCTFail|Test skipped|Test Case .* (passed|failed|skipped)|Test run with|TEST (SUCCEEDED|FAILED)|Assertion Failure"
+  > "$CRUDO" 2>&1
+SALIDA=$?
 
-# El código de salida es el de xcodebuild, no el del filtro.
-exit "${PIPESTATUS[0]}"
+rg -v "CHHapticPattern" "$CRUDO" \
+  | rg "error:|XCTAssert|XCTFail|Test skipped|Test Case .* (passed|failed|skipped)|Test run with|TEST (SUCCEEDED|FAILED)|Assertion Failure"
+
+# Si falló SIN que el filtro haya explicado nada, se enseña el final crudo.
+if [ "$SALIDA" -ne 0 ]; then
+  ejecutados=$(rg -c "Test Case .* (passed|failed|skipped) \(" "$CRUDO" 2>/dev/null || echo 0)
+  if [ "${ejecutados:-0}" -eq 0 ]; then
+    echo
+    echo "▸ Falló sin ejecutar un solo test. Final de la salida cruda:"
+    echo "  (completa en $CRUDO)"
+    tail -25 "$CRUDO" | sed 's/^/    /'
+  fi
+fi
+
+exit "$SALIDA"
