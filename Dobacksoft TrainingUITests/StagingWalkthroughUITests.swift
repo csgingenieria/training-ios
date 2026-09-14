@@ -587,7 +587,29 @@ final class StagingWalkthroughUITests: XCTestCase {
             return XCTFail("«Cambiar la contraseña» no es pulsable: algo lo tapa y no se puede destapar.")
         }
         XCTAssertTrue(enviar.isEnabled, "con los tres campos puestos tiene que dejar enviar")
-        enviar.tap()
+
+        // El envío también se REINTENTA, y aquí hace falta decir por qué es
+        // seguro.
+        //
+        // Reintentar una NAVEGACIÓN es inocuo: un toque tragado no deja rastro.
+        // Reintentar un ENVÍO no lo es en general — puede escribir dos veces.
+        // Lo es en ESTE test y solo en este: la contraseña actual va
+        // deliberadamente equivocada, así que ningún intento puede mutar nada.
+        // El backend rechaza los N con 422 y la pantalla acaba diciendo lo
+        // mismo que diría con uno.
+        //
+        // **No copiar este patrón a un envío que sí escriba** sin repetir ese
+        // razonamiento. Aquí está porque el toque se tragaba: el botón salía
+        // habilitado, el toque aterrizaba y no disparaba nada —la misma firma
+        // que en el acceso y en la fila del perfil—, y el test acusaba a la app
+        // de callar un rechazo que nunca había llegado a pedir.
+        let errorEnPantalla = element("password.error", in: app)
+        for intento in 0..<3 {
+            guard !errorEnPantalla.exists else { break }
+            guard enviar.exists, enviar.isEnabled, enviar.isHittable else { break }
+            enviar.tap()
+            if errorEnPantalla.waitForExistence(timeout: intento == 0 ? 20 : 10) { break }
+        }
 
         // Y el rechazo se CUENTA. Es lo que separa «no ha funcionado» de un
         // botón que se pulsa y no pasa nada.
@@ -1225,7 +1247,41 @@ final class StagingWalkthroughUITests: XCTestCase {
         try type(credentials.email, into: email, in: app)
         try type(credentials.password, into: app.secureTextFields["login.password"], in: app)
 
-        app.buttons["login.submit"].tap()
+        // El toque se REPITE hasta que la pantalla de acceso se va.
+        //
+        // Medido, no supuesto: cuando esto falla, el diagnóstico dice
+        // «submit existe=true activo=true rótulo=Iniciar sesión · email
+        // vacío=false · hay indicador de progreso=false». Botón visible,
+        // habilitado, sin cuenta atrás del límite, campos llenos y **ninguna
+        // petición en vuelo**. Es decir: el toque aterrizó y no disparó nada.
+        //
+        // Es la tercera vez esta semana con la misma forma —la fila del perfil
+        // bajo la barra flotante, el botón de enviar bajo el teclado— y este
+        // era el único toque del recorrido que no pasaba por la disciplina.
+        // Repetirlo es seguro: uno tragado no deja rastro, y en cuanto la
+        // pantalla se va, para.
+        // Se espera a que el campo DESAPAREZCA, no a que exista.
+        //
+        // La primera versión de este bucle preguntaba `email.waitForExistence`
+        // —que devuelve `true` en cuanto el campo está— y volvía a tocar. Con
+        // el acceso ya resuelto, el botón se había ido entre la comprobación y
+        // el toque, y XCUITest no devuelve `false`: **lanza** «Failed to tap:
+        // No matches found». O sea, el reintento metió una carrera donde no la
+        // había y convirtió un acceso correcto en un fallo.
+        for intento in 0..<4 {
+            // Si el formulario ya no está, se entró: no hay nada que reintentar.
+            guard email.exists else { break }
+
+            let boton = app.buttons["login.submit"]
+            guard boton.exists, boton.isHittable else { break }
+            boton.tap()
+
+            let fuera = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "exists == false"),
+                object: email
+            )
+            if XCTWaiter.wait(for: [fuera], timeout: intento == 0 ? 15 : 8) == .completed { break }
+        }
 
         // The signal is the login field going away, not a tab bar arriving.
         //
@@ -1249,7 +1305,26 @@ final class StagingWalkthroughUITests: XCTestCase {
             // con su identificador; leerlo cuesta una línea.
             let dicho = element("login.error", in: app)
             let motivo = dicho.exists ? dicho.label : "la pantalla no muestra ningún error"
-            return XCTFail("Sin sesión tras 30 s. La pantalla dice: «\(motivo)».")
+
+            // Y el ESTADO del formulario, no solo lo que dice.
+            //
+            // «Sin error y sin navegar» encaja con dos cosas incompatibles: el
+            // toque no hizo nada —botón deshabilitado, por ejemplo por la
+            // cuenta atrás del límite de intentos— o la petición se quedó
+            // colgada. El mensaje anterior no las distinguía, y sin
+            // distinguirlas no hay diagnóstico posible: una se arregla en el
+            // test y la otra en la app.
+            //
+            // Nada de contenido: los campos llevan credenciales. Solo si están
+            // vacíos, que es lo único que hace falta saber de ellos.
+            let enviar = element("login.submit", in: app)
+            let estado = "submit existe=\(enviar.exists) activo=\(enviar.exists ? String(enviar.isEnabled) : "—")"
+                + " rótulo=«\(enviar.exists ? enviar.label : "—")»"
+                + " · email vacío=\(email.value as? String == "" || email.value == nil)"
+                + " · hay indicador de progreso=\(app.activityIndicators.firstMatch.exists)"
+
+
+            return XCTFail("Sin sesión tras 30 s. La pantalla dice: «\(motivo)». \(estado)")
         }
     }
 
