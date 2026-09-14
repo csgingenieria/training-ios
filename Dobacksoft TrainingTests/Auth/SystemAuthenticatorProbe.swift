@@ -14,15 +14,20 @@ import LocalAuthentication
 /// No afirma un valor concreto: el resultado depende de cómo esté configurado
 /// el simulador o el teléfono. Lo que sí fija son las dos invariantes que no
 /// pueden romperse en ninguna configuración.
-/// **Lo que sigue SIN comprobar**, dicho aquí para que nadie lo dé por hecho:
-/// la rama de biometría INSCRITA. No se ha conseguido que un simulador le
-/// reporte `canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics) == true`
-/// al proceso de test —ni con `notifyutil` sobre
-/// `com.apple.BiometricKit.enrollmentChanged`, ni marcando «Enrolled» en el
-/// menú del Simulador—, así que `capability()` nunca se ha visto devolver
-/// `.faceID` ni `.touchID` de verdad. Hace falta un teléfono real con Face ID
-/// configurado. Los tests de aquí abajo pasan igual: están escritos para no
-/// afirmar nada sobre una rama que no se puede ejercitar.
+/// **Las dos ramas están comprobadas contra hardware, en dos configuraciones
+/// distintas:**
+///
+/// - Simulador iPhone 17 Pro con Face ID en el hardware y **sin inscribir**:
+///   `biometryType=.faceID`, política completa `true`, biométrica `false`
+///   → `capability() == .passcodeOnly`. Aquí apareció el defecto.
+/// - iPhone 16 Pro real con Face ID configurado: política biométrica `true`
+///   → `capability() == .faceID`.
+///
+/// Los tests están escritos para no dejar hueco: cubren los tres casos y
+/// ninguno pasa en vacío. La primera versión solo afirmaba cuando NO había
+/// biometría inscrita, así que en un teléfono configurado salía verde sin
+/// haber comprobado nada — que es exactamente la clase de comprobación contra
+/// la que existe este archivo.
 struct SystemAuthenticatorProbe {
     /// **Biometría disponible no es biometría inscrita**, y `capability()`
     /// no puede confundirlas.
@@ -44,12 +49,17 @@ struct SystemAuthenticatorProbe {
         let biometrica = contexto.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
         let capacidad = SystemOwnerAuthenticator().capability()
 
-        if completa && !biometrica {
-            #expect(capacidad == .passcodeOnly,
-                    "sin biometría inscrita no se puede anunciar biometría; dice \(capacidad)")
-        }
+        // Los tres casos, sin hueco. La versión anterior solo afirmaba cuando
+        // NO había biometría inscrita, así que en un teléfono configurado
+        // pasaba en vacío: verde sin haber comprobado nada.
         if !completa {
             #expect(capacidad == .unavailable)
+        } else if !biometrica {
+            #expect(capacidad == .passcodeOnly,
+                    "sin biometría inscrita no se puede anunciar biometría; dice \(capacidad)")
+        } else {
+            #expect(capacidad == .faceID || capacidad == .touchID,
+                    "con biometría inscrita hay que nombrarla; dice \(capacidad)")
         }
     }
 
