@@ -150,6 +150,31 @@ SALIDA=$?
 rg -v "CHHapticPattern" "$CRUDO" \
   | rg "error:|XCTAssert|XCTFail|Test skipped|Test Case .* (passed|failed|skipped)|Test run with|TEST (SUCCEEDED|FAILED)|Assertion Failure"
 
+# Una corrida que se SALTÓ todo no es una corrida verde.
+#
+# Este script siempre pasa credenciales y `STAGING_REQUIRED=1`, que existe para
+# que su ausencia FALLE en vez de saltarse. Pero el entorno no siempre llega:
+# si xcodebuild relanza la corrida —por ejemplo, porque el simulador se apagó
+# debajo—, el segundo intento arranca sin las variables, los ocho tests se
+# saltan «SIN CREDENCIALES» y xcodebuild dice `TEST SUCCEEDED` con salida 0.
+#
+# Pasó de verdad: una corrida de iPad iba a reportarse como verde habiendo
+# probado exactamente nada. El propio mensaje del salto lo avisa —«esta corrida
+# no prueba nada sobre él, aunque xcodebuild diga TEST SUCCEEDED»— y aun así el
+# código de salida decía que sí.
+#
+# El guard tiene que vivir AQUÍ, donde sí se sabe que se pasaron credenciales.
+if rg -q "SIN CREDENCIALES" "$CRUDO" 2>/dev/null; then
+  echo
+  echo "✗ Hubo tests saltados por falta de credenciales, y este script SÍ las pasó."
+  echo
+  echo "  Significa que el entorno no llegó al proceso de test —normalmente"
+  echo "  porque xcodebuild relanzó la corrida—. Lo que xcodebuild diga de esa"
+  echo "  segunda pasada no vale: no ejecutó el recorrido."
+  echo "  Salida cruda completa en $CRUDO"
+  SALIDA=1
+fi
+
 # Si falló SIN que el filtro haya explicado nada, se enseña el final crudo.
 if [ "$SALIDA" -ne 0 ]; then
   ejecutados=$(rg -c "Test Case .* (passed|failed|skipped) \(" "$CRUDO" 2>/dev/null || echo 0)
