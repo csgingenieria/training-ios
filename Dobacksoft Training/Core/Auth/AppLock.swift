@@ -16,15 +16,27 @@ protocol DeviceOwnerAuthenticator: Sendable {
 struct SystemOwnerAuthenticator: DeviceOwnerAuthenticator {
     func capability() -> BiometryCapability {
         let context = LAContext()
-        var error: NSError?
 
-        // Se pregunta por la política que se va a USAR.
-        //
-        // `.deviceOwnerAuthenticationWithBiometrics` diría «no se puede» en un
-        // dispositivo con código y sin Face ID inscrito, y ahí sí se puede:
-        // solo cambia qué se pide.
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+        // Primero, si se puede evaluar SIQUIERA. Se pregunta por la política
+        // que se va a usar: `.deviceOwnerAuthenticationWithBiometrics` diría
+        // «no se puede» en un dispositivo con código y sin biometría inscrita,
+        // y ahí sí se puede — solo cambia qué se pide.
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) else {
             return .unavailable
+        }
+
+        // **Biometría DISPONIBLE no es biometría INSCRITA**, y `biometryType`
+        // no distingue: describe el hardware. Un iPhone con Face ID y ninguna
+        // cara registrada devuelve `.faceID` igual que uno configurado.
+        //
+        // Sin esta comprobación, `capability()` decía `.faceID` en un
+        // dispositivo donde lo único que iba a funcionar era el código.
+        // Encontrado ejecutando `SystemAuthenticatorProbe` contra un simulador
+        // en ese estado exacto: `biometryType=.faceID`, `canEvaluate` de la
+        // política completa `true`, y de la biométrica `false`. La
+        // documentación no lo dice así de claro; el dispositivo sí.
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else {
+            return .passcodeOnly
         }
 
         switch context.biometryType {
