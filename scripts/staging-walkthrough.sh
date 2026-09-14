@@ -99,7 +99,11 @@ fi
 # Las dos cosas parecen defectos de la app y no lo son. Costaron cuatro
 # diagnósticos falsos en una tarde, uno de ellos a punto de reportarse como
 # hallazgo. Aislado, lo mismo pasa dos veces seguidas.
-if pgrep -f "xcodebuild test" >/dev/null 2>&1; then
+# `pgrep -x`, no `-f`: `-f` casa con CUALQUIER proceso cuya línea de comandos
+# contenga «xcodebuild test», incluido un vigilante que compruebe si hay
+# corridas en marcha. Así, el propio observador abortaba los recorridos que
+# venía a observar, y el mensaje culpaba a una contención que no existía.
+if pgrep -x xcodebuild >/dev/null 2>&1; then
   echo "✗ Ya hay un «xcodebuild test» corriendo."
   echo
   echo "  Dos corridas sobre el mismo simulador producen fallos que parecen de"
@@ -125,10 +129,6 @@ echo
 # `TEST_RUNNER_` lo reenvía xcodebuild al runner quitando el prefijo.
 # Las variables van solo en el entorno de este proceso: no se imprimen, y el
 # `set -x` está deliberadamente apagado para que no acaben en ningún log.
-TEST_RUNNER_STAGING_EMAIL="$EMAIL" \
-TEST_RUNNER_STAGING_PASSWORD="$PASSWORD" \
-TEST_RUNNER_STAGING_REQUIRED=1 \
-TEST_RUNNER_STAGING_ROLE="$ROL" \
 # La salida CRUDA se guarda siempre, y el filtro se aplica a la copia.
 #
 # El filtro existía sin red de seguridad, y se comió la causa de un fallo: una
@@ -138,6 +138,14 @@ TEST_RUNNER_STAGING_ROLE="$ROL" \
 # lee a buscar el defecto en la app, que es donde no está.
 CRUDO=$(mktemp -t staging-walkthrough)
 
+# **Nada entre estas asignaciones y `xcodebuild`.** Van encadenadas con `\` y
+# solo valen para el comando que sigue: meter un comentario en medio rompe la
+# continuación y xcodebuild arranca SIN credenciales. Pasó exactamente eso al
+# añadir el volcado de la salida cruda, y el recorrido entero se saltó.
+TEST_RUNNER_STAGING_EMAIL="$EMAIL" \
+TEST_RUNNER_STAGING_PASSWORD="$PASSWORD" \
+TEST_RUNNER_STAGING_REQUIRED=1 \
+TEST_RUNNER_STAGING_ROLE="$ROL" \
 xcodebuild test \
   -project "Dobacksoft Training.xcodeproj" \
   -scheme "Dobacksoft Training" \
