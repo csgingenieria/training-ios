@@ -858,11 +858,28 @@ final class StagingWalkthroughUITests: XCTestCase {
     }
 
     private func assertNoUnexplainedBreakdownRow(_ app: XCUIApplication) {
+        // Primero se PREGUNTA, y solo si hay algo se enumera.
+        //
+        // `allElementsBoundByIndex` hace una ida y vuelta POR ELEMENTO. Esta
+        // comprobación enumeraba hasta 300 siempre, nada más que para saber si
+        // existía una fila «No evaluado» —que en la mayoría de pantallas no
+        // existe—, y acababa en `return` habiendo pagado las 300.
+        //
+        // Medido en una vuelta del recorrido en iPad: 687 consultas de elemento
+        // y unos cinco minutos del test gastados en enumerar. Un predicado lo
+        // resuelve el lado del simulador en UNA consulta.
+        //
+        // La enumeración completa sigue estando: solo se paga cuando hay una
+        // fila que de verdad hay que explicar. Mismo comportamiento, mismo
+        // fallo cuando toca fallar.
+        let sinValor = app.staticTexts.matching(
+            NSPredicate(format: "label IN %@", ["No evaluado", "Sin dato"])
+        )
+        guard sinValor.firstMatch.exists else { return }
+
         let labels = app.staticTexts.allElementsBoundByIndex
             .prefix(300)
             .compactMap { $0.exists ? $0.label : nil }
-
-        guard labels.contains(where: { $0 == "No evaluado" || $0 == "Sin dato" }) else { return }
 
         // The explanation renders as its own text next to the label, so the
         // screen must carry more than the bare two words.
