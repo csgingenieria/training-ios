@@ -18,7 +18,7 @@ import Foundation
 /// respuesta trae exactamente activeConvocatorias, totalCandidates,
 /// totalParticipants, attemptsToday, attemptsThisWeek, lastWebfleetSyncAt y
 /// convocatoriasWithLowQuality. El sistema no gestiona cupos.
-struct ManagerDashboardDTO: Sendable {
+nonisolated struct ManagerDashboardDTO: Sendable {
     let activeConvocatorias: Int
     let totalCandidates: Int
     let totalParticipants: Int

@@ -7,13 +7,13 @@ import os
 /// Detrás de un protocolo para poder probar las decisiones sin biometría: un
 /// simulador no tiene Face ID, así que sin esto la única prueba posible sería
 /// mirar el código y creerse que hace lo que dice.
-protocol DeviceOwnerAuthenticator: Sendable {
+nonisolated protocol DeviceOwnerAuthenticator: Sendable {
     func capability() -> BiometryCapability
     func evaluate(reason: String) async throws -> Bool
 }
 
 /// La implementación real, sobre `LocalAuthentication`.
-struct SystemOwnerAuthenticator: DeviceOwnerAuthenticator {
+nonisolated struct SystemOwnerAuthenticator: DeviceOwnerAuthenticator {
     func capability() -> BiometryCapability {
         let context = LAContext()
 

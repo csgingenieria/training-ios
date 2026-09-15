@@ -11,7 +11,7 @@ import Foundation
 /// `StandingDTO` a propósito, así que se decodifican en `GradeComposition`, el
 /// tipo que ya existe: un segundo vocabulario para los mismos cuatro números
 /// obligaría a un segundo DTO que decir lo mismo de otra forma.
-struct ProgressDTO: Sendable {
+nonisolated struct ProgressDTO: Sendable {
     let candidate: ProgressCandidateDTO?
     let convocatoria: ProgressConvocatoriaDTO?
     let activeEnrollments: [ProgressEnrollmentDTO]
@@ -107,7 +107,7 @@ nonisolated extension ProgressDTO: Decodable {
 // MARK: - Evolución por recorrido
 
 /// La última vuelta de un recorrido, contra la anterior y contra la nota.
-struct ProgressEvolutionDTO: Sendable, Identifiable, Hashable {
+nonisolated struct ProgressEvolutionDTO: Sendable, Identifiable, Hashable {
     let routeCode: String?
     let label: String?
 
@@ -200,7 +200,7 @@ nonisolated enum ProgressTrend: Sendable, Hashable {
 
 // MARK: - Extremos, candidato, convocatoria
 
-struct ProgressRouteExtremeDTO: Sendable, Hashable {
+nonisolated struct ProgressRouteExtremeDTO: Sendable, Hashable {
     let routeCode: String?
     let label: String?
     let score: Double?
@@ -209,7 +209,7 @@ struct ProgressRouteExtremeDTO: Sendable, Hashable {
 
 nonisolated extension ProgressRouteExtremeDTO: Decodable {}
 
-struct ProgressCandidateDTO: Sendable, Hashable {
+nonisolated struct ProgressCandidateDTO: Sendable, Hashable {
     let id: String?
     let name: String?
     /// El número de INSCRIPCIÓN que el aspirante teclea en la tablet, no una
@@ -230,7 +230,7 @@ nonisolated extension ProgressCandidateDTO: Decodable {
     private enum CodingKeys: String, CodingKey { case id, name, plaza }
 }
 
-struct ProgressConvocatoriaDTO: Sendable, Hashable {
+nonisolated struct ProgressConvocatoriaDTO: Sendable, Hashable {
     let id: String?
     let name: String?
     /// Cuándo se CERRÓ la convocatoria. `nil` mientras sigue abierta — no es un
@@ -258,7 +258,7 @@ struct ProgressConvocatoriaDTO: Sendable, Hashable {
 
 nonisolated extension ProgressConvocatoriaDTO: Decodable {}
 
-struct ProgressEnrollmentDTO: Sendable, Hashable, Identifiable {
+nonisolated struct ProgressEnrollmentDTO: Sendable, Hashable, Identifiable {
     let convocatoriaId: String?
     let name: String?
 

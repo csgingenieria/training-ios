@@ -2,7 +2,7 @@ import Foundation
 
 /// Severidad de una alerta operativa de enriquecimiento Webfleet.
 /// Mapeo backend: `error` = enrichment FAILED · `warning` = enrichment PARTIAL.
-enum WebfletAlertSeverity: String, Sendable, Decodable {
+nonisolated enum WebfletAlertSeverity: String, Sendable, Decodable {
     case error
     case warning
 
@@ -22,7 +22,7 @@ enum WebfletAlertSeverity: String, Sendable, Decodable {
 /// GDPR-safe por construcción: NO expone telemetría granular (kpisDriver,
 /// HARSH_*) — solo el hecho del fallo + error técnico. `studentName` es PII
 /// de identidad pero el manager ya tiene autorización para verla.
-struct WebfletAlertDTO: Sendable, Hashable, Identifiable {
+nonisolated struct WebfletAlertDTO: Sendable, Hashable, Identifiable {
     let attemptId: String
     let severity: WebfletAlertSeverity
     let type: String
@@ -38,7 +38,7 @@ struct WebfletAlertDTO: Sendable, Hashable, Identifiable {
 nonisolated extension WebfletAlertDTO: Decodable {}
 
 /// Respuesta completa de `GET /api/v1/webfleet/alerts`.
-struct WebfletAlertsResponseDTO: Sendable {
+nonisolated struct WebfletAlertsResponseDTO: Sendable {
     let items: [WebfletAlertDTO]
     let count: Int
 }

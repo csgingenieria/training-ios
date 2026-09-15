@@ -1,6 +1,6 @@
 import Foundation
 
-struct AttemptCandidateDTO: Hashable, Sendable {
+nonisolated struct AttemptCandidateDTO: Hashable, Sendable {
     let id: String?
     let name: String?
 }
@@ -13,7 +13,7 @@ nonisolated extension AttemptCandidateDTO: Decodable {}
 /// legible («Parque → Hoyo de Manzanares») viaja aparte en `name`, y el
 /// contrato es así por historia: en la matriz, en cambio, `label` sí trae el
 /// nombre. No confiar en `label` para mostrar al usuario.
-struct AttemptRouteDTO: Hashable, Sendable {
+nonisolated struct AttemptRouteDTO: Hashable, Sendable {
     let id: String?
     let label: String?
 
@@ -238,7 +238,7 @@ nonisolated struct AttemptScoreFamilyDTO: Hashable, Sendable {
 
 nonisolated extension AttemptScoreFamilyDTO: Decodable {}
 
-struct AttemptEventDTO: Hashable, Sendable, Identifiable {
+nonisolated struct AttemptEventDTO: Hashable, Sendable, Identifiable {
     /// La identidad que le da el backend.
     ///
     /// Es la llave con la que este evento se cruza con el del mapa
@@ -516,7 +516,7 @@ nonisolated extension AttemptEventDTO: Decodable {
     }
 }
 
-struct AttemptDetailDTO: Sendable {
+nonisolated struct AttemptDetailDTO: Sendable {
     let id: String?
     let candidate: AttemptCandidateDTO?
     let route: AttemptRouteDTO?

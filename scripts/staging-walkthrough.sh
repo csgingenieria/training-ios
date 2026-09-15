@@ -117,9 +117,64 @@ fi
 
 DESTINO="${STAGING_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 
-# El simulador primero, que es la cura del cuelgue de hoy. Nunca matar
-# CoreSimulatorService: apagar los dispositivos basta y es reversible.
+# El simulador se BORRA, no solo se apaga.
+#
+# Apagar no quita el estado acumulado. Medido: el subsistema de accesibilidad
+# de XCUITest se degrada POR RECORRIDO, no por dispositivo. Un iPad Air recien
+# borrado paso los siete tests que le tocan; el segundo recorrido seguido sobre
+# ese mismo simulador dio cinco fallos, todos «Failed to get matching
+# snapshots», uno con la frase que lo explica: «Unable to perform work on main
+# run loop». El bucle principal del proceso de test deja de responder.
+#
+# Eso confundio el diagnostico un buen rato: `erase` parecio no servir porque se
+# hizo UNA vez y luego se corrieron DOS recorridos. La cura es borrar antes de
+# cada uno.
+#
+# Nunca matar CoreSimulatorService: borrar el dispositivo basta y es reversible.
 xcrun simctl shutdown all >/dev/null 2>&1
+
+NOMBRE_DESTINO=$(echo "$DESTINO" | sd '.*name=' '')
+# Literal primero (`-F`), y el UDID después. `rg` no soporta `\Q…\E`, y una
+# expresión construida con el nombre del dispositivo dentro se rompe sola: «iPad
+# Air 11-inch (M4)» lleva paréntesis. El « (» final distingue «iPhone 17 Pro»
+# de «iPhone 17 Pro Max».
+UDID=$(xcrun simctl list devices available 2>/dev/null \
+       | rg -F "$NOMBRE_DESTINO (" \
+       | rg -o '\(([0-9A-F-]{36})\)' -r '$1' | head -1)
+
+# Por defecto NO se borra, y esto se midió en las dos direcciones.
+#
+# Borrar cura la degradación de accesibilidad, sí. Pero borra también la app
+# instalada, así que el PRIMER test de cada recorrido arranca completamente en
+# frío y se queda sin sesión a los 30 s. Medido en el mismo recorrido de
+# instructor en iPhone: sin borrar 3 pasan y 0 fallan; con borrado 1 pasa y 2
+# fallan. Se cambió un fallo intermitente al final de una sesión larga por uno
+# fijo al principio de cada recorrido: peor negocio.
+#
+# Queda como opción, pero **no como cura de la degradación**, que es lo que se
+# creyó al principio y resultó falso.
+#
+# Medido en el mismo recorrido, tras tres corridas seguidas en la máquina:
+# sin borrar, dos tests fallan con «Failed to resolve query: Timed out»;
+# CON `STAGING_ERASE=1`, el runner de UI no llega ni a arrancar —«Timed out
+# while loading»— y se ejecutan cero tests. Borrar no mejora nada ahí.
+#
+# Lo que hay tras muchas horas y decenas de instalaciones es un límite de la
+# máquina que `erase` no toca, porque el estado que estorba no vive en el
+# dispositivo. Lo único que se ha visto funcionar es dejarla reposar.
+#
+# Entonces, ¿para qué sigue existiendo? Para partir de un simulador sin sesión
+# ni app previa cuando eso es lo que se quiere probar. No para arreglar una
+# corrida que va mal.
+if [ -z "${STAGING_ERASE:-}" ]; then
+  :
+elif [ -n "${UDID:-}" ]; then
+  xcrun simctl erase "$UDID" >/dev/null 2>&1 \
+    && echo "▸ Simulador «${NOMBRE_DESTINO}» borrado a estado limpio." \
+    || echo "▸ No se pudo borrar «${NOMBRE_DESTINO}»; se sigue."
+else
+  echo "▸ No se resolvio el UDID de «${NOMBRE_DESTINO}»; se sigue sin borrar."
+fi
 
 echo "▸ Rol: $ROL · destino: $DESTINO"
 echo "▸ Configuración: $CONFIGURACION · servidor: $HOST"

@@ -1,6 +1,6 @@
 import Foundation
 
-struct RankingCandidateDTO: Hashable, Sendable {
+nonisolated struct RankingCandidateDTO: Hashable, Sendable {
     let id: String?
     let name: String?
 
@@ -12,7 +12,7 @@ struct RankingCandidateDTO: Hashable, Sendable {
 nonisolated extension RankingCandidateDTO: Decodable {}
 
 /// Una fila del ranking de una convocatoria.
-struct RankingEntryDTO: Identifiable, Hashable, Sendable {
+nonisolated struct RankingEntryDTO: Identifiable, Hashable, Sendable {
     /// Puesto en el orden de méritos, o `nil` si la persona no ha conducido.
     ///
     /// El backend emite `position: null` para todo inscrito sin nota
@@ -96,7 +96,7 @@ struct RankingEntryDTO: Identifiable, Hashable, Sendable {
 
 nonisolated extension RankingEntryDTO: Decodable {}
 
-struct RankingResponseDTO: Sendable {
+nonisolated struct RankingResponseDTO: Sendable {
     let convocatoria: ConvocatoriaSummaryDTO
     let entries: [RankingEntryDTO]
 }

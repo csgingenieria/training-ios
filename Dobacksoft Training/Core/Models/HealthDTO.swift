@@ -1,6 +1,6 @@
 import Foundation
 
-struct HealthDTO: Sendable {
+nonisolated struct HealthDTO: Sendable {
     let status: String
     let version: String
     let time: String

@@ -9,7 +9,7 @@ import Foundation
 /// el número de inscripción, permite conducir en nombre de otro — así que la
 /// pantalla no lo pide de fondo ni lo refresca sola: se abre cuando la persona
 /// entra a verlo.
-struct PinDTO: Sendable {
+nonisolated struct PinDTO: Sendable {
     /// El PIN, o `nil`.
     ///
     /// **`nil` significa dos cosas que para quien llama son la misma**: que no

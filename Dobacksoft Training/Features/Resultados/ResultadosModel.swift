@@ -9,6 +9,7 @@ import Foundation
 /// contesta lo que un instructor pregunta de verdad. El ranking dice quién va
 /// delante pero no de qué está hecha la nota; la matriz dice qué ha conducido
 /// cada uno pero no en qué orden quedan.
+nonisolated
 struct ResultadoRow: Identifiable, Sendable {
     let candidateId: String
     let name: String
@@ -38,6 +39,7 @@ struct ResultadoRow: Identifiable, Sendable {
 }
 
 /// Todo lo que «Resultados» necesita, ya cruzado.
+nonisolated
 struct ResultadosData: Sendable {
     let convocatoriaName: String
     let convocatoriaStatus: String?
@@ -79,6 +81,7 @@ struct ResultadosData: Sendable {
 
 // MARK: - Cruce
 
+nonisolated
 extension ResultadosData {
     /// Cruza ranking y matriz en una sola tabla.
     ///
@@ -171,6 +174,7 @@ extension ResultadosData {
 ///
 /// «Más recorridos completados» sí sobrevive, y es el que contesta la pregunta
 /// de la rotación: a quién le toca conducir.
+nonisolated
 enum ResultadosSortMode: String, CaseIterable, Identifiable, Sendable {
     case position
     case completedDescending
@@ -202,6 +206,7 @@ enum ResultadosSortMode: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+nonisolated
 private extension Collection {
     func count(where predicate: (Element) -> Bool) -> Int {
         reduce(0) { predicate($1) ? $0 + 1 : $0 }

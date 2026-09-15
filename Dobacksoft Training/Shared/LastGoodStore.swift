@@ -22,6 +22,7 @@ import os
 /// 4. No entrega cifras más viejas que el umbral de caducidad del widget. El
 ///    widget se niega a mostrar un puesto de 48 horas sin etiquetarlo; la app
 ///    no puede ser más permisiva con el mismo número.
+nonisolated
 struct LastGoodStore: Sendable {
     /// Qué se guarda. Cada clave es un fichero distinto.
     enum Key: String, Sendable, CaseIterable {
@@ -159,11 +160,13 @@ struct LastGoodStore: Sendable {
 /// declarar una conformidad que no necesita. Los DTO de este proyecto son
 /// `Decodable` a propósito —el cliente lee el contrato, no lo emite—, así que
 /// para escribirlos hace falta lo mínimo.
+nonisolated
 private struct WriteEnvelope<T: Encodable>: Encodable {
     let capturedAt: Date
     let value: T
 }
 
+nonisolated
 private struct ReadEnvelope<T: Decodable>: Decodable {
     let capturedAt: Date
     let value: T

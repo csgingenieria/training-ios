@@ -11,7 +11,7 @@ import Foundation
 /// La fórmula es: suma del mejor intento de cada recorrido exigido conducido,
 /// dividida entre el **número total de recorridos exigidos**. El denominador es
 /// fijo: lo exigido y no conducido cuenta cero.
-struct GradeComposition: Sendable, Equatable {
+nonisolated struct GradeComposition: Sendable, Equatable {
     /// Recorridos que la convocatoria exige.
     ///
     /// `nil` significa que **no exige ninguno** y la nota es el mejor intento

@@ -5,7 +5,7 @@ import os
 ///
 /// No usa `AppLog` a propósito: este fichero lo compilan varios targets y
 /// `AppLog` solo existe en el de la app.
-private let snapshotLog = Logger(
+nonisolated private let snapshotLog = Logger(
     subsystem: Bundle.main.bundleIdentifier ?? "com.dobacksoft.training",
     category: "snapshot"
 )
@@ -42,7 +42,7 @@ nonisolated enum SnapshotReadResult: Sendable, Equatable {
 ///
 /// La app escribe; las superficies secundarias solo leen. Un lector **nunca**
 /// borra ni reescribe, ni siquiera para purgar algo caducado.
-struct SnapshotStore: Sendable {
+nonisolated struct SnapshotStore: Sendable {
     /// Identificador del App Group.
     ///
     /// Sigue la convención de los bundle ids del proyecto. **Debe registrarse

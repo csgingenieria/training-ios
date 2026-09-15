@@ -838,16 +838,27 @@ final class StagingWalkthroughUITests: XCTestCase {
             )
         }
 
-        fila.tap()
+        // Por la misma disciplina que las demás filas: libre de la barra
+        // flotante y del teclado, quieta, y con el toque reintentado.
+        //
+        // Este era el ÚLTIMO toque del recorrido sin ella, y falló con la firma
+        // de siempre —«la fila no abrió la pantalla»— sobre una fila que existe
+        // y se puede tocar. Es la quinta cara del mismo defecto.
+        guard let tocable = hittableRow("progreso.row", in: app) else {
+            return XCTFail("«progreso.row» existe pero no se puede tocar: algo lo tapa y no se destapa.")
+        }
+
         // Se espera la pantalla de destino por su identidad, no «algún botón
         // en la barra»: eso último se cumple también en la de origen, y este
         // test pasaba corriendo solo y fallaba en la tanda completa. Un test
         // que solo falla acompañado es peor que uno que falla siempre — sale
         // verde en la máquina de quien lo escribe.
-        XCTAssertTrue(
-            element("recorrido.pantalla", in: app).waitForExistence(timeout: 20),
-            "La fila de progreso no abrió la ficha del recorrido."
+        let abrió = tapUntilArriving(
+            tocable,
+            at: element("recorrido.pantalla", in: app),
+            timeout: 20
         )
+        XCTAssertTrue(abrió, "La fila de progreso no abrió la ficha del recorrido.")
         capture(app, named: "21-ficha-recorrido")
         assertNoDecodingFailureVisible(app, screen: "Ficha del recorrido")
         assertNoVerdictVisible(app, screen: "Ficha del recorrido")

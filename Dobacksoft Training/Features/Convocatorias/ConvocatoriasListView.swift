@@ -392,7 +392,7 @@ struct ConvocatoriaRow: View {
 /// El portal web las presenta en dos listas distintas; aquí estaban todas
 /// mezcladas y con el tiempo la lista se vuelve inservible: un instructor
 /// trabaja sobre las abiertas y consulta las cerradas de tarde en tarde.
-enum ConvocatoriaScope: String, CaseIterable, Identifiable {
+nonisolated enum ConvocatoriaScope: String, CaseIterable, Identifiable {
     case activas
     case cerradas
     case todas

@@ -1,6 +1,6 @@
 import Foundation
 
-struct AttemptSummaryDTO: Sendable, Identifiable, Hashable {
+nonisolated struct AttemptSummaryDTO: Sendable, Identifiable, Hashable {
     let id: String
     let route: AttemptRouteDTO?
     let score: Double?
@@ -154,7 +154,7 @@ nonisolated enum AttemptState: Sendable, Hashable {
     }
 }
 
-struct MyAttemptsListDTO: Sendable {
+nonisolated struct MyAttemptsListDTO: Sendable {
     let items: [AttemptSummaryDTO]
 }
 

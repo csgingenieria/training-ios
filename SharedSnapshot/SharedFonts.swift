@@ -14,7 +14,7 @@ import SwiftUI
 /// quedan en el target de la app: el widget no tiene sus tamaños ni debería,
 /// porque lo suyo lo manda `WidgetFamily`.
 
-private enum SharedFontName {
+nonisolated private enum SharedFontName {
     static let displayRegular     = "Fraunces72pt-Regular"
     static let displayItalic      = "Fraunces72pt-Italic"
     static let displayBold        = "Fraunces72pt-Bold"

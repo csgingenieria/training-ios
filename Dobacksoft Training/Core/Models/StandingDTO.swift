@@ -12,7 +12,7 @@ import Foundation
 ///   temporal, y se descarta al decodificar.
 ///
 /// No volver a añadirlos. Un campo que no existe no se puede pintar por error.
-struct StandingDTO: Sendable {
+nonisolated struct StandingDTO: Sendable {
     let convocatoriaId: String
     let position: Int
     let totalCandidates: Int

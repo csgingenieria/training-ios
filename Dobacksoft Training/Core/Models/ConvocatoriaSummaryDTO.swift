@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Sin `plazas`: el sistema no gestiona cupos. El backend todavía lo envía como
 /// espejo de `totalCandidates` por compatibilidad y aquí se descarta.
-struct ConvocatoriaSummaryDTO: Identifiable, Hashable, Sendable {
+nonisolated struct ConvocatoriaSummaryDTO: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
     let description: String?
@@ -35,7 +35,7 @@ nonisolated extension ConvocatoriaSummaryDTO {
     )
 }
 
-struct ConvocatoriasListDTO: Sendable {
+nonisolated struct ConvocatoriasListDTO: Sendable {
     let items: [ConvocatoriaSummaryDTO]
 }
 

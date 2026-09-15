@@ -9,7 +9,7 @@ import Foundation
 ///
 /// Todo se muestra en **hora de Madrid**, que es donde ocurre el examen. El
 /// backend usa ese mismo huso para sus cortes de día y semana.
-enum APIDate {
+nonisolated enum APIDate {
     /// Huso del examen. No usar la zona del dispositivo: un instructor de viaje
     /// vería horas que no casan con las del acta ni con las del portal.
     static let timeZone = TimeZone(identifier: "Europe/Madrid") ?? .gmt
@@ -18,7 +18,23 @@ enum APIDate {
 
     /// El backend emite fracciones de segundo en unos endpoints y no en otros,
     /// así que hacen falta las dos estrategias.
-    private static let parsers: [ISO8601DateFormatter] = {
+    /// **`nonisolated(unsafe)` con una invariante, no para callar al
+    /// compilador.**
+    ///
+    /// Foundation no declara `ISO8601DateFormatter` como `Sendable`, y tiene
+    /// motivo: configurarlo desde dos hilos a la vez sí es una carrera. Aquí se
+    /// configuran **una sola vez** dentro de esta clausura y no se vuelven a
+    /// tocar; formatear y analizar sobre un formateador que nadie muta es
+    /// seguro.
+    ///
+    /// Lo que rompería la invariante: tocar `formatOptions` en cualquier sitio
+    /// que no sea esta clausura. Quien lo necesite, que cree el suyo.
+    ///
+    /// Se comparten a propósito: `parse` se llama una vez por cada fecha de
+    /// cada DTO —ciento y pico veces al abrir el mapa de una vuelta— y
+    /// construir dos formateadores en cada llamada sería un coste real por
+    /// nada.
+    nonisolated(unsafe) private static let parsers: [ISO8601DateFormatter] = {
         let withFraction = ISO8601DateFormatter()
         withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let plain = ISO8601DateFormatter()
@@ -40,7 +56,8 @@ enum APIDate {
     private static let longDateFormatter = formatter("d 'de' MMMM 'de' yyyy")
     private static let timeFormatter = formatter("HH:mm")
 
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
+    /// Misma invariante que `parsers`: configurado una vez aquí y nunca mutado.
+    nonisolated(unsafe) private static let relativeFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = locale
         formatter.unitsStyle = .full

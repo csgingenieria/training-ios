@@ -11,7 +11,7 @@ import Foundation
 /// **Regla que gobierna todos estos textos**: ninguno afirma un dato que no se
 /// tiene. Cuando no hay dato se dice que no lo hay — nunca un cero, nunca un
 /// guion en lugar de una cifra, nunca «te falta» nada.
-enum SnapshotCopy {
+nonisolated enum SnapshotCopy {
     static let widgetName = "Mi posición"
 
     static let widgetDescription =

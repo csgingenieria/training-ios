@@ -6,7 +6,7 @@ import CoreLocation
 /// Lo que hace de esto un contrato delicado es que **se dibuja**: un mapa
 /// afirma cosas con la forma de una línea, y una línea de más es una vuelta
 /// que nadie condujo.
-struct GpsPayloadDTO: Sendable {
+nonisolated struct GpsPayloadDTO: Sendable {
     /// Los puntos crudos. **Respaldo**, no la traza: solo se dibujan cuando no
     /// hay nada pegado a la calzada.
     let points: [GpsPointDTO]
@@ -76,7 +76,7 @@ nonisolated extension GpsPayloadDTO: Decodable {
 /// el dato: más de un segmento significa que el GPS dio un salto imposible y la
 /// línea se cortó **a propósito**. Unirlos dibujaría al camión atravesando un
 /// terreno que nunca atravesó.
-struct GpsTrackDTO: Sendable {
+nonisolated struct GpsTrackDTO: Sendable {
     /// Las polilíneas. Un corte entre dos es un salto que no se puede afirmar.
     let segments: [[GpsCoordinateDTO]]
 
@@ -136,7 +136,7 @@ nonisolated extension GpsTrackDTO: Decodable {
 
 // MARK: - Coordenadas y puntos
 
-struct GpsCoordinateDTO: Sendable, Hashable {
+nonisolated struct GpsCoordinateDTO: Sendable, Hashable {
     let lat: Double
     let lng: Double
 
@@ -148,7 +148,7 @@ struct GpsCoordinateDTO: Sendable, Hashable {
 nonisolated extension GpsCoordinateDTO: Decodable {}
 
 /// Un punto crudo de la traza, con lo que el receptor supo de él.
-struct GpsPointDTO: Sendable, Hashable {
+nonisolated struct GpsPointDTO: Sendable, Hashable {
     let lat: Double?
     let lng: Double?
     let speed: Double?
@@ -218,7 +218,7 @@ nonisolated extension GpsPointDTO: Decodable {
 /// correcta para decir si el evento restó, y emitirlo desde `aplica_a_nota`
 /// haría que el mismo evento se contradijera entre el mapa y la ficha. El
 /// cliente lo cruza por `id` con `/attempts/<id>`.
-struct GpsEventDTO: Sendable, Hashable, Identifiable {
+nonisolated struct GpsEventDTO: Sendable, Hashable, Identifiable {
     let id: String?
     let type: String?
     let severity: Double?

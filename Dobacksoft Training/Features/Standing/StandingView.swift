@@ -1167,7 +1167,7 @@ enum AttemptSortMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum AttemptQualityFilter: String, CaseIterable, Identifiable {
+nonisolated enum AttemptQualityFilter: String, CaseIterable, Identifiable {
     case all, high, medium, low
 
     var id: String { rawValue }
@@ -1193,7 +1193,7 @@ enum AttemptQualityFilter: String, CaseIterable, Identifiable {
     }
 }
 
-enum AttemptScoreFilter: String, CaseIterable, Identifiable {
+nonisolated enum AttemptScoreFilter: String, CaseIterable, Identifiable {
     case all, scored, unscored
 
     var id: String { rawValue }

@@ -11,7 +11,7 @@ import Foundation
 /// `cardUid` viaja completo, con paridad exacta con el portal, que lo pinta
 /// entero. El UID va impreso en el plástico y enseñarlo es lo que permite la
 /// comparación visual que justifica la pantalla.
-struct CardDTO: Sendable, Hashable {
+nonisolated struct CardDTO: Sendable, Hashable {
     /// Si el sistema le tiene asignada una tarjeta.
     let hasCard: Bool?
 

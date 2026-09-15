@@ -3,7 +3,7 @@ import Foundation
 /// `GET /api/v1/me/routes/<code>` — el detalle de un recorrido, bloque D.
 ///
 /// El último del pedido, y el que cierra el portal del aspirante.
-struct RouteDetailDTO: Sendable {
+nonisolated struct RouteDetailDTO: Sendable {
     let route: RouteInfoDTO?
     let waypoints: [RouteWaypointDTO]
 
@@ -44,7 +44,7 @@ nonisolated extension RouteDetailDTO: Decodable {
 
 // MARK: - El recorrido
 
-struct RouteInfoDTO: Sendable, Hashable {
+nonisolated struct RouteInfoDTO: Sendable, Hashable {
     let code: String?
     let name: String?
     let description: String?
@@ -90,7 +90,7 @@ nonisolated extension RouteInfoDTO: Decodable {
     }
 }
 
-struct RouteWaypointDTO: Sendable, Hashable, Identifiable {
+nonisolated struct RouteWaypointDTO: Sendable, Hashable, Identifiable {
     let order: Int?
     let lat: Double?
     let lng: Double?
@@ -109,7 +109,7 @@ nonisolated extension RouteWaypointDTO: Decodable {}
 // MARK: - Los números del recorrido
 
 /// Cuántas vueltas y cómo salieron.
-struct RouteStatsDTO: Sendable, Hashable {
+nonisolated struct RouteStatsDTO: Sendable, Hashable {
     /// Los intentos **con nota**.
     ///
     /// No «cerrados», y el backend lo renombró por eso: el estado derivado no

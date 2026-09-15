@@ -81,7 +81,7 @@ enum Theme {
         }
     }
 
-    enum motion {
+    nonisolated enum motion {
         static let fast: Animation = .easeOut(duration: 0.12)
         static let base: Animation = .easeOut(duration: 0.18)
         static let slow: Animation = .easeInOut(duration: 0.22)

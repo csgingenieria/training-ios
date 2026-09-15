@@ -3,6 +3,7 @@ import Foundation
 /// Errores estándar del APIClient. Mapean a la shape `{error, message}` del backend
 /// `/api/v1/*` y los handlers JSON. La inconsistencia conocida de `@require_role`
 /// (devuelve solo `{message}`) se tolera leyendo `message` siempre y `error` opcional.
+nonisolated
 enum APIError: Error, Sendable {
     case unauthenticated
 
@@ -134,6 +135,7 @@ nonisolated enum CredentialRejection: Sendable, Equatable {
     }
 }
 
+nonisolated
 struct APIErrorBody: Sendable {
     let error: String?
     let message: String?

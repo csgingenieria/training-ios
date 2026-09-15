@@ -1,6 +1,6 @@
 import Foundation
 
-struct UserDTO: Identifiable, Hashable, Sendable {
+nonisolated struct UserDTO: Identifiable, Hashable, Sendable {
     let id: String
     let email: String
     let name: String

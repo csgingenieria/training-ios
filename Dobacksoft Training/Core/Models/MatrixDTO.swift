@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Circuit
 
 /// Una columna de la matriz.
-struct MatrixCircuitDTO: Sendable, Identifiable {
+nonisolated struct MatrixCircuitDTO: Sendable, Identifiable {
     let id: String
     let label: String
 
@@ -47,7 +47,7 @@ nonisolated extension MatrixCircuitDTO: Decodable {}
 
 // MARK: - Candidate
 
-struct MatrixCandidateDTO: Sendable, Identifiable {
+nonisolated struct MatrixCandidateDTO: Sendable, Identifiable {
     let id: String
     let name: String
 }
@@ -56,7 +56,7 @@ nonisolated extension MatrixCandidateDTO: Decodable {}
 
 // MARK: - Score
 
-struct MatrixScoreDTO: Sendable {
+nonisolated struct MatrixScoreDTO: Sendable {
     let circuitId: String
     let score: Double?
     let attemptId: String?
@@ -66,7 +66,7 @@ nonisolated extension MatrixScoreDTO: Decodable {}
 
 // MARK: - Row
 
-struct MatrixRowDTO: Sendable, Identifiable {
+nonisolated struct MatrixRowDTO: Sendable, Identifiable {
     let candidate: MatrixCandidateDTO
     let scores: [MatrixScoreDTO]
 
@@ -77,7 +77,7 @@ nonisolated extension MatrixRowDTO: Decodable {}
 
 // MARK: - Response
 
-struct MatrixResponseDTO: Sendable {
+nonisolated struct MatrixResponseDTO: Sendable {
     let convocatoria: ConvocatoriaSummaryDTO
     let circuits: [MatrixCircuitDTO]
     let rows: [MatrixRowDTO]

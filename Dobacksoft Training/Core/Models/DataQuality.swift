@@ -6,7 +6,7 @@ import Foundation
 /// valores: `HIGH`, `MEDIUM` y `LOW`. Cualquier otra cosa —campo ausente, cadena
 /// vacía, valor desconocido— significa «sin clasificar», y entonces no se pinta
 /// insignia: inventar una etiqueta sería afirmar algo que el backend no dijo.
-enum DataQuality: String, Sendable, CaseIterable {
+nonisolated enum DataQuality: String, Sendable, CaseIterable {
     case high = "HIGH"
     case medium = "MEDIUM"
     case low = "LOW"

@@ -10,7 +10,7 @@ import Foundation
 /// - Rate limit 3/min. 429 → mostrar "demasiados intentos" sin reintentar auto.
 /// - Síncrono (capa 20 attempts en backend), responde 200 inline.
 /// - NO decide APTO/NO_APTO (GDPR art. 22 intacto).
-struct SyncResultDTO: Sendable {
+nonisolated struct SyncResultDTO: Sendable {
     let ok: Bool
     let ftp: [String: SyncCounter]
     let webfleet: [String: SyncCounter]
@@ -21,7 +21,7 @@ nonisolated extension SyncResultDTO: Decodable {}
 /// Valor de un contador del resultado de sync. El backend usa enteros para la
 /// mayoría de claves pero puede meter strings (mensajes) en el mismo dict.
 /// Decodificamos defensivamente para no fallar si aparece algo inesperado.
-enum SyncCounter: Sendable, Hashable {
+nonisolated enum SyncCounter: Sendable, Hashable {
     case int(Int)
     case string(String)
     case unknown

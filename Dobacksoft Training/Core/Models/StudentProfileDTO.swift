@@ -7,7 +7,7 @@ import Foundation
 ///
 /// Sin `plazas` ni derivados de «línea de corte», igual que `StandingDTO`:
 /// RGPD art. 22. Ver la nota de ese tipo antes de añadir campos aquí.
-struct ProfileStandingDTO: Sendable, Identifiable, Hashable {
+nonisolated struct ProfileStandingDTO: Sendable, Identifiable, Hashable {
     let convocatoriaId: String
     let name: String
     let position: Int
@@ -48,7 +48,7 @@ nonisolated extension ProfileStandingDTO: Decodable {}
 /// `standings[*].attemptsCompleted`. El listado incluye intentos cerrados sin
 /// score (no validables); el contador agregado del standing solo cuenta los
 /// validables. NO mezclar en UI.
-struct StudentProfileDTO: Sendable {
+nonisolated struct StudentProfileDTO: Sendable {
     let user: UserDTO
     let standings: [ProfileStandingDTO]
     let attempts: [AttemptSummaryDTO]

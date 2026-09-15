@@ -14,7 +14,7 @@ import Foundation
 ///
 /// Es su dato: sale del bus del camión durante su vuelta, y tiene el mismo
 /// derecho a estar en la ficha que el freno motor.
-struct AllisonDTO: Sendable, Hashable {
+nonisolated struct AllisonDTO: Sendable, Hashable {
     /// Si se pudo evaluar. Con `false`, `reason` dice por qué.
     let evaluated: Bool?
     let reason: String?
@@ -57,7 +57,7 @@ nonisolated extension AllisonDTO: Decodable {}
 ///
 /// **Nunca la lista de viajes.** Un viaje concreto del camión no es una
 /// afirmación sobre la vuelta del aspirante.
-struct PartialWebfleetDTO: Sendable, Hashable {
+nonisolated struct PartialWebfleetDTO: Sendable, Hashable {
     let optidrive: Double?
 
     /// Sobre diez, que es la escala en la que se lee una nota. **No es la
@@ -85,7 +85,7 @@ nonisolated extension PartialWebfleetDTO: Decodable {}
 // MARK: - La narrativa de conducción
 
 /// La lectura agregada de su conducción, en hasta cinco puntos.
-struct DrivingNarrativeDTO: Sendable, Hashable {
+nonisolated struct DrivingNarrativeDTO: Sendable, Hashable {
     let outOfTen: Double?
     let optidrive: Double?
     let points: [DrivingPointDTO]
@@ -118,7 +118,7 @@ nonisolated extension DrivingNarrativeDTO: Decodable {
 }
 
 /// Un punto de la narrativa: un aspecto de su conducción, con su frase.
-struct DrivingPointDTO: Sendable, Hashable, Identifiable {
+nonisolated struct DrivingPointDTO: Sendable, Hashable, Identifiable {
     let title: String?
     /// La frase la escribe el backend y la pinta el cliente tal cual: es la
     /// explicación, y reescribirla aquí la separaría de la del portal.
