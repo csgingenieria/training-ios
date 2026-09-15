@@ -718,13 +718,45 @@ final class StagingWalkthroughUITests: XCTestCase {
             "El sidebar no ofrece «Perfil»: la sesión no llegó a abrirse."
         )
 
-        // El control que separa las dos causas.
+        // El caso de control, que antes no lo era.
+        //
+        // Esto medía el marco —eso sí— y a continuación afirmaba un
+        // diagnóstico que nadie había comprobado: «es direccionamiento de
+        // XCUITest, no la app». Un marco de cero también lo produce un sidebar
+        // que la app no llegó a maquetar, y esa sería la app.
+        //
+        // La distinción no es teórica: en este mismo archivo había otro salto
+        // que culpaba a XCUITest por no poder direccionar una celda, y resultó
+        // ser arrastre de un toque tragado en el acceso. Al arreglar la causa,
+        // aquel test dejó de saltarse. Una hipótesis con antigüedad no es un
+        // hecho, y la antigüedad es justo lo que la hace parecer uno.
+        //
+        // El control: si las OTRAS filas del sidebar sí tienen marco, lo de
+        // «Perfil» es direccionamiento. Si ninguna lo tiene, el sidebar no se
+        // maquetó y eso hay que decirlo como defecto, no saltárselo.
         let marco = perfil.frame
-        guard marco.width > 0, marco.height > 0 else {
+        if marco.width <= 0 || marco.height <= 0 {
+            // Las cuatro restantes. Se construyen igual que en la app, con
+            // `SidebarSection.rawValue`; `miPosicion` y `miProgreso` solo
+            // existen para el aspirante, y por eso se filtra por `exists`.
+            let otras = ["sidebar.panel", "sidebar.convocatorias",
+                         "sidebar.miPosicion", "sidebar.miProgreso"]
+                .map { element($0, in: app) }
+                .filter { $0.exists }
+            let algunaConMarco = otras.contains { $0.frame.width > 0 && $0.frame.height > 0 }
+
+            XCTAssertTrue(
+                algunaConMarco,
+                "NINGUNA fila del sidebar tiene marco, ni «Perfil» ni las otras "
+                + "\(otras.count). Eso no es direccionamiento de XCUITest: el "
+                + "sidebar del iPad no se está maquetando."
+            )
+
             throw XCTSkip(
-                "La fila «sidebar.perfil» existe sin marco válido (\(marco)): es "
-                + "direccionamiento de XCUITest, no la app. SIN cubrir: la navegación "
-                + "del sidebar."
+                "La fila «sidebar.perfil» existe sin marco válido (\(marco)) pero "
+                + "otras filas del sidebar SÍ lo tienen, así que es direccionamiento "
+                + "de XCUITest y no la app —comprobado, no supuesto—. SIN cubrir: la "
+                + "navegación del sidebar."
             )
         }
 
@@ -979,7 +1011,18 @@ final class StagingWalkthroughUITests: XCTestCase {
             // celda es direccionamiento. Si tampoco navega, hay algo real en
             // la matriz y no se puede seguir llamándolo límite de XCUITest.
             let aspirante = element("resultados.aspirante", in: app)
-            if aspirante.waitForExistence(timeout: 5) {
+            // La ausencia del enlace es INFORMACIÓN, no silencio.
+            //
+            // Este control vivía dentro del `if`: si el nombre no aparecía, no
+            // se comprobaba nada y el salto se quedaba sin examinar, con la
+            // misma cara que si el control hubiera pasado.
+            XCTAssertTrue(
+                aspirante.waitForExistence(timeout: 5),
+                "La matriz no ofrece ni celdas direccionables ni el enlace del "
+                + "nombre, así que no hay forma de comprobar si el contenedor "
+                + "navega. Esta corrida NO puede decidir si es XCUITest o la app."
+            )
+            if aspirante.exists {
                 aspirante.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
                 let abrio = app.navigationBars["Aspirante"].waitForExistence(timeout: 15)
                 XCTAssertTrue(
@@ -1277,28 +1320,20 @@ final class StagingWalkthroughUITests: XCTestCase {
         // era el único toque del recorrido que no pasaba por la disciplina.
         // Repetirlo es seguro: uno tragado no deja rastro, y en cuanto la
         // pantalla se va, para.
-        // Se espera a que el campo DESAPAREZCA, no a que exista.
+        // Un toque, y el reintento SOLO si hizo falta.
         //
-        // La primera versión de este bucle preguntaba `email.waitForExistence`
-        // —que devuelve `true` en cuanto el campo está— y volvía a tocar. Con
-        // el acceso ya resuelto, el botón se había ido entre la comprobación y
-        // el toque, y XCUITest no devuelve `false`: **lanza** «Failed to tap:
-        // No matches found». O sea, el reintento metió una carrera donde no la
-        // había y convirtió un acceso correcto en un fallo.
-        for intento in 0..<4 {
-            // Si el formulario ya no está, se entró: no hay nada que reintentar.
-            guard email.exists else { break }
-
-            let boton = app.buttons["login.submit"]
-            guard boton.exists, boton.isHittable else { break }
-            boton.tap()
-
-            let fuera = XCTNSPredicateExpectation(
-                predicate: NSPredicate(format: "exists == false"),
-                object: email
-            )
-            if XCTWaiter.wait(for: [fuera], timeout: intento == 0 ? 15 : 8) == .completed { break }
-        }
+        // La versión anterior metía una espera con predicado dentro del bucle,
+        // así que el camino bueno —el que va a ocurrir casi siempre— pagaba
+        // consultas de más. En iPad eso reventó: la jerarquía de accesibilidad
+        // es grande, capturarla costaba 14 s y la consulta agotaba el tiempo.
+        // Un arreglo que encarece el caso normal para cubrir el raro está mal
+        // hecho aunque cubra el raro.
+        //
+        // Ahora el coste del reintento lo paga solo quien lo necesita: se toca
+        // una vez, se espera como siempre, y únicamente si el formulario sigue
+        // ahí se vuelve a tocar. Cuando el acceso funciona a la primera, esto
+        // hace exactamente lo mismo que hacía antes de tocarlo nada.
+        app.buttons["login.submit"].tap()
 
         // The signal is the login field going away, not a tab bar arriving.
         //
@@ -1306,11 +1341,32 @@ final class StagingWalkthroughUITests: XCTestCase {
         // so waiting for one failed 30 s after a sign-in that had actually
         // worked — the dashboard was on screen behind the system sheet. Only
         // running on iPad showed it.
-        let gone = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == false"),
-            object: email
-        )
-        guard XCTWaiter.wait(for: [gone], timeout: 30) == .completed else {
+        func esperaAQueSeVaya(_ segundos: TimeInterval) -> Bool {
+            let gone = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "exists == false"),
+                object: email
+            )
+            return XCTWaiter.wait(for: [gone], timeout: segundos) == .completed
+        }
+
+        // El reintento vive AQUÍ, en el camino de fallo.
+        //
+        // Cuando el acceso funciona, la primera espera lo resuelve y esto no
+        // cuesta nada. Cuando no, se vuelve a tocar: el diagnóstico de este
+        // mismo fallo decía «botón habilitado, campos llenos, ninguna petición
+        // en vuelo», o sea que el toque aterrizó sin disparar nada, y ahí sí
+        // hace falta insistir.
+        var entró = esperaAQueSeVaya(30)
+        var reintentos = 0
+        while !entró, reintentos < 2, email.exists {
+            let boton = app.buttons["login.submit"]
+            guard boton.exists, boton.isHittable else { break }
+            boton.tap()
+            entró = esperaAQueSeVaya(12)
+            reintentos += 1
+        }
+
+        guard entró else {
             capture(app, named: "00-login-fallido")
             // El mensaje que la pantalla está dando, no «mira la captura».
             //
