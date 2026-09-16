@@ -1,7 +1,9 @@
 # Verificación de entrega — 2026-09-16
 
 Comprobación del cliente antes de la entrega del proyecto. Todo lo que sigue se
-midió el 2026-09-16 sobre `main` en `7a2b025`; nada se da por bueno de memoria.
+midió el 2026-09-16 sobre `main`, en la revisión `7a2b025`, que este documento
+y la corrección del recuento de la auditoría convierten en `9374342`. Nada se da
+por bueno de memoria.
 
 ## Resultado
 
@@ -14,6 +16,7 @@ midió el 2026-09-16 sobre `main` en `7a2b025`; nada se da por bueno de memoria.
 | `check-ui-register` | ✅ |
 | `check-widget-palette` | ✅ |
 | `check-deep-link` | ✅ (y los dos esquemas de control **no** resuelven) |
+| Recorridos contra servidor real | **no ejecutados** en esta verificación |
 | Auditoría de calidad nativa | ✅ 57 / 57 |
 | Arranque en dispositivo real | ✅ iPhone 16 Pro, iOS 26.6, con sesión iniciada |
 | Servidor de Release | ✅ `200` en 0,2 s · certificado válido hasta 2026-12-08 |
