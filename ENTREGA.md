@@ -16,14 +16,15 @@ aplicación da acceso desde el móvil a ese expediente: posición, calificación
 desglose, progreso por recorrido, detalle de cada vuelta y el trazado GPS sobre
 el mapa. Los instructores ven la tabla de resultados de su convocatoria.
 
-No es un ejercicio: **forma parte del entregable oficial a la Comunidad de
-Madrid** desde el 5 de septiembre de 2026.
-
 > **Estado actual.** El sistema está en **fase de pruebas** y entra en
 > producción en el cuerpo de **Bomberos de la Comunidad de Madrid dentro de
-> aproximadamente un mes**. Los datos que se ven hoy son de una convocatoria de
-> prueba; a partir de la entrada en producción serán expedientes reales de
-> opositores, sujetos a acuerdo de confidencialidad.
+> aproximadamente un mes**.
+>
+> «Convocatoria de prueba» no significa datos inventados: los **conductores son
+> reales**, los **recorridos son reales**, los **criterios de evaluación son los
+> oficiales** y la **telemetría procede de los vehículos reales**. Lo que está en
+> pruebas es el proceso, no los datos — que por eso están sujetos a acuerdo de
+> confidencialidad.
 
 | | |
 |---|---|
