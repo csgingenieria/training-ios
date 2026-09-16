@@ -1,6 +1,6 @@
 # Documento de entrega
 
-**Dobacksoft Training** — Cliente nativo iOS
+**Dobacksoft Training** — Cliente nativo iOS\
 Antonio Hermoso González · 16 de septiembre de 2026
 
 ---
