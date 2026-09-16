@@ -35,7 +35,7 @@ mapa. Los instructores ven la tabla de resultados de su convocatoria.
 | | |
 |---|---|
 | Repositorio | <https://github.com/csgingenieria/training-ios> |
-| Revisión entregada | `ba302b3` en `main` |
+| Revisión entregada | tag `entrega-2026-09-16` en `main` |
 | Swift | **6.0**, aislamiento estricto (`-default-isolation=MainActor`) |
 | Interfaz | SwiftUI · iPhone y iPad, una sola base de código |
 | Despliegue mínimo | iOS 26.4 · `TARGETED_DEVICE_FAMILY = 1,2` |
