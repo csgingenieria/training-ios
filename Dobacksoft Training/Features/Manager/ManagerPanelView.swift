@@ -91,6 +91,19 @@ final class ManagerPanelViewModel {
         }
     }
 
+    /// La capa de red, por parámetro.
+    ///
+    /// La misma costura que el resto de los modelos de vista: sin ella, la
+    /// carga de este panel —que agrega dos peticiones en paralelo, indexa
+    /// rankings con tope y acumula fallos parciales— no se podía ejercitar
+    /// contra el doble de pruebas, y era la superficie con más lógica del área
+    /// del instructor sin una sola prueba de comportamiento.
+    private let api: TrainingAPI
+
+    init(api: TrainingAPI = APIClient.shared) {
+        self.api = api
+    }
+
     /// Cuántas convocatorias se consultan para armar la lista.
     ///
     /// El endpoint de ranking va a 30 peticiones por minuto y esta pantalla se
@@ -117,9 +130,9 @@ final class ManagerPanelViewModel {
             //
             // Ambas van dentro de la misma llamada autorizada: si el token
             // caduca, se refresca una vez y se reintentan las dos juntas.
-            let (d, c) = try await auth.authorized { token in
-                async let dashboard = APIClient.shared.managerDashboard(accessToken: token)
-                async let convs = APIClient.shared.convocatorias(accessToken: token)
+            let (d, c) = try await auth.authorized { [api] token in
+                async let dashboard = api.managerDashboard(accessToken: token)
+                async let convs = api.convocatorias(accessToken: token)
                 return try await (dashboard, convs)
             }
             state = .loaded(d, c)
@@ -151,8 +164,8 @@ final class ManagerPanelViewModel {
         var acumulado: [Aspirante] = []
         for convocatoria in objetivo {
             do {
-                let ranking = try await auth.authorized { token in
-                    try await APIClient.shared.ranking(
+                let ranking = try await auth.authorized { [api] token in
+                    try await api.ranking(
                         convocatoriaId: convocatoria.id,
                         accessToken: token
                     )
@@ -186,8 +199,8 @@ final class ManagerPanelViewModel {
         defer { isSyncing = false }
 
         do {
-            let result = try await auth.authorized { token in
-                try await APIClient.shared.webfletSync(accessToken: token)
+            let result = try await auth.authorized { [api] token in
+                try await api.webfletSync(accessToken: token)
             }
             syncResult = result
             // Tras sync exitoso, refrescamos el dashboard para que los KPIs

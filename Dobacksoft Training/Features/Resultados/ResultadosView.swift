@@ -29,14 +29,22 @@ final class ResultadosViewModel {
     /// orden con las columnas vacías en vez de una pantalla de error. Un
     /// instructor que solo necesita saber quién va delante no debería perder la
     /// pantalla porque el endpoint de la matriz se haya caído.
+    /// La capa de red, por parámetro: la misma costura que el resto de los
+    /// modelos de vista, sin la cual esto no se puede probar contra el doble.
+    private let api: TrainingAPI
+
+    init(api: TrainingAPI = APIClient.shared) {
+        self.api = api
+    }
+
     func load(convocatoriaId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let ranking = try await auth.authorized { token in
-                try await APIClient.shared.ranking(convocatoriaId: convocatoriaId, accessToken: token)
+            let ranking = try await auth.authorized { [api] token in
+                try await api.ranking(convocatoriaId: convocatoriaId, accessToken: token)
             }
-            let matrix = try? await auth.authorized { token in
-                try await APIClient.shared.matrix(convocatoriaId: convocatoriaId, accessToken: token)
+            let matrix = try? await auth.authorized { [api] token in
+                try await api.matrix(convocatoriaId: convocatoriaId, accessToken: token)
             }
 
             let data = ResultadosData.merge(ranking: ranking, matrix: matrix)

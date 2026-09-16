@@ -35,6 +35,18 @@ actor FakeTrainingAPI: TrainingAPI {
     private(set) var myConvocatoriasCalls = 0
     private(set) var convocatoriasCalls = 0
     private(set) var routeRequests: [(String, String?)] = []
+    /// Las del área del instructor. Estaban sin guionizar, y por eso el panel
+    /// —la superficie con más lógica de ese área— no tenía ni una prueba de
+    /// comportamiento: el doble no podía devolverle nada.
+    var managerDashboardResults: [Result<ManagerDashboardDTO, Error>] = []
+    var rankingResults: [Result<RankingResponseDTO, Error>] = []
+    var matrixResults: [Result<MatrixResponseDTO, Error>] = []
+    var studentProfileResults: [Result<StudentProfileDTO, Error>] = []
+    var alertsResults: [Result<WebfletAlertsResponseDTO, Error>] = []
+    var syncResults: [Result<SyncResultDTO, Error>] = []
+    private(set) var rankingRequests: [String] = []
+    private(set) var syncCalls = 0
+
     var passwordResult: Result<Void, Error> = .success(())
     private(set) var passwordBodies: [[String]] = []
     private(set) var progressConvocatoriaIds: [String?] = []
@@ -65,6 +77,12 @@ actor FakeTrainingAPI: TrainingAPI {
         convocatoriasResults = results
     }
     func setPasswordResult(_ result: Result<Void, Error>) { passwordResult = result }
+    func setManagerDashboardResults(_ r: [Result<ManagerDashboardDTO, Error>]) { managerDashboardResults = r }
+    func setRankingResults(_ r: [Result<RankingResponseDTO, Error>]) { rankingResults = r }
+    func setMatrixResults(_ r: [Result<MatrixResponseDTO, Error>]) { matrixResults = r }
+    func setStudentProfileResults(_ r: [Result<StudentProfileDTO, Error>]) { studentProfileResults = r }
+    func setAlertsResults(_ r: [Result<WebfletAlertsResponseDTO, Error>]) { alertsResults = r }
+    func setSyncResults(_ r: [Result<SyncResultDTO, Error>]) { syncResults = r }
 
     private func next<T>(_ queue: inout [Result<T, Error>]) throws -> T {
         guard !queue.isEmpty else { throw APIError.notFound(.resourceMissing) }
@@ -142,25 +160,27 @@ actor FakeTrainingAPI: TrainingAPI {
         throw APIError.notFound(.resourceMissing)
     }
     func ranking(convocatoriaId: String, accessToken: String) async throws -> RankingResponseDTO {
-        throw APIError.notFound(.resourceMissing)
+        rankingRequests.append(convocatoriaId)
+        return try next(&rankingResults)
     }
     func matrix(convocatoriaId: String, accessToken: String) async throws -> MatrixResponseDTO {
-        throw APIError.notFound(.resourceMissing)
+        try next(&matrixResults)
     }
     func attempt(id: String, accessToken: String) async throws -> AttemptDetailDTO {
         try next(&attemptResults)
     }
     func managerDashboard(accessToken: String) async throws -> ManagerDashboardDTO {
-        throw APIError.notFound(.resourceMissing)
+        try next(&managerDashboardResults)
     }
     func studentProfile(studentId: String, accessToken: String) async throws -> StudentProfileDTO {
-        throw APIError.notFound(.resourceMissing)
+        try next(&studentProfileResults)
     }
     func webfletAlerts(accessToken: String) async throws -> WebfletAlertsResponseDTO {
-        throw APIError.notFound(.resourceMissing)
+        try next(&alertsResults)
     }
     func webfletSync(accessToken: String) async throws -> SyncResultDTO {
-        throw APIError.notFound(.resourceMissing)
+        syncCalls += 1
+        return try next(&syncResults)
     }
 }
 

@@ -16,11 +16,19 @@ final class StudentProfileViewModel {
 
     var state: State = .loading
 
+    /// La capa de red, por parámetro: la misma costura que el resto de los
+    /// modelos de vista, sin la cual esto no se puede probar contra el doble.
+    private let api: TrainingAPI
+
+    init(api: TrainingAPI = APIClient.shared) {
+        self.api = api
+    }
+
     func load(studentId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let profile = try await auth.authorized { token in
-                try await APIClient.shared.studentProfile(
+            let profile = try await auth.authorized { [api] token in
+                try await api.studentProfile(
                     studentId: studentId,
                     accessToken: token
                 )

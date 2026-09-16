@@ -16,11 +16,19 @@ final class WebfletAlertsViewModel {
 
     var state: State = .loading
 
+    /// La capa de red, por parámetro: la misma costura que el resto de los
+    /// modelos de vista, sin la cual esto no se puede probar contra el doble.
+    private let api: TrainingAPI
+
+    init(api: TrainingAPI = APIClient.shared) {
+        self.api = api
+    }
+
     func load(auth: AuthSession) async {
         state = .loading
         do {
-            let response = try await auth.authorized { token in
-                try await APIClient.shared.webfletAlerts(accessToken: token)
+            let response = try await auth.authorized { [api] token in
+                try await api.webfletAlerts(accessToken: token)
             }
             state = response.items.isEmpty ? .empty : .loaded(response)
         } catch let err as APIError {
