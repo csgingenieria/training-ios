@@ -40,9 +40,9 @@ mapa. Los instructores ven la tabla de resultados de su convocatoria.
 | Interfaz | SwiftUI · iPhone y iPad, una sola base de código |
 | Despliegue mínimo | iOS 26.4 · `TARGETED_DEVICE_FAMILY = 1,2` |
 | Dependencias de terceros | **cero** |
-| Código de aplicación | 15 598 líneas · 113 ficheros |
-| Código de pruebas | 13 112 líneas · **46 % del repositorio** |
-| Pruebas | **767** casos · 104 suites · 0 fallos |
+| Código de aplicación | 15 750 líneas · 120 ficheros |
+| Código de pruebas | 13 412 líneas · **46 % del repositorio** |
+| Pruebas | **790** casos · 0 fallos |
 | Extensiones | WidgetKit · AppIntents |
 
 ---
@@ -191,9 +191,9 @@ Tres niveles con propósitos distintos, porque cada uno tiene un punto ciego:
 
 | Nivel | Qué demuestra | Qué no |
 |---|---|---|
-| **767 pruebas unitarias** | Que una regla es correcta en todos sus casos | Que esté conectada a la pantalla |
+| **790 pruebas unitarias** | Que una regla es correcta en todos sus casos | Que esté conectada a la pantalla |
 | **4 recorridos XCUITest** | La app real contra un servidor real, 2 roles × 2 tamaños | Los casos límite |
-| **5 guardas de proyecto** | Propiedades estructurales que ningún test alcanza | Comportamiento |
+| **6 guardas de proyecto** | Propiedades estructurales que ningún test alcanza | Comportamiento |
 
 Cada guarda existe porque el defecto que vigila **ocurrió**:
 
@@ -204,6 +204,7 @@ Cada guarda existe porque el defecto que vigila **ocurrió**:
 | `check-widget-palette` | `Bundle.main` dentro de una extensión **es** la extensión: la paleta tiene que ser copia, y una copia deriva |
 | `check-deep-link` | Constante, parser, buzón e `Info.plist` pueden estar verdes y el toque no hacer nada: quien decide es LaunchServices |
 | `check-hosts` | Todos los tests corren en Debug. `Release.xcconfig` apuntaba a un host inexistente y nada lo detectaba |
+| `check-build-number` | Dos compilaciones distintas convivieron como `2.0 (1)`. Con el mismo número, «me falla la app» no es accionable: no se sabe qué binario es. Sale del historial, no hay que acordarse de subirlo |
 
 ### El principio que lo gobierna todo
 
@@ -221,7 +222,7 @@ que lo construía, y que por tanto no podía fallar nunca.
 
 ## Cómo ejecutarlo para evaluarlo
 
-**Las 767 pruebas unitarias no necesitan red ni credenciales.** Es la vía para
+**Las 790 pruebas unitarias no necesitan red ni credenciales.** Es la vía para
 evaluar el proyecto sin acceso al servidor:
 
 ```bash
