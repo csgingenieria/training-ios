@@ -114,9 +114,14 @@ podía dejarla muerta sin que el aspirante tocara nada.
 Por eso esta tabla lleva estado ahora. Llevarlo en la conversación y en los
 mensajes de commit no sobrevive a una sesión.
 
-**Cerrados: 55 · parciales: 2 · abiertos: 0.**
+**Cerrados: 57 · parciales: 0 · abiertos: 0.**
 
-Los parciales, con lo que falta de cada uno:
+Este titular decía «55 · parciales: 2» y era del 2026-09-08: se quedó atrás
+cuando los dos parciales se cerraron, mientras la tabla de arriba sí se
+actualizaba. La tabla es la que manda —57 filas, 57 `✅`, contadas— y este
+recuento se corrige el 2026-09-16 para que coincida con ella.
+
+Lo que fue parcial, y cómo terminó:
 
 - **#26** — hechas las animaciones LOCALES: la cifra del puesto con
   `contentTransition(.numericText())`, la selección de convocatoria con su
