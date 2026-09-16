@@ -8,17 +8,23 @@ Antonio Hermoso González · 16 de septiembre de 2026
 ## En un minuto
 
 Cliente **nativo iOS** para el seguimiento de la prueba práctica de conducción de
-una oposición real de bombero conductor de la Comunidad de Madrid.
+una oposición real: la Oposición de Conductores del Cuerpo de Bomberos de la
+Comunidad de Madrid (conductor de camión de bomberos).
 
-Los aspirantes conducen recorridos en un camión instrumentado con telemetría GPS
-y sensores de estabilidad. De esos datos sale una calificación objetiva. La
-aplicación da acceso desde el móvil a ese expediente: posición, calificación y su
-desglose, progreso por recorrido, detalle de cada vuelta y el trazado GPS sobre
-el mapa. Los instructores ven la tabla de resultados de su convocatoria.
+Los aspirantes conducen recorridos en un camión instrumentado por **dos sistemas
+distintos**: un dispositivo **Doback Elite** a bordo, que mide estabilidad con
+acelerómetros, giroscopios y el bus CAN; y **Webfleet**, un servicio de telemática
+del que proceden el GPS, la velocidad y los eventos de conducción. De ahí sale una
+calificación objetiva.
 
-> **Estado actual.** El sistema está en **fase de pruebas** y entra en
-> producción en el cuerpo de **Bomberos de la Comunidad de Madrid dentro de
-> aproximadamente un mes**.
+La aplicación da acceso desde el móvil a ese expediente: posición, calificación y
+su desglose, progreso por recorrido, detalle de cada vuelta y el trazado sobre el
+mapa. Los instructores ven la tabla de resultados de su convocatoria.
+
+> **Estado actual.** El sistema está en **fase de pruebas** y la previsión es que
+> entre en producción en el Cuerpo de Bomberos de la Comunidad de Madrid **dentro
+> de aproximadamente un mes** (previsión de proyecto a 16/09/2026, no fecha
+> contractual publicada).
 >
 > «Convocatoria de prueba» no significa datos inventados: los **conductores son
 > reales**, los **recorridos son reales**, los **criterios de evaluación son los
