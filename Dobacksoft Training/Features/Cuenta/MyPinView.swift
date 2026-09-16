@@ -84,7 +84,7 @@ struct MyPinView: View {
                 // Monoespaciada y espaciada: se teclea en una tablet, dígito a
                 // dígito, y una proporcional junta el 1 con el 7.
                 Text(pin)
-                    .font(.system(size: 44, weight: .bold, design: .monospaced))
+                    .font(.pinDisplay)
                     .foregroundStyle(Color.ink)
                     .textSelection(.enabled)
                     // Marcado como sensible. El widget ya marcaba así sus

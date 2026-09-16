@@ -53,7 +53,7 @@ struct RootView: View {
                 ZStack {
                     Color.paper
                     Image(systemName: "shield.fill")
-                        .font(.system(size: 56))
+                        .font(.heroGlyph)
                         .foregroundStyle(Color.brand)
                 }
                 .ignoresSafeArea()
@@ -161,7 +161,7 @@ private struct LaunchView: View {
             // indicador del sistema sobre fondo blanco, sin nada del producto,
             // y es lo primero que se ve al abrir.
             Image(systemName: "shield.fill")
-                .font(.system(size: 56))
+                .font(.heroGlyph)
                 .foregroundStyle(Color.brand)
                 .accessibilityHidden(true)
             ProgressView()

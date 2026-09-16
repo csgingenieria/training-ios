@@ -91,6 +91,13 @@ final class AppLock {
     private let authenticator: any DeviceOwnerAuthenticator
     private let defaults: UserDefaults
     private var leftForegroundAt: Date?
+
+    /// Ya se desbloqueó, y la app no se ha ido al fondo desde entonces.
+    ///
+    /// Existe porque el diálogo del sistema devuelve el foco al cerrarse y eso
+    /// cuenta como activación: sin este dato, un desbloqueo correcto disparaba
+    /// otra petición, y otra, sin salida.
+    private var resolvedInThisForeground = false
     private static let key = "appLock.enabled"
     private let log = Logger(subsystem: "com.dobacksoft.training", category: "AppLock")
 
@@ -145,6 +152,7 @@ final class AppLock {
         guard AppLockRules.shouldAsk(
             enabled: isEnabled,
             authenticated: authenticated,
+            alreadyResolved: resolvedInThisForeground,
             leftForegroundAt: leftForegroundAt,
             now: now
         ) else { return }
@@ -155,6 +163,9 @@ final class AppLock {
 
     func sceneLeftForeground(now: Date = .now) {
         leftForegroundAt = now
+        // Se fue de verdad: lo de antes ya no vale, y al volver se decide con
+        // la gracia como siempre.
+        resolvedInThisForeground = false
     }
 
     /// La sesión se cerró: no hay nada que tapar.
@@ -164,6 +175,7 @@ final class AppLock {
     func sessionEnded() {
         state = .open
         leftForegroundAt = nil
+        resolvedInThisForeground = false
     }
 
     func authenticate() async {
@@ -175,6 +187,7 @@ final class AppLock {
             if ok {
                 state = .open
                 leftForegroundAt = nil
+                resolvedInThisForeground = true
             } else {
                 state = .locked
             }

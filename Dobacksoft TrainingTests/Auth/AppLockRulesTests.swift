@@ -18,7 +18,7 @@ struct AppLockRulesTests {
     /// Off by default, and off means never asked.
     @Test func withTheSettingOffItIsNeverAsked() {
         #expect(AppLockRules.shouldAsk(
-            enabled: false, authenticated: true, leftForegroundAt: nil, now: t0
+            enabled: false, authenticated: true, alreadyResolved: false, leftForegroundAt: nil, now: t0
         ) == false)
     }
 
@@ -26,10 +26,10 @@ struct AppLockRulesTests {
     /// protects no datum: it only stops someone getting in.
     @Test func withNoSessionThereIsNothingToCover() {
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: false, leftForegroundAt: nil, now: t0
+            enabled: true, authenticated: false, alreadyResolved: false, leftForegroundAt: nil, now: t0
         ) == false)
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: false,
+            enabled: true, authenticated: false, alreadyResolved: false,
             leftForegroundAt: t0.addingTimeInterval(-3600), now: t0
         ) == false)
     }
@@ -37,7 +37,7 @@ struct AppLockRulesTests {
     /// A cold start always asks: nothing is known about how the app got closed.
     @Test func aColdStartAlwaysAsks() {
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: true, leftForegroundAt: nil, now: t0
+            enabled: true, authenticated: true, alreadyResolved: false, leftForegroundAt: nil, now: t0
         ))
     }
 
@@ -46,7 +46,7 @@ struct AppLockRulesTests {
     /// authentication.
     @Test func comingStraightBackDoesNotAsk() {
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: true,
+            enabled: true, authenticated: true, alreadyResolved: false,
             leftForegroundAt: t0, now: t0.addingTimeInterval(5)
         ) == false)
     }
@@ -57,13 +57,38 @@ struct AppLockRulesTests {
     @Test func pastTheGraceItAsksAndTheBoundaryAsksToo() {
         let grace = AppLockRules.grace
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: true,
+            enabled: true, authenticated: true, alreadyResolved: false,
             leftForegroundAt: t0, now: t0.addingTimeInterval(grace)
         ))
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: true,
+            enabled: true, authenticated: true, alreadyResolved: false,
             leftForegroundAt: t0, now: t0.addingTimeInterval(grace - 0.001)
         ) == false)
+    }
+
+    /// **Ya resuelto: no se vuelve a pedir.**
+    ///
+    /// Es la regla que faltaba, y su ausencia dejaba la app inaccesible al
+    /// activar el bloqueo: el diálogo del sistema devuelve el foco al cerrarse,
+    /// eso cuenta como activación, y un desbloqueo correcto dejaba
+    /// `leftForegroundAt` en `nil` — que la regla lee, con razón, como arranque
+    /// en frío. Se desbloqueaba y se volvía a pedir, sin salida.
+    @Test func alreadyResolvedDoesNotAskAgain() {
+        #expect(AppLockRules.shouldAsk(
+            enabled: true, authenticated: true, alreadyResolved: true,
+            leftForegroundAt: nil, now: t0
+        ) == false)
+    }
+
+    /// Y su control: resuelto **pero** habiéndose ido y vuelto pasada la
+    /// gracia, sí se pide. Quien limpia `alreadyResolved` es la salida al
+    /// fondo, así que esta combinación no debería darse — y si se diera, el
+    /// paso del tiempo manda.
+    @Test func resolvedIsClearedByLeavingNotByTime() {
+        #expect(AppLockRules.shouldAsk(
+            enabled: true, authenticated: true, alreadyResolved: false,
+            leftForegroundAt: t0, now: t0.addingTimeInterval(AppLockRules.grace)
+        ))
     }
 
     /// **A clock moved backwards asks.**
@@ -74,7 +99,7 @@ struct AppLockRulesTests {
     /// consuming the absence; here it means asking.
     @Test func aBackwardsClockAsks() {
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: true,
+            enabled: true, authenticated: true, alreadyResolved: false,
             leftForegroundAt: t0, now: t0.addingTimeInterval(-3600)
         ))
     }

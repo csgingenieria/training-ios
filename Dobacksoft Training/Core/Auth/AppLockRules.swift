@@ -40,17 +40,29 @@ nonisolated enum AppLockRules {
 
     /// Si hay que pedir la autenticación ahora.
     ///
+    /// - `alreadyResolved` es **ya se desbloqueó y la app no se ha ido desde
+    ///   entonces**. Sin este dato la app entraba en un bucle del que no se
+    ///   salía: el diálogo del sistema devuelve el foco al cerrarse, eso
+    ///   cuenta como activación, y el desbloqueo con éxito dejaba
+    ///   `leftForegroundAt` en `nil` — indistinguible de un arranque en frío.
+    ///   Se desbloqueaba, el sistema devolvía el foco, y se volvía a pedir.
     /// - `leftForegroundAt == nil` es el arranque en frío: se pide siempre.
     /// - Con la sesión cerrada **no** se pide: no hay nada que tapar, y un
     ///   candado sobre la pantalla de acceso no protege un dato, solo impide
     ///   entrar.
+    ///
+    /// `alreadyResolved` **no lleva valor por defecto** a propósito: quien
+    /// llame tiene que decidir, porque olvidarlo es exactamente el defecto que
+    /// dejó la app inaccesible.
     static func shouldAsk(
         enabled: Bool,
         authenticated: Bool,
+        alreadyResolved: Bool,
         leftForegroundAt: Date?,
         now: Date
     ) -> Bool {
         guard enabled, authenticated else { return false }
+        guard !alreadyResolved else { return false }
         guard let leftForegroundAt else { return true }
 
         // Reloj hacia atrás: se PIDE.

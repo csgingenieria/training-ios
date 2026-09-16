@@ -93,7 +93,7 @@ struct LoginView: View {
             // botón de entrar.
             if !isShort {
                 Image(systemName: "shield.fill")
-                    .font(.system(size: 56))
+                    .font(.heroGlyph)
                     .foregroundStyle(Color.brand)
                     .accessibilityHidden(true)
             }

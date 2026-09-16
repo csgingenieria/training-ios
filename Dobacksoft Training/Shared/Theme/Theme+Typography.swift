@@ -44,6 +44,31 @@ extension Font {
     /// en cada sitio —18, 20, 22, 28, 44— y no había forma de saber si dos que
     /// coincidían era a propósito o por casualidad. Un rol dice qué ES la
     /// cifra; un tamaño solo dice cuánto mide.
+    /// El glifo de pantalla completa: el escudo del arranque, del bloqueo y del
+    /// acceso, y los iconos de los estados vacíos.
+    ///
+    /// Era un `56` literal repartido por seis sitios. El valor no cambia —esto
+    /// no altera un píxel—, pero deja de estar disperso: el día que el escudo
+    /// tenga que crecer, se cambia aquí y no en una búsqueda por el proyecto.
+    ///
+    /// **Sigue siendo tamaño fijo, y conviene saberlo.** Es lo único de la app
+    /// que no escala con el tamaño de texto del sistema. Se acepta porque es un
+    /// símbolo decorativo, marcado `accessibilityHidden` allá donde aparece:
+    /// quien usa tamaños de accesibilidad necesita que crezca el texto que
+    /// informa, no el adorno que lo acompaña.
+    static var heroGlyph: Font {
+        .system(size: 56)
+    }
+
+    /// El PIN de la tablet, en monoespaciada.
+    ///
+    /// Monoespaciada porque se teclea mirando: con proporcional, un `1` y un
+    /// `7` ocupan distinto y el ojo pierde la posición al copiar dígito a
+    /// dígito.
+    static var pinDisplay: Font {
+        .system(size: 44, weight: .bold, design: .monospaced)
+    }
+
     static var scoreHero: Font {
         .display(size: 56, weight: .bold, italic: false, relativeTo: .largeTitle)
     }

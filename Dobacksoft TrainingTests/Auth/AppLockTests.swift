@@ -38,6 +38,79 @@ struct AppLockTests {
         return suite ?? .standard
     }
 
+    // MARK: - El bucle
+
+    /// **El bucle que dejaba la app inaccesible.**
+    ///
+    /// Reportado en dispositivo real: al activar el desbloqueo con Face ID, la
+    /// app pedía autenticación una y otra vez y nunca entraba.
+    ///
+    /// La causa no está en la biometría sino en el ciclo de la escena. El
+    /// diálogo del sistema pone la app en `.inactive`, y al cerrarse la
+    /// devuelve a `.active` — lo que dispara otra vez `sceneBecameActive`.
+    /// Como el desbloqueo con éxito ponía `leftForegroundAt = nil`, el estado
+    /// resultante era **indistinguible de un arranque en frío**, y la regla
+    /// dice —con razón— que en un arranque en frío se pide siempre.
+    ///
+    /// Resultado: se desbloquea, el sistema devuelve el foco, se vuelve a
+    /// pedir. Para siempre.
+    @Test func unDesbloqueoCorrectoNoSeVuelveAPedirAlRecuperarElFoco() async {
+        let fake = Fake(can: .faceID, answer: .success(true))
+        let lock = AppLock(authenticator: fake, defaults: isolatedDefaults())
+        lock.setEnabled(true)
+
+        // Arranque en frío: se pide, y se concede.
+        lock.sceneBecameActive(authenticated: true)
+        await lock.authenticate()
+        #expect(lock.state == .open)
+        #expect(fake.evaluations == 1)
+
+        // El diálogo se cierra y el sistema devuelve el foco. Esto NO es una
+        // vuelta desde el fondo: nadie salió de la app.
+        lock.sceneBecameActive(authenticated: true)
+
+        #expect(lock.state == .open, "Se volvió a bloquear sin que nadie saliera de la app")
+        #expect(fake.evaluations == 1, "Se pidió \(fake.evaluations) veces la autenticación")
+    }
+
+    /// El caso de control del anterior: **irse al fondo y volver pasada la
+    /// gracia sí tiene que volver a pedir**. Sin esto, la prueba de arriba se
+    /// contentaría con un bloqueo que no vuelve a pedir nunca, que es el
+    /// defecto contrario y peor.
+    @Test func volverDelFondoPasadaLaGraciaSiVuelveAPedir() async {
+        let fake = Fake(can: .faceID, answer: .success(true))
+        let lock = AppLock(authenticator: fake, defaults: isolatedDefaults())
+        lock.setEnabled(true)
+
+        let t0 = Date(timeIntervalSince1970: 1_757_000_000)
+        lock.sceneBecameActive(authenticated: true, now: t0)
+        await lock.authenticate()
+        #expect(lock.state == .open)
+
+        lock.sceneLeftForeground(now: t0)
+        lock.sceneBecameActive(authenticated: true, now: t0.addingTimeInterval(AppLockRules.grace + 1))
+
+        #expect(lock.state != .open, "Tras la gracia tenía que volver a pedir")
+    }
+
+    /// Y volver antes de la gracia no molesta: mirar una notificación y volver
+    /// no puede obligar a autenticarse.
+    @Test func volverDelFondoDentroDeLaGraciaNoPide() async {
+        let fake = Fake(can: .faceID, answer: .success(true))
+        let lock = AppLock(authenticator: fake, defaults: isolatedDefaults())
+        lock.setEnabled(true)
+
+        let t0 = Date(timeIntervalSince1970: 1_757_000_000)
+        lock.sceneBecameActive(authenticated: true, now: t0)
+        await lock.authenticate()
+
+        lock.sceneLeftForeground(now: t0)
+        lock.sceneBecameActive(authenticated: true, now: t0.addingTimeInterval(5))
+
+        #expect(lock.state == .open)
+        #expect(fake.evaluations == 1)
+    }
+
     // MARK: - El ajuste
 
     @Test func itIsOffByDefault() {

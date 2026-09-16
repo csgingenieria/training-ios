@@ -22,7 +22,7 @@ struct AppLockOverlay: View {
 
             VStack(spacing: Theme.spacing.lg.value) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 56))
+                    .font(.heroGlyph)
                     .foregroundStyle(Color.brand)
                     .accessibilityHidden(true)
 
