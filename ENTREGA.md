@@ -40,9 +40,9 @@ mapa. Los instructores ven la tabla de resultados de su convocatoria.
 | Interfaz | SwiftUI · iPhone y iPad, una sola base de código |
 | Despliegue mínimo | iOS 26.4 · `TARGETED_DEVICE_FAMILY = 1,2` |
 | Dependencias de terceros | **cero** |
-| Código de aplicación | 15 561 líneas · 113 ficheros |
-| Código de pruebas | 12 864 líneas · **45 % del repositorio** |
-| Pruebas | **757** casos · 103 suites · 0 fallos |
+| Código de aplicación | 15 598 líneas · 113 ficheros |
+| Código de pruebas | 13 112 líneas · **46 % del repositorio** |
+| Pruebas | **767** casos · 104 suites · 0 fallos |
 | Extensiones | WidgetKit · AppIntents |
 
 ---
@@ -191,7 +191,7 @@ Tres niveles con propósitos distintos, porque cada uno tiene un punto ciego:
 
 | Nivel | Qué demuestra | Qué no |
 |---|---|---|
-| **757 pruebas unitarias** | Que una regla es correcta en todos sus casos | Que esté conectada a la pantalla |
+| **767 pruebas unitarias** | Que una regla es correcta en todos sus casos | Que esté conectada a la pantalla |
 | **4 recorridos XCUITest** | La app real contra un servidor real, 2 roles × 2 tamaños | Los casos límite |
 | **5 guardas de proyecto** | Propiedades estructurales que ningún test alcanza | Comportamiento |
 
@@ -221,7 +221,7 @@ que lo construía, y que por tanto no podía fallar nunca.
 
 ## Cómo ejecutarlo para evaluarlo
 
-**Las 757 pruebas unitarias no necesitan red ni credenciales.** Es la vía para
+**Las 767 pruebas unitarias no necesitan red ni credenciales.** Es la vía para
 evaluar el proyecto sin acceso al servidor:
 
 ```bash
@@ -313,7 +313,7 @@ real, con una configuración real. Leer el código no los habría encontrado, po
 cada uno era código correcto interactuando con una realidad distinta de la
 supuesta. El defecto no vivía en el código: vivía entre el código y el mundo.
 
-De ahí el 45 % de pruebas, de ahí las guardas, y de ahí que cada guarda lleve su
+De ahí el 46 % de pruebas, de ahí las guardas, y de ahí que cada guarda lleve su
 caso de control.
 
 ---
