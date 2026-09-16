@@ -17,8 +17,13 @@ desglose, progreso por recorrido, detalle de cada vuelta y el trazado GPS sobre
 el mapa. Los instructores ven la tabla de resultados de su convocatoria.
 
 No es un ejercicio: **forma parte del entregable oficial a la Comunidad de
-Madrid** desde el 5 de septiembre de 2026, con usuarios reales y datos sujetos a
-acuerdo de confidencialidad.
+Madrid** desde el 5 de septiembre de 2026.
+
+> **Estado actual.** El sistema está en **fase de pruebas** y entra en
+> producción en el cuerpo de **Bomberos de la Comunidad de Madrid dentro de
+> aproximadamente un mes**. Los datos que se ven hoy son de una convocatoria de
+> prueba; a partir de la entrada en producción serán expedientes reales de
+> opositores, sujetos a acuerdo de confidencialidad.
 
 | | |
 |---|---|
@@ -235,15 +240,31 @@ tocar el `pbxproj`.
 
 > Un solo `xcodebuild test` a la vez.
 
-**Lo que no se puede ejecutar desde fuera:** los cuatro recorridos contra el
-servidor real necesitan credenciales de cuentas de personas identificables en un
-proceso selectivo público, sujetas a acuerdo de confidencialidad. **No se
-entregan, ni se escriben en ningún documento.** El código de esos recorridos sí
-está en el repositorio (`StagingWalkthroughUITests.swift`, 1 650 de las 1 817
-líneas de pruebas de interfaz) y se lee
-perfectamente como muestra de trabajo: la disciplina de toques que no se tragan, la
-espera a que un elemento deje de moverse y la comprobación de que no lo tapa el
-cromo del sistema.
+### Acceso con datos reales
+
+Para ver la aplicación funcionando de verdad se facilitan **credenciales de
+evaluación de los dos perfiles** —instructor y aspirante— **junto con esta
+entrega**.
+
+**No están en este repositorio, y no deben publicarse ni redistribuirse.** Dan
+acceso al servidor del proyecto, que hoy sirve una convocatoria de prueba y en un
+mes servirá expedientes reales de opositores de Bomberos de la Comunidad de
+Madrid. Son para evaluar este proyecto, y para nada más.
+
+Con ellas se pueden ejecutar también los cuatro recorridos automatizados, que
+leen las credenciales del llavero y nunca de un fichero:
+
+```bash
+security add-generic-password -U -s training-ios-staging-student -a '<correo>' -w
+security add-generic-password -U -s training-ios-staging-manager -a '<correo>' -w
+bash scripts/staging-walkthrough.sh
+```
+
+El código de esos recorridos está en el repositorio
+(`StagingWalkthroughUITests.swift`, 1 650 de las 1 817 líneas de pruebas de
+interfaz) y se lee perfectamente como muestra de trabajo aunque no se ejecute: la
+disciplina de toques que no se tragan, la espera a que un elemento deje de
+moverse y la comprobación de que no lo tapa el cromo del sistema.
 
 ---
 
