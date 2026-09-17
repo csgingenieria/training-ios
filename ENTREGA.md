@@ -281,7 +281,7 @@ Las dos cuentas ven **dos convocatorias abiertas** en el servidor real:
 | Convocatoria | Qué es | A 17/09/2026 |
 |---|---|---|
 | **`prueba0`** | La oposición real: conductores, recorridos, criterios y telemetría de los camiones | **Siete aspirantes con vueltas, puntuaciones, eventos y trazado GPS. Es la que hay que abrir** |
-| `fase0` | La fase 0 de formación previa al examen, que arranca el jueves 18/09/2026 | Apenas datos: empieza esta semana |
+| `fase0` | La fase 0 de formación previa al examen, que arranca el jueves 24/09/2026 | Apenas datos: empieza la semana que viene |
 
 Los exámenes están previstos para mediados de octubre. El sistema completo
 —portal web, aplicación de escritorio, tablet Android del camión y esta
