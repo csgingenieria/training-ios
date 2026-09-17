@@ -5,7 +5,6 @@ import SwiftUI
 ///
 /// Los demás tipos que vivían aquí están ahora en ficheros propios:
 /// `StandingViewModel`, `StandingCard` y `AttemptListTypes`.
-
 struct MyStandingTabView: View {
     @Environment(AuthSession.self) private var auth
 

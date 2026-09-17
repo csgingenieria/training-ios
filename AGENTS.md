@@ -21,7 +21,7 @@ El único acoplamiento permitido es **el contrato del API móvil v1**. La app iO
 
 1. **Memoria aislada por `project`.** Detalles de implementación iOS → `project: "training-ios"`. Detalles del backend → `project: "training"`. Nunca cruzados.
 2. **Comunicación por engram con topic keys conocidos** (sección siguiente). Sin IPC en vivo, sin sockets, sin archivos compartidos. Engram es el canal **primario**.
-3. **GitHub Issues como canal secundario formal.** Cuando una necesidad cross-track tenga que ser visible para humanos del equipo training (Jesús, Alejandro, Joel) o requiera tracking más allá de la sesión actual, se abre issue en `csgingenieria/training` con label `cross-ios` (a crear cuando haga falta). Engram sigue siendo la fuente de verdad para los agentes; GitHub es para humanos.
+3. **GitHub Issues como canal secundario formal.** Cuando una necesidad cross-track tenga que ser visible para humanos del equipo training el equipo del backend o requiera tracking más allá de la sesión actual, se abre issue en `csgingenieria/training` con label `cross-ios` (a crear cuando haga falta). Engram sigue siendo la fuente de verdad para los agentes; GitHub es para humanos.
 4. **El humano (Antonio) es el único canal síncrono.** Si algo es urgente, se le dice a él; él decide.
 5. **Sin commits cruzados.** Ningún archivo `.swift` entra al repo training. Ningún archivo `.py` entra al repo iOS. Sólo metadocumentación (este AGENTS.md, decisiones D-XXX, etc.).
 6. **Confidencialidad, sean privados o no.** Los dos repos son privados (verificado el 2026-09-06; este archivo declaraba el backend como público, y no lo es). Eso no cambia el criterio: **cero datos reales CMadrid, cero capturas con info confidencial, cero credenciales** en commits, issues o comentarios. Un repo privado se comparte, se clona y cambia de visibilidad; lo escrito no se borra.
@@ -105,7 +105,7 @@ Igual que Caso A pero con topic `cross/api-bugs/<id>` y `type: "bugfix"`. La urg
 
 ## Comunicación con el equipo Training (humanos)
 
-**Sólo Antonio.** Jesús, Alejandro y Joel **no** saben (ni necesitan saber, hoy) que existe esta app iOS personal. Si algún feature de esta app llega a reflejarse en el sprint del equipo, será porque Antonio lo decidió y lo introduce con un issue/PR normal en el repo training.
+**Sólo Antonio.** el equipo del backend **no** saben (ni necesitan saber, hoy) que existe esta app iOS personal. Si algún feature de esta app llega a reflejarse en el sprint del equipo, será porque Antonio lo decidió y lo introduce con un issue/PR normal en el repo training.
 
 ## Histórico
 

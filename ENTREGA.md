@@ -330,7 +330,7 @@ docs/decisions/D-IOS-002…                   entrada en el entregable a CMadrid
 docs/decisions/D-IOS-003…                   retirada del Apple Watch, y por qué
 ```
 
-Y la **memoria del proyecto**: 49 páginas con contexto, requisitos, arquitectura,
+Y la **memoria del proyecto**: 50 páginas con contexto, requisitos, arquitectura,
 modelo de datos, interfaz, seguridad, pruebas, despliegue y seis casos de estudio
 de defectos reales con su causa, su síntoma y su corrección.
 

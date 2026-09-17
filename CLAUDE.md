@@ -8,7 +8,7 @@ App nativa iOS **dentro del entregable oficial a CMadrid** desde el 2026-09-05 (
 
 - Consume el **API móvil v1** del repo `training/` (Flask, otro proyecto, otro track) vía Bearer JWT.
 - La usan **bomberos aspirantes** (rol `STUDENT`) e **instructores** (rol `MANAGER`). El usuario final no es técnico y no tiene a quién preguntarle: un crash o un dato confuso es un incidente con el cliente, no un bug de andar por casa.
-- Nació como track **paralelo** al sprint del equipo Training (Jesús, Alejandro, Joel) — ver `D-DIR-001` en `/Users/antoniohermoso/repos/training/memory/decision-tracks-paralelos.md`. Sigue siendo un repo aparte, pero ya no es un experimento personal.
+- Nació como track **paralelo** al sprint del equipo del backend — ver `D-DIR-001` en `/Users/antoniohermoso/repos/training/memory/decision-tracks-paralelos.md`. Sigue siendo un repo aparte, pero ya no es un experimento personal.
 
 **Repos relevantes:**
 - Este repo iOS (**público desde el 2026-09-16**, para la entrega académica; antes privado): [`csgingenieria/training-ios`](https://github.com/csgingenieria/training-ios)
@@ -99,7 +99,7 @@ La UI **nunca** puede mostrar, sugerir ni insinuar:
 
 - `APTO` / `NO APTO`, «aprobado», «suspenso», «admitido», «excluido», ni ninguna variante.
 - «línea de corte», «dentro/fuera de plaza», `withinCutoff`, ni marcar visualmente un umbral en el ranking.
-- **`plazas` / `totalPlazas`.** El sistema dejó de gestionar cupos (#392). El backend todavía devuelve esos campos como espejo de `totalCandidates` / `totalParticipants` por compatibilidad temporal (marcados `// Release N` en `services.py`), pero `docs/CMADRID-ENTREGA.md` v1.1 declara al cliente que **«el sistema no gestiona plazas ni cupos»**. Mostrarlos contradice un documento contractual entregado.
+- **`plazas` / `totalPlazas`.** El sistema dejó de gestionar cupos (#392). El backend ya no modela cupo ni capacidad —lo único con nombre parecido es `plazaNumber`, el identificador de inscripción del aspirante—, y `docs/CMADRID-ENTREGA.md` v1.1 declara al cliente que **«el sistema no gestiona plazas ni cupos»**. Mostrarlos contradice un documento contractual entregado.
 
 Lo que sí se muestra: posición en el ranking, nota, número de participantes, intentos completados.
 

@@ -8,8 +8,8 @@
 # se construye lo que se instala en el teléfono de un bombero— apunta a
 # `training.dobacksoft.com`, que **tampoco resuelve**.
 #
-# Nada de eso lo detectaba ningún test, y no por descuido: los 755 tests
-# unitarios y los seis recorridos usan Debug. Una build de producción podía
+# Nada de eso lo detectaba ningún test, y no por descuido: las pruebas
+# unitarias y los recorridos usan Debug. Una build de producción podía
 # apuntar a la nada y salir todo verde.
 #
 # Esto no adivina el host bueno. Solo dice cuál declara cada configuración y si

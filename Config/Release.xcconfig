@@ -5,7 +5,7 @@
 //
 // Antes declaraba `training.dobacksoft.com`, un host que **no resuelve** y que
 // nunca resolvió: una build de producción apuntaba a la nada, y ningún test lo
-// detectaba porque los 755 unitarios y los seis recorridos corren en Debug.
+// detectaba porque las pruebas unitarias y los recorridos corren en Debug.
 // Se descubrió al compilar en Release por primera vez.
 //
 // Consecuencia que conviene tener presente: Debug y Release hablan con el

@@ -139,6 +139,3 @@ struct StudentAttemptRoute: Hashable {
     /// recibe del API, así que viaja en la ruta.
     var createdAt: String?
 }
-
-/// Tab del STUDENT en el dashboard: muestra saludo + selector de convocatorias
-/// + standing + lista de intentos. Si tiene una sola, va directo a ella.

@@ -12,7 +12,6 @@ private struct PanelStudentRoute: Hashable {
 ///
 /// Su estado vive en `ManagerPanelViewModel` y sus destinos en
 /// `PanelRoute`, cada uno en su fichero.
-
 struct ManagerPanelView: View {
     @Environment(AuthSession.self) private var auth
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -620,5 +619,3 @@ private struct SyncResultSheet: View {
         .cardStyle()
     }
 }
-
-/// Lo que se puede abrir desde el panel del instructor.

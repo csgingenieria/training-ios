@@ -93,6 +93,12 @@ struct RootView: View {
             // funciona.
             lock.sceneBecameActive(authenticated: auth.isAuthenticated)
         }
+        // Cerrar sesión desde donde sea —Cuenta, o una caducidad forzada—
+        // deja de tapar: la pantalla de acceso no protege ningún dato, y el
+        // «ya resuelto» de esta estancia no puede sobrevivir a otra sesión.
+        .onChange(of: auth.isAuthenticated) { _, sigue in
+            if !sigue { lock.sessionEnded() }
+        }
         .onOpenURL { url in
             deepLinks.receive(url)
         }
