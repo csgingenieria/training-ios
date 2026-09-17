@@ -415,13 +415,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training Widgets/Dobacksoft_Training_Widgets.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Dobacksoft Training Widgets/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Widgets";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -448,13 +448,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training Widgets/Dobacksoft_Training_Widgets.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Dobacksoft Training Widgets/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Dobacksoft Training Widgets";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -484,7 +484,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training/Dobacksoft_Training.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				ENABLE_APP_SANDBOX = YES;
@@ -537,7 +537,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Dobacksoft Training/Dobacksoft_Training.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				ENABLE_APP_SANDBOX = YES;
@@ -707,7 +707,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -736,7 +736,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -764,7 +764,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -792,7 +792,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 134;
+				CURRENT_PROJECT_VERSION = 135;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2S747NZP4R;
 				GENERATE_INFOPLIST_FILE = YES;

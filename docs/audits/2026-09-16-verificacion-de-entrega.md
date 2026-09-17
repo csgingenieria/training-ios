@@ -91,3 +91,60 @@ caso de control**, ninguna por casualidad.
   `2.0 (1)`. Incrementar `CFBundleVersion` en cada build que salga del equipo,
   o no hay forma de saber qué se está probando.
 - Los recorridos automatizados se ejecutan a mano, no en integración continua.
+
+## Estado final sobre el tag `entrega-2026-09-16`
+
+Lo de arriba se midió sobre `7a2b025` la mañana del 16. Desde entonces hubo una
+tanda de trabajo y una revisión adversarial de la entrega (ocho revisores
+independientes, refutación por tres lentes). Esto es lo que hay en el árbol
+etiquetado, medido de nuevo:
+
+| Comprobación | Resultado |
+|---|---|
+| Pruebas unitarias | **794 casos · 0 fallidas** (793 funciones `@Test` en 90 ficheros) |
+| Guardas de proyecto (`check-*`) | **6 de 6**, incluida `check-build-number` |
+| Número de build | derivado del historial; `verificar.sh` lo comprueba |
+| Recorrido · aspirante en iPhone | 6 pasadas · 0 fallidas contra el servidor real |
+| Recorrido · instructor en iPhone | entra, navega y pinta la tabla de resultados; el detalle del intento se salta por datos (la convocatoria de prueba no tiene celdas con nota) |
+| Recorridos en iPad | sin ejecutar |
+| Arranque en dispositivo real | iPhone 16 Pro · iOS 26.6 · con sesión iniciada |
+
+### Dos defectos encontrados y corregidos después de la primera verificación
+
+1. **El desbloqueo con Face ID entraba en bucle.** `leftForegroundAt = nil`
+   significaba «arranque en frío» y también «acabo de desbloquear»; el diálogo
+   del sistema devuelve el foco, eso cuenta como activación, y se volvía a
+   pedir. Corregido con `resolvedInThisForeground` y `shouldAsk(alreadyResolved:)`
+   sin valor por defecto. Rojo verificado antes del arreglo.
+2. **El segundo bucle, el de la autenticación fallida.** Con la tapa puesta tras
+   un intento que no salió, el foco relanzaba el diálogo y dejaba «Desbloquear»
+   y «Cerrar sesión» sin poder pulsarse. Lo encontró la revisión adversarial,
+   no un usuario. Corregido: `sceneBecameActive` no hace nada si la tapa ya
+   está puesta; la decisión es de la persona.
+
+### Lo que la revisión adversarial corrigió en los documentos
+
+- Las tablas por carpeta de la memoria y del documento de entrega arrastraban
+  el desglose de una revisión anterior (113 ficheros · 15 598) con el titular
+  ya actualizado (15 750). Regeneradas desde el árbol entregado.
+- La memoria daba tres cifras distintas de pruebas (765 / 788 / 790) y 133
+  commits; el árbol etiquetado tiene 793 funciones, 794 casos y 135 commits.
+- `GreetingCard` no usaba `GreetingCopy`: siete pruebas verificaban un tipo que
+  ninguna pantalla pintaba. Ahora la vista pinta lo que se prueba.
+- `MyAttemptsViewModel` era el décimo modelo de vista y el único sin costura
+  de pruebas; la memoria decía «cuatro de cuatro» contando solo cuatro.
+- El widget declaraba iOS 26.5 como mínimo y la app 26.4. Unificados a 26.4.
+- Los documentos decían «requiere Xcode 26.4»; se construyó y probó con 26.6,
+  y eso es lo que ahora dicen.
+- Anexo A: `/convocatorias` y `/convocatorias/{id}` son solo de instructor;
+  `/attempts/{id}` y `/attempts/{id}/gps` los ven los dos roles.
+- La memoria y `CLAUDE.md` decían que el repositorio es privado; es público
+  desde la entrega.
+
+### Historial público: cuentas de semilla
+
+El cuerpo del commit `7168625` (2026-04-30) enumera cuatro cuentas de semilla
+del backend (`@cmadrid.com`) con sus contraseñas de desarrollo. El árbol no las
+contiene, pero el historial es público. Se probaron las cuatro contra el
+servidor el 2026-09-17: **las cuatro rechazadas (401)**. No se reescribe el
+historial —rompería los clones— y queda anotado para que nadie las reutilice.

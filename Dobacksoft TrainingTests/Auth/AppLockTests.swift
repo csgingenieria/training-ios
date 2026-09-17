@@ -111,6 +111,47 @@ struct AppLockTests {
         #expect(fake.evaluations == 1)
     }
 
+    /// **El segundo bucle.** La primera corrección cubría el desbloqueo con
+    /// éxito; quedaba el fallo. Falla o se cancela la autenticación, la tapa
+    /// queda puesta con «Desbloquear» y «Cerrar sesión», el sistema devuelve
+    /// el foco… y `sceneBecameActive` volvía a lanzar el diálogo, una y otra
+    /// vez, dejando las dos salidas sin poder pulsarse. Encontrado por la
+    /// revisión adversarial de la entrega, no por un usuario.
+    @Test func unaAutenticacionFallidaYVueltaAlFocoNoRelanzaElDialogo() async {
+        let fake = Fake(can: .faceID, answer: .failure(Denied()))
+        let lock = AppLock(authenticator: fake, defaults: isolatedDefaults())
+        lock.setEnabled(true)
+
+        lock.sceneBecameActive(authenticated: true)
+        await lock.authenticate()
+        #expect(lock.state == .locked)
+        #expect(fake.evaluations == 1)
+
+        // El diálogo se cierra sin éxito y el sistema devuelve el foco.
+        lock.sceneBecameActive(authenticated: true)
+
+        #expect(lock.state == .locked, "Tenía que quedarse tapada, esperando a la persona")
+        #expect(fake.evaluations == 1, "Se relanzó el diálogo \(fake.evaluations - 1) veces")
+    }
+
+    /// Y el control: con la tapa puesta, **la persona sí puede** pedir otro
+    /// intento con el botón. Que no se relance solo no significa que no se
+    /// pueda relanzar.
+    @Test func conLaTapaPuestaElBotonSiPideOtroIntento() async {
+        let fake = Fake(can: .faceID, answer: .failure(Denied()))
+        let lock = AppLock(authenticator: fake, defaults: isolatedDefaults())
+        lock.setEnabled(true)
+        lock.sceneBecameActive(authenticated: true)
+        await lock.authenticate()
+        #expect(fake.evaluations == 1)
+
+        fake.answer = .success(true)
+        await lock.authenticate()   // lo que hace el botón «Desbloquear»
+
+        #expect(lock.state == .open)
+        #expect(fake.evaluations == 2)
+    }
+
     // MARK: - El ajuste
 
     @Test func itIsOffByDefault() {

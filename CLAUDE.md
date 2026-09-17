@@ -11,12 +11,12 @@ App nativa iOS **dentro del entregable oficial a CMadrid** desde el 2026-09-05 (
 - Nació como track **paralelo** al sprint del equipo Training (Jesús, Alejandro, Joel) — ver `D-DIR-001` en `/Users/antoniohermoso/repos/training/memory/decision-tracks-paralelos.md`. Sigue siendo un repo aparte, pero ya no es un experimento personal.
 
 **Repos relevantes:**
-- Este repo iOS (PRIVADO): [`csgingenieria/training-ios`](https://github.com/csgingenieria/training-ios)
+- Este repo iOS (**público desde el 2026-09-16**, para la entrega académica; antes privado): [`csgingenieria/training-ios`](https://github.com/csgingenieria/training-ios)
 - Repo backend del equipo (PRIVADO): [`csgingenieria/training`](https://github.com/csgingenieria/training)
 
 > Ambos son privados y verificados el 2026-09-06. Hasta esa fecha este archivo citaba `cosigein/*`, una organización que **no existe**, y declaraba el backend como público. El repo iOS nunca había tenido remoto válido: dieciséis commits vivían solo en el disco de Antonio.
 >
-> Que sean privados **no relaja la confidencialidad**: los datos de CMadrid siguen bajo NDA y el criterio de qué se escribe en un commit no cambia.
+> El repo iOS es público desde el 2026-09-16 y el backend sigue privado. Eso **no relaja la confidencialidad, la endurece**: los datos de CMadrid siguen bajo NDA y lo que se escribe en un commit ahora lo lee cualquiera.
 
 **Nada de este repo se commitea al repo training, ni viceversa.** El único acoplamiento permitido es el contrato del API móvil v1.
 
@@ -36,33 +36,37 @@ App nativa iOS **dentro del entregable oficial a CMadrid** desde el 2026-09-05 (
 - **Concurrencia:** `async/await` + `actor` (ej: `APIClient` es un actor singleton).
 - **HTTP:** `URLSession` directo. Sin Alamofire, sin Moya.
 - **Persistencia local de tokens:** Keychain a través de `TokenStore`. **No** usar `UserDefaults` para tokens.
-- **Build:** Xcode 26.4. El proyecto usa `PBXFileSystemSynchronizedRootGroup` — cualquier `.swift` dentro de `Dobacksoft Training/` se incluye automáticamente, no hace falta editar `pbxproj` para agregar archivos.
+- **Build:** Xcode 26.6 (con el que se construyó y probó la entrega; el despliegue mínimo es iOS 26.4). El proyecto usa `PBXFileSystemSynchronizedRootGroup` — cualquier `.swift` dentro de `Dobacksoft Training/` se incluye automáticamente, no hace falta editar `pbxproj` para agregar archivos.
 
 ## Estructura
 
+Carpetas sincronizadas: lo que está en el árbol está en el target, sin tocar el `pbxproj`.
+
 ```
 Dobacksoft Training/
-├── Dobacksoft_TrainingApp.swift     # @main, App lifecycle
-├── ContentView.swift                # entry view
+├── Dobacksoft_TrainingApp.swift     # @main
+├── ContentView.swift                # RootView: arranque, bloqueo, privacidad, enlaces
 ├── Core/
-│   ├── API/
-│   │   ├── APIClient.swift          # actor único, async/await, Bearer JWT
-│   │   └── APIError.swift           # enum tipado de errores HTTP
-│   ├── Auth/
-│   │   ├── AuthSession.swift        # estado de sesión + refresh flow
-│   │   └── TokenStore.swift         # Keychain wrapper
-│   └── Models/
-│       ├── *DTO.swift               # Decodables que matchean el contrato API
-└── Features/
-    ├── Login/
-    ├── Dashboard/
-    ├── Convocatorias/
-    ├── Standing/
-    ├── Ranking/
-    └── Attempt/
+│   ├── API/         # APIClient (actor), TrainingAPI (la costura), APIError, *Query
+│   ├── Auth/        # AuthSession, TokenStore (llavero), AppLock + AppLockRules
+│   ├── Models/      # 30 DTOs + reglas de dominio (GradeFinality, StatusVocabulary…)
+│   └── Navigation/  # DeepLink, OpenStandingIntent, SecretRedaction
+├── Features/        # 9 áreas: Login · Dashboard · Convocatorias · Standing · Progreso
+│                    #          Attempt · Resultados · Manager · Cuenta
+│   ├── Standing/    # StandingView + StandingViewModel + StandingCard + AttemptListTypes
+│   └── Manager/     # ManagerPanelView + ManagerPanelViewModel + PanelRoute
+└── Shared/
+    ├── Theme/       # tokens, tipografía, GreetingCard, LoadingStateView
+    ├── SnapshotPublisher, LastGoodStore, PrivacyGate, RefreshTicker, AppLog
+SharedSnapshot/      # lo que comparten app y widget (sin depender de la app)
+Dobacksoft Training Widgets/
+Dobacksoft TrainingTests/   · Dobacksoft TrainingUITests/
+scripts/             # 6 guardas check-*.sh · staging-walkthrough.sh · verificar.sh
 ```
 
-Cada feature es una carpeta con `*View.swift` (SwiftUI) y, cuando aplique, `*ViewModel.swift` (`@Observable` o `@MainActor` class).
+Cada feature es una carpeta con `*View.swift` y, cuando hay algo que probar sin la vista,
+un `*ViewModel.swift` (`@Observable`, con `init(api: TrainingAPI = APIClient.shared)`).
+Diez modelos de vista, los diez con esa costura.
 
 ## Reglas firmes
 
@@ -104,7 +108,7 @@ Lo que sí se muestra: posición en el ranking, nota, número de participantes, 
 ### Confidencialidad
 - Datos CMadrid bajo NDA. Para desarrollo, usar el VPS staging o seed local — nunca la base de producción.
 - Sin capturas con datos reales en commits, issues, gists, screenshots públicos ni herramientas de terceros.
-- Ambos repos son privados, pero eso **no baja el listón**: los datos de CMadrid están bajo NDA y lo que se escribe en un commit, un issue o una captura sigue el mismo criterio que si fueran públicos.
+- El repo iOS es público y el backend privado; el listón es el mismo para los dos: los datos de CMadrid están bajo NDA y lo que se escribe en un commit, un issue o una captura no lleva datos reales ni credenciales. El historial público ya arrastra un commit de abril con cuentas de semilla (muertas, comprobado el 2026-09-17): que sea el último.
 
 ## Memoria persistente (engram)
 

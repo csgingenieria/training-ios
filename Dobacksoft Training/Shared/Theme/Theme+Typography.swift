@@ -64,9 +64,10 @@ extension Font {
     ///
     /// Monoespaciada porque se teclea mirando: con proporcional, un `1` y un
     /// `7` ocupan distinto y el ojo pierde la posición al copiar dígito a
-    /// dígito.
+    /// dígito. Y **escala con el texto del sistema**, a diferencia de
+    /// `heroGlyph`: esto no es un adorno, es la cifra que hay que leer.
     static var pinDisplay: Font {
-        .system(size: 44, weight: .bold, design: .monospaced)
+        .system(.largeTitle, design: .monospaced, weight: .bold)
     }
 
     static var scoreHero: Font {

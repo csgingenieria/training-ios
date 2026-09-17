@@ -40,9 +40,9 @@ mapa. Los instructores ven la tabla de resultados de su convocatoria.
 | Interfaz | SwiftUI · iPhone y iPad, una sola base de código |
 | Despliegue mínimo | iOS 26.4 · `TARGETED_DEVICE_FAMILY = 1,2` |
 | Dependencias de terceros | **cero** |
-| Código de aplicación | 15 750 líneas · 120 ficheros |
-| Código de pruebas | 13 412 líneas · **46 % del repositorio** |
-| Pruebas | **790** casos · 0 fallos |
+| Código de aplicación | 15 761 líneas · 120 ficheros |
+| Código de pruebas | 13 528 líneas · **46 % del repositorio** |
+| Pruebas | **794** casos · 0 fallos |
 | Extensiones | WidgetKit · AppIntents |
 
 ---
@@ -149,8 +149,8 @@ código lo detectó; apareció al ejecutar en un iPad real.
 
 ### Accesibilidad como requisito, no como extra
 
-Dynamic Type en **todos** los roles tipográficos (`relativeTo:`, ninguna fuente de
-tamaño fijo); los diseños conmutan de horizontal a vertical en tamaños de
+Dynamic Type en **todos** los roles tipográficos que informan (`relativeTo:`; la
+única excepción es un glifo decorativo oculto a VoiceOver); los diseños conmutan de horizontal a vertical en tamaños de
 accesibilidad. Etiquetas que describen el significado: un pin del mapa dice qué
 ocurrió, no `EVT_01`; una posición se pronuncia «Puesto 12 de 40» como una sola
 frase; una nota, «8,5 sobre 10». Objetivos táctiles de 44 pt, movimiento reducido
@@ -161,12 +161,12 @@ respetado, contraste ≥ 4,5:1 en claro y en oscuro.
 ## Arquitectura
 
 ```
-Features/           9 áreas · 36 ficheros · 8 298 líneas   SwiftUI + ViewModels
+Features/           9 áreas · 41 ficheros · 8 328 líneas   SwiftUI + ViewModels
 ├── Core/Navigation    rutas y enlaces profundos      188
 ├── Core/Models        30 DTOs y reglas de dominio  3 122
-├── Core/Auth          sesión, llavero, bloqueo       793
+├── Core/Auth          sesión, llavero, bloqueo       825
 └── Core/API           actor de red, errores          697
-Shared/             tema, publicación, utilidades   1 191
+Shared/             tema, publicación, utilidades   1 329
           ▲                              ▲
     ┌─────┴──────┐              ┌────────┴────────┐
     │ App (iOS)  │              │ Widget (ext.)   │
@@ -191,7 +191,7 @@ Tres niveles con propósitos distintos, porque cada uno tiene un punto ciego:
 
 | Nivel | Qué demuestra | Qué no |
 |---|---|---|
-| **790 pruebas unitarias** | Que una regla es correcta en todos sus casos | Que esté conectada a la pantalla |
+| **794 pruebas unitarias** | Que una regla es correcta en todos sus casos | Que esté conectada a la pantalla |
 | **4 recorridos XCUITest** | La app real contra un servidor real, 2 roles × 2 tamaños | Los casos límite |
 | **6 guardas de proyecto** | Propiedades estructurales que ningún test alcanza | Comportamiento |
 
@@ -222,7 +222,7 @@ que lo construía, y que por tanto no podía fallar nunca.
 
 ## Cómo ejecutarlo para evaluarlo
 
-**Las 790 pruebas unitarias no necesitan red ni credenciales.** Es la vía para
+**Las 794 pruebas unitarias no necesitan red ni credenciales.** Es la vía para
 evaluar el proyecto sin acceso al servidor:
 
 ```bash
@@ -242,7 +242,7 @@ control en funcionamiento:
 for g in scripts/check-*.sh; do bash "$g"; done
 ```
 
-Requiere **Xcode 26.4**. El proyecto usa carpetas sincronizadas
+Construido y probado con **Xcode 26.6**; no se ha verificado con versiones anteriores. El proyecto usa carpetas sincronizadas
 (`PBXFileSystemSynchronizedRootGroup`): los ficheros del árbol entran solos, sin
 tocar el `pbxproj`.
 
@@ -343,7 +343,8 @@ Porque forman parte del resultado:
 1. **Distribución.** TestFlight quedó inutilizable por un problema de la cuenta.
    El canal correcto para un entregable institucional es **Custom App** vía Apple
    Business Manager.
-2. **Numeración de versiones.** Dos compilaciones distintas llegaron a convivir
-   como `2.0 (1)`. Hay que incrementar `CFBundleVersion` en cada build que salga
-   del equipo, o es imposible saber qué se está probando.
+2. **Numeración de versiones — resuelto el 16/09.** Dos compilaciones distintas
+   llegaron a convivir como `2.0 (1)`. Ahora `CFBundleVersion` sale del historial
+   (`scripts/check-build-number.sh`) y `verificar.sh` lo comprueba antes de
+   distribuir. Queda anotado porque explica media mañana de diagnóstico.
 3. **Integración continua.** Los recorridos se ejecutan a mano.

@@ -19,11 +19,19 @@ final class MyAttemptsViewModel {
 
     var state: State = .loading
 
+    /// La capa de red, por parámetro: la misma costura que los otros nueve
+    /// modelos de vista. Era el décimo y el único que quedaba sin ella.
+    private let api: TrainingAPI
+
+    init(api: TrainingAPI = APIClient.shared) {
+        self.api = api
+    }
+
     func load(convocatoriaId: String, auth: AuthSession) async {
         state = .loading
         do {
-            let items = try await auth.authorized { token in
-                try await APIClient.shared.myAttempts(
+            let items = try await auth.authorized { [api] token in
+                try await api.myAttempts(
                     convocatoriaId: convocatoriaId,
                     accessToken: token
                 )

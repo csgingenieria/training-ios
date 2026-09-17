@@ -38,6 +38,9 @@ actor FakeTrainingAPI: TrainingAPI {
     /// Las del área del instructor. Estaban sin guionizar, y por eso el panel
     /// —la superficie con más lógica de ese área— no tenía ni una prueba de
     /// comportamiento: el doble no podía devolverle nada.
+    /// Las vueltas del aspirante. Sin cola, `MyAttemptsViewModel` era el único
+    /// modelo de vista que no se podía ejercitar contra este doble.
+    var myAttemptsResults: [Result<[AttemptSummaryDTO], Error>] = []
     var managerDashboardResults: [Result<ManagerDashboardDTO, Error>] = []
     var rankingResults: [Result<RankingResponseDTO, Error>] = []
     var matrixResults: [Result<MatrixResponseDTO, Error>] = []
@@ -77,6 +80,7 @@ actor FakeTrainingAPI: TrainingAPI {
         convocatoriasResults = results
     }
     func setPasswordResult(_ result: Result<Void, Error>) { passwordResult = result }
+    func setMyAttemptsResults(_ r: [Result<[AttemptSummaryDTO], Error>]) { myAttemptsResults = r }
     func setManagerDashboardResults(_ r: [Result<ManagerDashboardDTO, Error>]) { managerDashboardResults = r }
     func setRankingResults(_ r: [Result<RankingResponseDTO, Error>]) { rankingResults = r }
     func setMatrixResults(_ r: [Result<MatrixResponseDTO, Error>]) { matrixResults = r }
@@ -150,7 +154,7 @@ actor FakeTrainingAPI: TrainingAPI {
         return try next(&myConvocatoriasResults)
     }
     func myAttempts(convocatoriaId: String, accessToken: String) async throws -> [AttemptSummaryDTO] {
-        throw APIError.notFound(.resourceMissing)
+        try next(&myAttemptsResults)
     }
     func convocatorias(accessToken: String) async throws -> [ConvocatoriaSummaryDTO] {
         convocatoriasCalls += 1

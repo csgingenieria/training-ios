@@ -149,6 +149,13 @@ final class AppLock {
             return
         }
 
+        // La tapa ya está puesta: o el diálogo del sistema está en pantalla, o
+        // la persona tiene delante «Desbloquear» y «Cerrar sesión» tras un
+        // intento que no salió. Relanzar la petición aquí, al recuperar el
+        // foco, era el segundo bucle: el diálogo volvía solo una y otra vez y
+        // las dos salidas no se podían pulsar. La decisión es suya.
+        guard state == .open else { return }
+
         guard AppLockRules.shouldAsk(
             enabled: isEnabled,
             authenticated: authenticated,

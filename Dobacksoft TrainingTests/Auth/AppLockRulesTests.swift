@@ -80,15 +80,18 @@ struct AppLockRulesTests {
         ) == false)
     }
 
-    /// Y su control: resuelto **pero** habiéndose ido y vuelto pasada la
-    /// gracia, sí se pide. Quien limpia `alreadyResolved` es la salida al
-    /// fondo, así que esta combinación no debería darse — y si se diera, el
-    /// paso del tiempo manda.
-    @Test func resolvedIsClearedByLeavingNotByTime() {
+    /// **Resuelto manda sobre el tiempo.** Quien limpia `alreadyResolved` es
+    /// la salida al fondo, no el reloj: si por lo que sea llega `true` con una
+    /// salida antigua, no se pide. Dejar que el tiempo lo anulara reabriría
+    /// el bucle por otra puerta.
+    ///
+    /// La primera versión de esta prueba pasaba `alreadyResolved: false` y era
+    /// un duplicado exacto de la de la gracia: decía una cosa y probaba otra.
+    @Test func resolvedWinsOverElapsedTime() {
         #expect(AppLockRules.shouldAsk(
-            enabled: true, authenticated: true, alreadyResolved: false,
-            leftForegroundAt: t0, now: t0.addingTimeInterval(AppLockRules.grace)
-        ))
+            enabled: true, authenticated: true, alreadyResolved: true,
+            leftForegroundAt: t0, now: t0.addingTimeInterval(AppLockRules.grace + 3600)
+        ) == false)
     }
 
     /// **A clock moved backwards asks.**

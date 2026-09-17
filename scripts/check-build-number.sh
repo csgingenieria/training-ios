@@ -25,7 +25,13 @@ PROYECTO="Dobacksoft Training.xcodeproj/project.pbxproj"
 [ -f "$PROYECTO" ] || { echo "✗ No encuentro $PROYECTO"; exit 2; }
 
 ESPERADO=$(git rev-list --count HEAD 2>/dev/null)
-[ -n "$ESPERADO" ] || { echo "✗ Sin historia de git: no hay de dónde derivar el número."; exit 2; }
+if [ -z "$ESPERADO" ]; then
+    # Un árbol exportado (la carpeta de entrega) no tiene historia. La guarda
+    # no es aplicable ahí, y «no aplicable» no es «fallo»: quien evalúa desde
+    # esa carpeta no debe ver un rojo por algo que no puede corregir.
+    echo "· Sin historia de git: esta guarda no es aplicable fuera del repositorio."
+    exit 0
+fi
 
 # Todas las configuraciones tienen que llevar el MISMO número. Si una se queda
 # atrás, Debug y Release dejan de ser comparables — que es justo el escenario
@@ -37,7 +43,9 @@ DISTINTOS=$(echo "$ACTUALES" | grep -c .)
 if [ "${1:-}" = "--fix" ]; then
     sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $ESPERADO;/g" "$PROYECTO"
     echo "✓ CURRENT_PROJECT_VERSION = $ESPERADO en todas las configuraciones."
-    echo "  Recuerde incluir el pbxproj en el commit."
+    echo "  Inclúyalo en el commit que está preparando con \`git commit --amend\`."
+    echo "  Si lo confirma como commit NUEVO, el árbol pasa a $((ESPERADO + 1)) y la"
+    echo "  guarda volverá a pedir --fix: es lo que pasó dos veces el 16/09."
     exit 0
 fi
 

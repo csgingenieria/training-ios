@@ -15,22 +15,17 @@ struct GreetingCard<Distintivo: View>: View {
     let subtitle: String
     @ViewBuilder var distintivo: Distintivo
 
-    /// La inicial del nombre, en mayúscula. Vacía si no hay nombre: un círculo
-    /// sin letra se lee como «todavía no ha cargado», que es la verdad.
-    private var inicial: String {
-        (name?.prefix(1) ?? "").uppercased()
-    }
-
-    /// Solo el nombre de pila. Un saludo con los dos apellidos no es un saludo.
-    private var nombreDePila: String {
-        name?.components(separatedBy: " ").first ?? ""
-    }
+    // La inicial y el saludo salen de `GreetingCopy`, que es lo que prueban
+    // `GreetingCopyTests`. La primera versión de esta vista los calculaba por
+    // su cuenta, y siete pruebas verificaban un tipo que ninguna pantalla
+    // pintaba: «sin nombre no se saluda a una coma» era cierto en el test y
+    // falso en la pantalla.
 
     var body: some View {
         HStack(spacing: Theme.spacing.base.value) {
             ZStack {
                 Circle().fill(Color.brandTint)
-                Text(inicial)
+                Text(GreetingCopy.initial(of: name))
                     .font(.display(size: 22, weight: .bold, italic: true, relativeTo: .title2))
                     .foregroundStyle(Color.brand)
             }
@@ -38,7 +33,7 @@ struct GreetingCard<Distintivo: View>: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: Theme.spacing.xxs.value) {
-                Text("Hola, \(nombreDePila)")
+                Text(GreetingCopy.greeting(for: name))
                     .font(.cardTitle)
                     .foregroundStyle(Color.ink)
                 Text(subtitle)

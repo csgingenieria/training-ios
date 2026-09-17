@@ -36,9 +36,14 @@ paso () {
     fi
 }
 
-titulo "El árbol"
-paso "sin cambios sin guardar" bash -c '[ -z "$(git status --porcelain)" ]'
-paso "número de build alineado" bash scripts/check-build-number.sh
+if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    titulo "El árbol"
+    paso "sin cambios sin guardar" bash -c '[ -z "$(git status --porcelain)" ]'
+    paso "número de build alineado" bash scripts/check-build-number.sh
+else
+    titulo "El árbol"
+    echo "  · Carpeta exportada sin historia de git: se omiten las comprobaciones del árbol."
+fi
 
 titulo "Las guardas"
 for g in scripts/check-*.sh; do
