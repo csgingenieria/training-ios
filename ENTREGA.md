@@ -274,6 +274,24 @@ interfaz) y se lee perfectamente como muestra de trabajo aunque no se ejecute: l
 disciplina de toques que no se tragan, la espera a que un elemento deje de
 moverse y la comprobación de que no lo tapa el cromo del sistema.
 
+### Dónde están los datos, y en qué punto está el proceso
+
+Las dos cuentas ven **dos convocatorias abiertas** en el servidor real:
+
+| Convocatoria | Qué es | A 17/09/2026 |
+|---|---|---|
+| **`prueba0`** | La oposición real: conductores, recorridos, criterios y telemetría de los camiones | **Siete aspirantes con vueltas, puntuaciones, eventos y trazado GPS. Es la que hay que abrir** |
+| `fase0` | La fase 0 de formación previa al examen, que arranca el jueves 18/09/2026 | Apenas datos: empieza esta semana |
+
+Los exámenes están previstos para mediados de octubre. El sistema completo
+—portal web, aplicación de escritorio, tablet Android del camión y esta
+aplicación— está desplegado y en uso, pero el proceso al que sirve acaba de
+empezar: por eso hay pocos datos, y por eso durante estas semanas cambia con
+frecuencia. La aplicación está funcionalmente completa; el esfuerzo se ha
+concentrado en la corrección del dato y en la verificación antes que en el
+acabado visual, que se ajustará con lo que digan los usuarios reales en la
+fase 0. La memoria lo desarrolla en §11.5.
+
 ---
 
 ## Cumplimiento normativo
