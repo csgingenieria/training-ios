@@ -128,7 +128,7 @@ etiquetado, medido de nuevo:
   el desglose de una revisión anterior (113 ficheros · 15 598) con el titular
   ya actualizado (15 750). Regeneradas desde el árbol entregado.
 - La memoria daba tres cifras distintas de pruebas (765 / 788 / 790) y 133
-  commits; el árbol etiquetado tiene 793 funciones, 794 casos y 135 commits.
+  commits; el árbol etiquetado tiene 793 funciones, 794 casos, y tantos commits como número de build —la guarda `check-build-number.sh` lo comprueba en cada verificación, así que la cifra exacta se lee en el propio árbol y no aquí, donde envejecería con el siguiente commit.
 - `GreetingCard` no usaba `GreetingCopy`: siete pruebas verificaban un tipo que
   ninguna pantalla pintaba. Ahora la vista pinta lo que se prueba.
 - `MyAttemptsViewModel` era el décimo modelo de vista y el único sin costura
